@@ -12,7 +12,7 @@ using UnityEngine.InputSystem.UI;
 /// <summary>Controls artist-editable UI prefab instances placed in the scene and wires their gameplay behaviour.</summary>
 public sealed class GameFlowTemplate : MonoBehaviour
 {
-    [Header("Drag the UI prefab assets here")]
+    [Header("UI panels (scene objects or prefab assets)")]
     [SerializeField] private GameObject mainMenuPrefab;
     [SerializeField] private GameObject pausePanelPrefab;
     [SerializeField] private GameObject hudPanelPrefab;
@@ -23,7 +23,6 @@ public sealed class GameFlowTemplate : MonoBehaviour
     private GameObject mainMenu;
     private GameObject pausePanel;
     private GameObject hudPanel;
-    private GameObject confirmationPanel;
     private GameObject pauseConfirmationPanel;
     private GameObject hudConfirmationPanel;
     private GameObject settingsPanel;
@@ -35,7 +34,6 @@ public sealed class GameFlowTemplate : MonoBehaviour
     private GameObject resultPanel;
     private Slider healthSlider;
     private Text healthText;
-    private Text confirmText;
     private Text dialogueSpeaker;
     private Text dialogueContent;
     private Text resultTitle;
@@ -58,18 +56,15 @@ public sealed class GameFlowTemplate : MonoBehaviour
         transitions = SceneTransitionManager.Create();
         EnsureEventSystem();
 
-        mainMenu = InstantiateUiPrefab(mainMenuPrefab, "MainMenu");
-        pausePanel = InstantiateUiPrefab(pausePanelPrefab, "PausePanel");
-        hudPanel = InstantiateUiPrefab(hudPanelPrefab, "HudPanel");
+        mainMenu = ResolveUiPanel(mainMenuPrefab, "MainMenu");
+        pausePanel = ResolveUiPanel(pausePanelPrefab, "PausePanel");
+        hudPanel = ResolveUiPanel(hudPanelPrefab, "HudPanel");
         if (mainMenu == null || pausePanel == null || hudPanel == null)
         {
-            Debug.LogError("Game UI prefab missing. Assign MainMenu, PausePanel, and HudPanel assets in the Inspector.", this);
             enabled = false;
             return;
         }
 
-        // Optional common dialogs may live inside any of the three prefab roots.
-        confirmationPanel = FindObject(mainMenu, "ConfirmationPanel");
         pauseConfirmationPanel = FindObject(pausePanel, "ConfirmationPanel");
         hudConfirmationPanel = FindObject(hudPanel, "ConfirmationPanel");
         settingsPanel = FindObject(mainMenu, "SettingsPanel");
@@ -81,7 +76,6 @@ public sealed class GameFlowTemplate : MonoBehaviour
         resultPanel = FindObject(hudPanel, "ResultPanel");
         healthSlider = FindComponent<Slider>(hudPanel, "HealthSlider");
         healthText = FindComponent<Text>(hudPanel, "HealthValueText");
-        confirmText = FindComponent<Text>(confirmationPanel, "MessageText");
         dialogueSpeaker = FindComponent<Text>(dialoguePanel, "SpeakerText");
         dialogueContent = FindComponent<Text>(dialoguePanel, "DialogueText");
         resultTitle = FindComponent<Text>(resultPanel, "ResultTitle");
@@ -112,14 +106,17 @@ public sealed class GameFlowTemplate : MonoBehaviour
         else if (GameStateManager.Current == GameState.Paused) ResumeGame();
     }
 
-    private GameObject InstantiateUiPrefab(GameObject prefab, string instanceName)
+    private GameObject ResolveUiPanel(GameObject panel, string instanceName)
     {
-        if (prefab == null)
+        if (panel == null)
         {
-            Debug.LogError($"GameFlowTemplate: assign the {instanceName} prefab in the Inspector.", this);
+            Debug.LogError($"GameFlowTemplate: assign {instanceName} from the Hierarchy or Project window.", this);
             return null;
         }
-        var instance = Instantiate(prefab);
+
+        if (panel.scene.IsValid()) return panel;
+
+        var instance = Instantiate(panel);
         instance.name = instanceName;
         return instance;
     }
@@ -139,14 +136,12 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Bind(mainMenu, "SettingsButton", () => ShowPanel(settingsPanel));
         Bind(mainMenu, "HelpButton", () => ShowPanel(helpPanel));
         Bind(mainMenu, "VersionButton", () => ShowPanel(versionPanel));
-        Bind(mainMenu, "ExitButton", () => Confirm("确定退出游戏吗？", ExitGame));
-
         Bind(pausePanel, "ResumeButton", ResumeGame);
         Bind(pausePanel, "PauseSettingsButton", () => ShowPanel(pauseSettingsPanel));
         Bind(pausePanel, "PauseHelpButton", () => ShowPanel(pauseHelpPanel));
-        Bind(pausePanel, "ResetButton", () => Confirm("重置当前关卡？当前进度将丢失。", ResetLevel));
-        Bind(pausePanel, "ReturnToMenuButton", () => Confirm("返回主菜单？当前关卡进度将丢失。", ReturnToMainMenu));
-        Bind(pausePanel, "PauseExitButton", () => Confirm("确定退出游戏吗？", ExitGame));
+        Bind(pausePanel, "ResetButton", () => Confirm(pauseConfirmationPanel, "重置当前关卡？当前进度将丢失。", ResetLevel));
+        Bind(pausePanel, "ReturnToMenuButton", () => Confirm(pauseConfirmationPanel, "返回主菜单？当前关卡进度将丢失。", ReturnToMainMenu));
+        Bind(pausePanel, "PauseExitButton", () => Confirm(pauseConfirmationPanel, "是否退出游戏？", ExitGame));
 
         Bind(hudPanel, "PauseButton", PauseGame);
         Bind(hudPanel, "DialogueButton", () => GameEventCenter.RequestDialogue("旁白", "这里展示剧情台词或任务提示。"));
@@ -154,8 +149,6 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Bind(hudPanel, "DemoDefeatButton", ShowDefeat);
         Bind(hudPanel, "DemoDamageButton", () => SetHealth(currentHealth - 10f, startingHealth));
 
-        Bind(confirmationPanel, "ConfirmButton", ConfirmAction);
-        Bind(confirmationPanel, "CancelButton", CloseConfirmation);
         Bind(pauseConfirmationPanel, "ConfirmButton", ConfirmAction);
         Bind(pauseConfirmationPanel, "CancelButton", CloseConfirmation);
         Bind(hudConfirmationPanel, "ConfirmButton", ConfirmAction);
@@ -167,7 +160,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Bind(versionPanel, "CloseButton", () => ShowPanel(versionPanel, false));
         Bind(dialoguePanel, "DialogueContinueButton", () => ShowPanel(dialoguePanel, false));
         Bind(resultPanel, "RetryButton", () => { ShowPanel(resultPanel, false); ResetLevel(); });
-        Bind(resultPanel, "ResultMenuButton", () => Confirm("返回主菜单？当前关卡进度将丢失。", ReturnToMainMenu));
+        Bind(resultPanel, "ResultMenuButton", () => Confirm(hudConfirmationPanel, "返回主菜单？当前关卡进度将丢失。", ReturnToMainMenu));
     }
 
     private void BindSettings()
@@ -207,6 +200,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         pausePanel.SetActive(false);
         hudPanel.SetActive(true);
         SetHealth(startingHealth, startingHealth);
+        audioManager.PlayGameplayMusic();
     }
 
     private void PauseGame()
@@ -244,6 +238,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         hudPanel.SetActive(false);
         pausePanel.SetActive(false);
         HideOptionalPanels();
+        audioManager.PlayMenuMusic();
     }
 
     private void ResetLevel()
@@ -291,9 +286,8 @@ public sealed class GameFlowTemplate : MonoBehaviour
         ShowPanel(dialoguePanel);
     }
 
-    private void Confirm(string message, Action action)
+    private void Confirm(GameObject panel, string message, Action action)
     {
-        var panel = hudPanel.activeSelf && IsActive(resultPanel) ? hudConfirmationPanel : pausePanel.activeSelf ? pauseConfirmationPanel : confirmationPanel;
         if (panel == null) { Debug.LogError("确认弹窗缺失：请在对应 prefab 内添加 ConfirmationPanel。"); return; }
         confirmAction = action;
         var text = FindComponent<Text>(panel, "MessageText");
@@ -303,8 +297,14 @@ public sealed class GameFlowTemplate : MonoBehaviour
     }
 
     private void ConfirmAction() { var action = confirmAction; CloseConfirmation(); action?.Invoke(); }
-    private bool IsAnyConfirmationOpen() => IsActive(confirmationPanel) || IsActive(pauseConfirmationPanel) || IsActive(hudConfirmationPanel);
-    private void CloseConfirmation() { ShowPanel(confirmationPanel, false); ShowPanel(pauseConfirmationPanel, false); ShowPanel(hudConfirmationPanel, false); confirmAction = null; }
+    private bool IsAnyConfirmationOpen() => IsActive(pauseConfirmationPanel) || IsActive(hudConfirmationPanel);
+
+    private void CloseConfirmation()
+    {
+        ShowPanel(pauseConfirmationPanel, false);
+        ShowPanel(hudConfirmationPanel, false);
+        confirmAction = null;
+    }
     private void HideOptionalPanels()
     {
         CloseConfirmation(); ShowPanel(settingsPanel, false); ShowPanel(pauseSettingsPanel, false); ShowPanel(helpPanel, false); ShowPanel(pauseHelpPanel, false);
