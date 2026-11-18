@@ -12,7 +12,7 @@ using UnityEngine.InputSystem.UI;
 /// <summary>Controls artist-editable UI prefab instances placed in the scene and wires their gameplay behaviour.</summary>
 public sealed class GameFlowTemplate : MonoBehaviour
 {
-    [Header("Drag the UI prefab assets here")]
+    [Header("UI panels (scene objects or prefab assets)")]
     [SerializeField] private GameObject mainMenuPrefab;
     [SerializeField] private GameObject pausePanelPrefab;
     [SerializeField] private GameObject hudPanelPrefab;
@@ -58,12 +58,11 @@ public sealed class GameFlowTemplate : MonoBehaviour
         transitions = SceneTransitionManager.Create();
         EnsureEventSystem();
 
-        mainMenu = InstantiateUiPrefab(mainMenuPrefab, "MainMenu");
-        pausePanel = InstantiateUiPrefab(pausePanelPrefab, "PausePanel");
-        hudPanel = InstantiateUiPrefab(hudPanelPrefab, "HudPanel");
+        mainMenu = ResolveUiPanel(mainMenuPrefab, "MainMenu");
+        pausePanel = ResolveUiPanel(pausePanelPrefab, "PausePanel");
+        hudPanel = ResolveUiPanel(hudPanelPrefab, "HudPanel");
         if (mainMenu == null || pausePanel == null || hudPanel == null)
         {
-            Debug.LogError("Game UI prefab missing. Assign MainMenu, PausePanel, and HudPanel assets in the Inspector.", this);
             enabled = false;
             return;
         }
@@ -112,14 +111,17 @@ public sealed class GameFlowTemplate : MonoBehaviour
         else if (GameStateManager.Current == GameState.Paused) ResumeGame();
     }
 
-    private GameObject InstantiateUiPrefab(GameObject prefab, string instanceName)
+    private GameObject ResolveUiPanel(GameObject panel, string instanceName)
     {
-        if (prefab == null)
+        if (panel == null)
         {
-            Debug.LogError($"GameFlowTemplate: assign the {instanceName} prefab in the Inspector.", this);
+            Debug.LogError($"GameFlowTemplate: assign {instanceName} from the Hierarchy or Project window.", this);
             return null;
         }
-        var instance = Instantiate(prefab);
+
+        if (panel.scene.IsValid()) return panel;
+
+        var instance = Instantiate(panel);
         instance.name = instanceName;
         return instance;
     }
@@ -207,6 +209,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         pausePanel.SetActive(false);
         hudPanel.SetActive(true);
         SetHealth(startingHealth, startingHealth);
+        audioManager.PlayGameplayMusic();
     }
 
     private void PauseGame()
@@ -244,6 +247,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         hudPanel.SetActive(false);
         pausePanel.SetActive(false);
         HideOptionalPanels();
+        audioManager.PlayMenuMusic();
     }
 
     private void ResetLevel()

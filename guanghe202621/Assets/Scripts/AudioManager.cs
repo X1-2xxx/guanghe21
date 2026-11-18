@@ -3,6 +3,19 @@ using UnityEngine;
 /// <summary>Runtime audio routing with saved music/SFX levels and simple UI feedback.</summary>
 public sealed class AudioManager : MonoBehaviour
 {
+    [Header("背景音乐")]
+    [SerializeField] private AudioClip menuMusic;
+    [SerializeField] private AudioClip gameplayMusic;
+
+    [Header("玩法音效")]
+    [SerializeField] private AudioClip turnCharacterSwitch;
+    [SerializeField] private AudioClip footstep;
+    [SerializeField] private AudioClip dash;
+    [SerializeField] private AudioClip jumpTakeoff;
+    [SerializeField] private AudioClip jumpLanding;
+    [SerializeField] private AudioClip springBounce;
+    [SerializeField] private AudioClip thinBoardBreak;
+
     private const string MusicKey = "GameTemplate.MusicVolume";
     private const string SfxKey = "GameTemplate.SfxVolume";
     private AudioSource musicSource;
@@ -11,6 +24,10 @@ public sealed class AudioManager : MonoBehaviour
 
     public float MusicVolume { get; private set; }
     public float SfxVolume { get; private set; }
+
+    private void Awake() => Initialize();
+    private void OnEnable() => GameEventCenter.SfxRequested += OnSfxRequested;
+    private void OnDisable() => GameEventCenter.SfxRequested -= OnSfxRequested;
 
     public void Initialize()
     {
@@ -43,19 +60,41 @@ public sealed class AudioManager : MonoBehaviour
     public void PlayMusic(AudioClip clip)
     {
         if (musicSource == null) return;
+        if (clip != null && musicSource.clip == clip && musicSource.isPlaying) return;
+
+        musicSource.Stop();
         musicSource.clip = clip;
-        if (clip == null) musicSource.Stop();
-        else musicSource.Play();
+        if (clip != null) musicSource.Play();
     }
+
+    public void PlayMenuMusic() => PlayMusic(menuMusic);
+    public void PlayGameplayMusic() => PlayMusic(gameplayMusic);
 
     public void PlaySfx(AudioClip clip)
     {
-        if (clip != null && sfxSource != null) sfxSource.PlayOneShot(clip, SfxVolume);
+        if (clip != null && sfxSource != null) sfxSource.PlayOneShot(clip);
     }
 
     public void PlayUiClick()
     {
-        if (uiTone != null && sfxSource != null) sfxSource.PlayOneShot(uiTone, SfxVolume * 0.35f);
+        if (uiTone != null && sfxSource != null) sfxSource.PlayOneShot(uiTone, 0.35f);
+    }
+
+    private void OnSfxRequested(GameplaySfx sound)
+    {
+        var clip = sound switch
+        {
+            GameplaySfx.TurnCharacterSwitch => turnCharacterSwitch,
+            GameplaySfx.Footstep => footstep,
+            GameplaySfx.Dash => dash,
+            GameplaySfx.JumpTakeoff => jumpTakeoff,
+            GameplaySfx.JumpLanding => jumpLanding,
+            GameplaySfx.SpringBounce => springBounce,
+            GameplaySfx.ThinBoardBreak => thinBoardBreak,
+            _ => null
+        };
+
+        PlaySfx(clip);
     }
 
     private void ApplyVolumes()
