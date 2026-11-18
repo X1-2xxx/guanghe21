@@ -195,12 +195,31 @@ public sealed class GameFlowTemplate : MonoBehaviour
 
     private void EnterGame()
     {
-        GameStateManager.SetState(GameState.Playing);
+        FixCollapsedHudLayout();
+        hudPanel.SetActive(true);
         mainMenu.SetActive(false);
         pausePanel.SetActive(false);
-        hudPanel.SetActive(true);
+        GameStateManager.SetState(GameState.Playing);
         SetHealth(startingHealth, startingHealth);
         audioManager.PlayGameplayMusic();
+    }
+
+    private void FixCollapsedHudLayout()
+    {
+        if (hudPanel.transform is not RectTransform rect || rect.parent is not RectTransform) return;
+
+        if (rect.localScale.x == 0f || rect.localScale.y == 0f)
+            rect.localScale = Vector3.one;
+
+        // Older scene instances saved a zero-sized HUD when it was moved under the Canvas.
+        bool widthCollapsed = rect.anchorMin.x == rect.anchorMax.x && rect.sizeDelta.x <= 0f;
+        bool heightCollapsed = rect.anchorMin.y == rect.anchorMax.y && rect.sizeDelta.y <= 0f;
+        if (!widthCollapsed && !heightCollapsed) return;
+
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
     }
 
     private void PauseGame()
