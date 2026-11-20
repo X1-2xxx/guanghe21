@@ -32,8 +32,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
     private GameObject versionPanel;
     private GameObject dialoguePanel;
     private GameObject resultPanel;
-    private Slider healthSlider;
-    private Text healthText;
+    private Text dialogueTitle;
     private Text dialogueSpeaker;
     private Text dialogueContent;
     private Text resultTitle;
@@ -43,7 +42,6 @@ public sealed class GameFlowTemplate : MonoBehaviour
     private AudioListener menuListener;
     private Scene menuScene;
     private Action confirmAction;
-    private float currentHealth;
     private bool levelLoaded;
 
     private void Awake()
@@ -74,22 +72,22 @@ public sealed class GameFlowTemplate : MonoBehaviour
         versionPanel = FindObject(mainMenu, "VersionPanel");
         dialoguePanel = FindObject(hudPanel, "DialoguePanel");
         resultPanel = FindObject(hudPanel, "ResultPanel");
-        healthSlider = FindComponent<Slider>(hudPanel, "HealthSlider");
-        healthText = FindComponent<Text>(hudPanel, "HealthValueText");
+        dialogueTitle = FindComponent<Text>(dialoguePanel, "Title");
         dialogueSpeaker = FindComponent<Text>(dialoguePanel, "SpeakerText");
         dialogueContent = FindComponent<Text>(dialoguePanel, "DialogueText");
+        DialogueFontUtility.ApplyFallback(dialogueTitle);
+        DialogueFontUtility.ApplyFallback(dialogueSpeaker);
+        DialogueFontUtility.ApplyFallback(dialogueContent);
         resultTitle = FindComponent<Text>(resultPanel, "ResultTitle");
 
         BindButtons();
         BindSettings();
-        GameEventCenter.HealthChanged += OnHealthChanged;
         GameEventCenter.DialogueRequested += OnDialogueRequested;
         ShowMainMenu();
     }
 
     private void OnDestroy()
     {
-        GameEventCenter.HealthChanged -= OnHealthChanged;
         GameEventCenter.DialogueRequested -= OnDialogueRequested;
         if (GameStateManager.Current == GameState.Paused) Time.timeScale = 1f;
     }
@@ -144,10 +142,6 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Bind(pausePanel, "PauseExitButton", () => Confirm(pauseConfirmationPanel, "是否退出游戏？", ExitGame));
 
         Bind(hudPanel, "PauseButton", PauseGame);
-        Bind(hudPanel, "DialogueButton", () => GameEventCenter.RequestDialogue("旁白", "这里展示剧情台词或任务提示。"));
-        Bind(hudPanel, "DemoVictoryButton", ShowVictory);
-        Bind(hudPanel, "DemoDefeatButton", ShowDefeat);
-        Bind(hudPanel, "DemoDamageButton", () => SetHealth(currentHealth - 10f, startingHealth));
 
         Bind(pauseConfirmationPanel, "ConfirmButton", ConfirmAction);
         Bind(pauseConfirmationPanel, "CancelButton", CloseConfirmation);
@@ -178,7 +172,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         if (sfx != null) { sfx.SetValueWithoutNotify(audioManager.SfxVolume); sfx.onValueChanged.AddListener(audioManager.SetSfxVolume); }
     }
 
-    private void StartGame()
+    public void StartGame()
     {
         if (!string.IsNullOrWhiteSpace(gameplaySceneName) && gameplaySceneName != menuScene.name)
         {
@@ -222,21 +216,21 @@ public sealed class GameFlowTemplate : MonoBehaviour
         rect.offsetMax = Vector2.zero;
     }
 
-    private void PauseGame()
+    public void PauseGame()
     {
         if (GameStateManager.Current != GameState.Playing) return;
         GameStateManager.SetState(GameState.Paused);
         pausePanel.SetActive(true);
     }
 
-    private void ResumeGame()
+    public void ResumeGame()
     {
         if (GameStateManager.Current != GameState.Paused) return;
         GameStateManager.SetState(GameState.Playing);
         pausePanel.SetActive(false);
     }
 
-    private void ReturnToMainMenu()
+    public void ReturnToMainMenu()
     {
         Action finish = () =>
         {
@@ -260,7 +254,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         audioManager.PlayMenuMusic();
     }
 
-    private void ResetLevel()
+    public void ResetLevel()
     {
         Action finish = () =>
         {
@@ -280,16 +274,10 @@ public sealed class GameFlowTemplate : MonoBehaviour
         GameEventCenter.PublishHealth(Mathf.Clamp(current, 0f, maximum), maximum);
     }
 
-    private void OnHealthChanged(float current, float maximum)
-    {
-        currentHealth = current;
-        if (healthSlider != null) healthSlider.value = maximum > 0f ? current / maximum : 0f;
-        if (healthText != null) healthText.text = $"{Mathf.CeilToInt(current)} / {Mathf.CeilToInt(maximum)}";
-    }
-
     public void ShowVictory() => ShowResult(true);
     public void ShowDefeat() => ShowResult(false);
     public void ShowDialogue(string speaker, string line) => GameEventCenter.RequestDialogue(speaker, line);
+    public void ShowNarration(string line) => ShowDialogue("旁白", line);
 
     private void ShowResult(bool victory)
     {
@@ -300,9 +288,18 @@ public sealed class GameFlowTemplate : MonoBehaviour
 
     private void OnDialogueRequested(string speaker, string line)
     {
-        if (dialogueSpeaker != null) dialogueSpeaker.text = speaker;
-        if (dialogueContent != null) dialogueContent.text = line;
+        if (dialogueTitle != null)
+            dialogueTitle.text = speaker == "旁白" ? "旁白提示" : "对话";
+
+        if (dialogueSpeaker != null)
+        {
+            dialogueSpeaker.text = speaker ?? string.Empty;
+            dialogueSpeaker.gameObject.SetActive(!string.IsNullOrWhiteSpace(speaker));
+        }
+
+        if (dialogueContent != null) dialogueContent.text = line ?? string.Empty;
         ShowPanel(dialoguePanel);
+        if (dialoguePanel != null) dialoguePanel.transform.SetAsLastSibling();
     }
 
     private void Confirm(GameObject panel, string message, Action action)

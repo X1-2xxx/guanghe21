@@ -16,6 +16,14 @@ public sealed class AudioManager : MonoBehaviour
     [SerializeField] private AudioClip springBounce;
     [SerializeField] private AudioClip thinBoardBreak;
 
+    [Header("物理块音效")]
+    [Tooltip("物理块碰撞或落地时播放，同一段音效可复用。")]
+    [SerializeField] private AudioClip physicsBlockImpact;
+    [Tooltip("粘贴成功时播放，纸张掀动后啪的一声粘在一起。")]
+    [SerializeField] private AudioClip physicsBlockAttach;
+    [Tooltip("分离成功时播放，剪刀剪开物理块之间纸片的声音。")]
+    [SerializeField] private AudioClip physicsBlockDetach;
+
     private const string MusicKey = "GameTemplate.MusicVolume";
     private const string SfxKey = "GameTemplate.SfxVolume";
     private AudioSource musicSource;
@@ -91,6 +99,9 @@ public sealed class AudioManager : MonoBehaviour
             GameplaySfx.JumpLanding => jumpLanding,
             GameplaySfx.SpringBounce => springBounce,
             GameplaySfx.ThinBoardBreak => thinBoardBreak,
+            GameplaySfx.PhysicsBlockImpact => physicsBlockImpact,
+            GameplaySfx.PhysicsBlockAttach => physicsBlockAttach,
+            GameplaySfx.PhysicsBlockDetach => physicsBlockDetach,
             _ => null
         };
 

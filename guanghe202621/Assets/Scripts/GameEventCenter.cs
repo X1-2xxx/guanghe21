@@ -8,7 +8,10 @@ public enum GameplaySfx
     JumpTakeoff,
     JumpLanding,
     SpringBounce,
-    ThinBoardBreak
+    ThinBoardBreak,
+    PhysicsBlockImpact,
+    PhysicsBlockAttach,
+    PhysicsBlockDetach
 }
 
 /// <summary>Typed message hub for decoupled gameplay systems.</summary>

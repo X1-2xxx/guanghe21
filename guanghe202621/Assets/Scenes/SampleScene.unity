@@ -246,6 +246,8 @@ GameObject:
   - component: {fileID: 519420030}
   - component: {fileID: 519420033}
   - component: {fileID: 519420034}
+  - component: {fileID: 519420035}
+  - component: {fileID: 519420036}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -409,6 +411,74 @@ MonoBehaviour:
   jumpLanding: {fileID: 0}
   springBounce: {fileID: 0}
   thinBoardBreak: {fileID: 0}
+  physicsBlockImpact: {fileID: 0}
+  physicsBlockAttach: {fileID: 0}
+  physicsBlockDetach: {fileID: 0}
+--- !u!114 &519420035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0b9a000832f4c9689c9fae3c6da0001, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  controlledCamera: {fileID: 519420031}
+  followBehaviours: []
+  playerTarget: {fileID: 0}
+  playerReturnOffset: {x: 0, y: 1}
+  easing:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  returnDuration: 0.6
+  useUnscaledTime: 0
+  configuredShots: []
+--- !u!114 &519420036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0b9a000832f4c9689c9fae3c6da0002, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  bubblePrefab: {fileID: 103, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+  useBottomDialogue: 1
+  bottomDialoguePrefab: {fileID: 103, guid: e0b9a000832f4c9689c9fae3c6da0006, type: 3}
+  renderCamera: {fileID: 519420031}
+  defaultHeadOffset: {x: 0, y: 1.8, z: 0}
+  useUnscaledTime: 0
+  typewriterByDefault: 0
+  charactersPerSecond: 25
+  screenMargin: 12
+  gapPixels: 8
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -616,14 +686,6 @@ PrefabInstance:
     - target: {fileID: 3636994850786954577, guid: 20ea2947aa713574186dab38706935ca, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5018173380921698456, guid: 20ea2947aa713574186dab38706935ca, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5018173380921698456, guid: 20ea2947aa713574186dab38706935ca, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8933582619673747063, guid: 20ea2947aa713574186dab38706935ca, type: 3}
       propertyPath: m_Name
