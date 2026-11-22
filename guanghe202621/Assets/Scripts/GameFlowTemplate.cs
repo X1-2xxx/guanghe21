@@ -9,20 +9,24 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 #endif
 
-/// <summary>Controls artist-editable UI prefab instances placed in the scene and wires their gameplay behaviour.</summary>
+/// <summary>接入美术可编辑的 UI 预置体，负责菜单、暂停、结果与对话的显示和按钮事件。</summary>
 public sealed class GameFlowTemplate : MonoBehaviour
 {
-    [Header("UI panels (scene objects or prefab assets)")]
-    [SerializeField] private GameObject mainMenuPrefab;
-    [SerializeField] private GameObject pausePanelPrefab;
-    [SerializeField] private GameObject hudPanelPrefab;
-    [Header("Optional additive level")]
-    [SerializeField] private string gameplaySceneName = "";
-    [SerializeField, Min(1)] private float startingHealth = 100f;
+    [Header("只接入本场景 Canvas 下的 UI 预置体实例")]
+    [Tooltip("可拖入 Hierarchy 中的主菜单。留空时根据 GameUIPanel 自动接入；运行时显示实际使用的实例。")]
+    [SerializeField, InspectorName("场景中的主菜单")] private GameObject mainMenuPrefab;
+    [Tooltip("可拖入 Hierarchy 中的暂停面板。替换实例后会重新识别面板类型。")]
+    [SerializeField, InspectorName("场景中的暂停面板")] private GameObject pausePanelPrefab;
+    [Tooltip("可拖入 Hierarchy 中的 HudPanel，开始游戏后显示的就是这份场景实例。")]
+    [SerializeField, InspectorName("场景中的游戏界面")] private GameObject hudPanelPrefab;
+    [Header("关卡加载（可选）")]
+    [Tooltip("留空时在当前场景开始游戏；填写后加载指定关卡。指定场景需要加入构建场景列表。")]
+    [SerializeField, InspectorName("游戏关卡场景名")] private string gameplaySceneName = "";
 
     private GameObject mainMenu;
     private GameObject pausePanel;
     private GameObject hudPanel;
+    private GameObject mainConfirmationPanel;
     private GameObject pauseConfirmationPanel;
     private GameObject hudConfirmationPanel;
     private GameObject settingsPanel;
@@ -46,7 +50,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
 
     private void Awake()
     {
-        menuScene = SceneManager.GetActiveScene();
+        menuScene = gameObject.scene;
         menuCamera = GetComponent<Camera>();
         menuListener = GetComponent<AudioListener>();
         audioManager = GetComponent<AudioManager>() ?? gameObject.AddComponent<AudioManager>();
@@ -54,15 +58,23 @@ public sealed class GameFlowTemplate : MonoBehaviour
         transitions = SceneTransitionManager.Create();
         EnsureEventSystem();
 
-        mainMenu = ResolveUiPanel(mainMenuPrefab, "MainMenu");
-        pausePanel = ResolveUiPanel(pausePanelPrefab, "PausePanel");
-        hudPanel = ResolveUiPanel(hudPanelPrefab, "HudPanel");
+        mainMenu = ResolveUiPanel(mainMenuPrefab, GameUIPanel.PanelKind.MainMenu, "MainMenu", "MainMenuPanel");
+        pausePanel = ResolveUiPanel(pausePanelPrefab, GameUIPanel.PanelKind.PausePanel, "PausePanel", "PausePanel");
+        hudPanel = ResolveUiPanel(hudPanelPrefab, GameUIPanel.PanelKind.HudPanel, "HudPanel", "GameplayHUD");
         if (mainMenu == null || pausePanel == null || hudPanel == null)
         {
             enabled = false;
             return;
         }
 
+        // Inspector 在运行时直接显示当前使用的场景对象，方便确认美术改的是哪一份。
+        mainMenuPrefab = mainMenu;
+        pausePanelPrefab = pausePanel;
+        hudPanelPrefab = hudPanel;
+        FixCollapsedUiLayout(mainMenu);
+        FixCollapsedUiLayout(pausePanel);
+        FixCollapsedUiLayout(hudPanel);
+        mainConfirmationPanel = FindObject(mainMenu, "ConfirmationPanel");
         pauseConfirmationPanel = FindObject(pausePanel, "ConfirmationPanel");
         hudConfirmationPanel = FindObject(hudPanel, "ConfirmationPanel");
         settingsPanel = FindObject(mainMenu, "SettingsPanel");
@@ -81,6 +93,8 @@ public sealed class GameFlowTemplate : MonoBehaviour
         resultTitle = FindComponent<Text>(resultPanel, "ResultTitle");
 
         BindButtons();
+        if (FindComponent<Button>(mainMenu, "StartButton") == null)
+            Debug.LogError("主菜单缺少开始按钮的功能引用。请在 GameUIPanel 中把“开始游戏按钮”关联到实际 Button。", mainMenu);
         BindSettings();
         GameEventCenter.DialogueRequested += OnDialogueRequested;
         ShowMainMenu();
@@ -104,19 +118,57 @@ public sealed class GameFlowTemplate : MonoBehaviour
         else if (GameStateManager.Current == GameState.Paused) ResumeGame();
     }
 
-    private GameObject ResolveUiPanel(GameObject panel, string instanceName)
+    private GameObject ResolveUiPanel(GameObject panel, GameUIPanel.PanelKind kind,
+        string instanceName, string legacyName)
     {
-        if (panel == null)
+        // 只从当前场景 Canvas 中选择，包括未激活的游戏和暂停面板。
+        var views = FindObjectsByType<GameUIPanel>(FindObjectsInactive.Include);
+        GameObject scenePanel = null;
+        foreach (var view in views)
         {
-            Debug.LogError($"GameFlowTemplate: assign {instanceName} from the Hierarchy or Project window.", this);
-            return null;
+            if (view.Kind != kind || !IsCanvasInstance(view.gameObject)) continue;
+            // 同类型重复拖入时，优先使用后放到 Canvas 下的实例，避免旧引用压过新面板。
+            if (scenePanel == null || view.transform.GetSiblingIndex() > scenePanel.transform.GetSiblingIndex())
+                scenePanel = view.gameObject;
+        }
+        if (scenePanel == null && IsCanvasInstance(panel))
+            scenePanel = panel;
+
+        // 兼容未挂 GameUIPanel 的旧场景。新预置体改名后由类型识别。
+        if (scenePanel == null)
+        {
+            foreach (GameObject root in gameObject.scene.GetRootGameObjects())
+            {
+                foreach (Transform item in root.GetComponentsInChildren<Transform>(true))
+                {
+                    if (item.name != instanceName && item.name != legacyName) continue;
+                    if (!IsCanvasInstance(item.gameObject)) continue;
+                    scenePanel = item.gameObject;
+                    break;
+                }
+                if (scenePanel != null) break;
+            }
         }
 
-        if (panel.scene.IsValid()) return panel;
+        if (scenePanel != null)
+        {
+            foreach (var view in views)
+            {
+                if (view.Kind != kind || !IsCanvasInstance(view.gameObject) || view.gameObject == scenePanel) continue;
+                view.gameObject.SetActive(false);
+                Debug.LogWarning($"场景中有重复的{instanceName}，已使用“{scenePanel.name}”并关闭另一份。请在编辑器里保留一份面板。", this);
+            }
+            return scenePanel;
+        }
 
-        var instance = Instantiate(panel);
-        instance.name = instanceName;
-        return instance;
+        Debug.LogError($"Canvas 下缺少{instanceName}实例。请把你编辑的预置体拖入 Canvas，保留根节点的 GameUIPanel 组件。", this);
+        return null;
+    }
+
+    private bool IsCanvasInstance(GameObject panel)
+    {
+        return panel != null && panel.scene == gameObject.scene && panel.transform.parent != null &&
+            panel.transform.parent.GetComponentInParent<Canvas>(true) != null;
     }
     private static void EnsureEventSystem()
     {
@@ -134,15 +186,17 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Bind(mainMenu, "SettingsButton", () => ShowPanel(settingsPanel));
         Bind(mainMenu, "HelpButton", () => ShowPanel(helpPanel));
         Bind(mainMenu, "VersionButton", () => ShowPanel(versionPanel));
+        Bind(mainMenu, "ExitButton", () => Confirm(mainConfirmationPanel, "是否退出游戏？", ExitGame));
         Bind(pausePanel, "ResumeButton", ResumeGame);
         Bind(pausePanel, "PauseSettingsButton", () => ShowPanel(pauseSettingsPanel));
         Bind(pausePanel, "PauseHelpButton", () => ShowPanel(pauseHelpPanel));
         Bind(pausePanel, "ResetButton", () => Confirm(pauseConfirmationPanel, "重置当前关卡？当前进度将丢失。", ResetLevel));
         Bind(pausePanel, "ReturnToMenuButton", () => Confirm(pauseConfirmationPanel, "返回主菜单？当前关卡进度将丢失。", ReturnToMainMenu));
-        Bind(pausePanel, "PauseExitButton", () => Confirm(pauseConfirmationPanel, "是否退出游戏？", ExitGame));
 
         Bind(hudPanel, "PauseButton", PauseGame);
 
+        Bind(mainConfirmationPanel, "ConfirmButton", ConfirmAction);
+        Bind(mainConfirmationPanel, "CancelButton", CloseConfirmation);
         Bind(pauseConfirmationPanel, "ConfirmButton", ConfirmAction);
         Bind(pauseConfirmationPanel, "CancelButton", CloseConfirmation);
         Bind(hudConfirmationPanel, "ConfirmButton", ConfirmAction);
@@ -176,6 +230,13 @@ public sealed class GameFlowTemplate : MonoBehaviour
     {
         if (!string.IsNullOrWhiteSpace(gameplaySceneName) && gameplaySceneName != menuScene.name)
         {
+            // 场景名误填为项目名等情况，仍然进入当前 Canvas 的游戏界面。
+            if (!Application.CanStreamedLevelBeLoaded(gameplaySceneName))
+            {
+                Debug.LogWarning($"关卡“{gameplaySceneName}”不存在或未加入构建列表，已进入当前场景的游戏界面。制作 UI 时请把“游戏关卡场景名”留空。", this);
+                EnterGame();
+                return;
+            }
             transitions.LoadLevelAdditive(gameplaySceneName, () =>
             {
                 levelLoaded = true;
@@ -184,28 +245,30 @@ public sealed class GameFlowTemplate : MonoBehaviour
                 EnterGame();
             });
         }
-        else transitions.FadeAction(EnterGame);
+        else EnterGame();
     }
 
     private void EnterGame()
     {
-        FixCollapsedHudLayout();
+        HideOptionalPanels();
+        FixCollapsedUiLayout(hudPanel);
         hudPanel.SetActive(true);
         mainMenu.SetActive(false);
         pausePanel.SetActive(false);
+        Time.timeScale = 1f;
+        Canvas.ForceUpdateCanvases();
         GameStateManager.SetState(GameState.Playing);
-        SetHealth(startingHealth, startingHealth);
         audioManager.PlayGameplayMusic();
     }
 
-    private void FixCollapsedHudLayout()
+    private static void FixCollapsedUiLayout(GameObject panel)
     {
-        if (hudPanel.transform is not RectTransform rect || rect.parent is not RectTransform) return;
+        if (panel.transform is not RectTransform rect || rect.parent is not RectTransform) return;
 
         if (rect.localScale.x == 0f || rect.localScale.y == 0f)
             rect.localScale = Vector3.one;
 
-        // Older scene instances saved a zero-sized HUD when it was moved under the Canvas.
+        // 修复旧场景中被压成零宽高的根面板，正常的美术布局保持原值。
         bool widthCollapsed = rect.anchorMin.x == rect.anchorMax.x && rect.sizeDelta.x <= 0f;
         bool heightCollapsed = rect.anchorMin.y == rect.anchorMax.y && rect.sizeDelta.y <= 0f;
         if (!widthCollapsed && !heightCollapsed) return;
@@ -240,7 +303,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
             ShowMainMenu();
         };
         if (levelLoaded) transitions.UnloadLevelAdditive(gameplaySceneName, finish);
-        else transitions.FadeAction(finish);
+        else finish();
     }
 
     private void ShowMainMenu()
@@ -258,7 +321,6 @@ public sealed class GameFlowTemplate : MonoBehaviour
     {
         Action finish = () =>
         {
-            SetHealth(startingHealth, startingHealth);
             GameEventCenter.PublishLevelReset();
             GameStateManager.SetState(GameState.Playing);
             pausePanel.SetActive(false);
@@ -266,12 +328,6 @@ public sealed class GameFlowTemplate : MonoBehaviour
         };
         if (levelLoaded) transitions.ReloadLevelAdditive(gameplaySceneName, finish);
         else finish();
-    }
-
-    public void SetHealth(float current, float maximum)
-    {
-        maximum = Mathf.Max(1f, maximum);
-        GameEventCenter.PublishHealth(Mathf.Clamp(current, 0f, maximum), maximum);
     }
 
     public void ShowVictory() => ShowResult(true);
@@ -313,10 +369,11 @@ public sealed class GameFlowTemplate : MonoBehaviour
     }
 
     private void ConfirmAction() { var action = confirmAction; CloseConfirmation(); action?.Invoke(); }
-    private bool IsAnyConfirmationOpen() => IsActive(pauseConfirmationPanel) || IsActive(hudConfirmationPanel);
+    private bool IsAnyConfirmationOpen() => IsActive(mainConfirmationPanel) || IsActive(pauseConfirmationPanel) || IsActive(hudConfirmationPanel);
 
     private void CloseConfirmation()
     {
+        ShowPanel(mainConfirmationPanel, false);
         ShowPanel(pauseConfirmationPanel, false);
         ShowPanel(hudConfirmationPanel, false);
         confirmAction = null;
@@ -340,6 +397,12 @@ public sealed class GameFlowTemplate : MonoBehaviour
     private static GameObject FindObject(GameObject root, string objectName)
     {
         if (root == null) return null;
+        var view = root.GetComponentInParent<GameUIPanel>(true);
+        if (view != null)
+        {
+            GameObject linked = view.FindElement(objectName, root.transform);
+            if (linked != null) return linked;
+        }
         foreach (var item in root.GetComponentsInChildren<Transform>(true)) if (item.name == objectName) return item.gameObject;
         return null;
     }

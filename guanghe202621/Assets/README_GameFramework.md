@@ -1,16 +1,24 @@
 # UI Prefab 接入说明（Unity 6.6）
 
-`SampleScene` 的 `GameFlowTemplate` 已绑定 Canvas 下的三个预置体实例。进入游戏时隐藏主菜单并显示 HUD，返回主菜单时切换回来。
+`SampleScene` 的 `GameFlowTemplate` 只使用当前场景 Canvas 下的预置体实例。点击开始时，直接关闭 Canvas/MainMenu、打开 Canvas/HudPanel；返回主菜单时切换回来。运行时不会从 Resources 加载或另外实例化 UI。
 
-Inspector 字段对应：
+Inspector 中的三个 UI 字段对应 Hierarchy 中的场景对象，运行时会显示实际使用的实例。
 
-- Main Menu Prefab → `Canvas/MainMenu`
-- Pause Panel Prefab → `Canvas/PausePanel`
-- Hud Panel Prefab → `Canvas/HudPanel`
+- 场景中的主菜单 → 开始游戏、设置、说明、版本和退出入口。
+- 场景中的暂停面板 → 暂停时显示的菜单。
+- 场景中的游戏界面 → 存放暂停按钮、对话和结果弹窗。
 
-美术可以直接打开 `Assets/Resources/UI` 下的对应预置体，修改并保存。替换整个面板时，在 Canvas 下换上新预置体，再从 Hierarchy 拖入对应字段。按钮 OnClick 由脚本绑定。
+字段可以留空，程序会根据 GameUIPanel 的“面板类型”接入 Canvas 中的实例。如果同一种面板重复拖入，优先使用放在 Canvas 子物体列表后面的实例，并关闭旧的一份。场景中缺少某一面板时，会提示把对应预置体拖入 Canvas。
 
-按钮和面板对象名需保留脚本识别的名称，例如 `StartButton`、`ReturnToMenuButton`、`ResultPanel`、`ConfirmButton`。HUD 已移除血条和血量数字。
+当前做 UI 时，“游戏关卡场景名”保持空白即可。它用于加载已经制作好的独立关卡，需要填写实际场景名并将场景加入构建列表。误填不存在的名字时会给出提示，然后照常进入当前场景的游戏界面。当前项目的 SampleScene 是 UI 模板，实际游戏地图和角色由玩法场景提供。
+
+美术可以直接打开 `Assets/Resources/UI` 下的对应预置体，修改并保存。替换整个面板时，停止运行，删除 Canvas 下的旧实例，再将修改后的预置体拖入 Canvas，保存场景后运行。三个预置体根节点均已配置 GameUIPanel，替换实例后可以自动重新接入，原来的 Inspector 引用可留空。每种面板保留一份实例，避免重复界面叠在一起。
+
+GameUIPanel 的“面板类型”和“功能对象引用”已配置。换图、改文字、改对象名、移动布局和调整层级时，保留该组件及已有功能对象的引用即可。按钮 OnClick 由脚本绑定，无需重复填写。
+
+如果删除旧按钮再新建按钮，在预置体根节点的 GameUIPanel / 功能对象引用里，找到对应功能，将新按钮对象拖入“界面对象”即可；新按钮需要保留 Button 组件。替换确认弹窗时，同样更新确认面板、确认按钮、取消按钮和确认提示文字的引用。增加全新玩法按钮时仍需程序提供对应行为。
+
+已经删除的可选按钮会被跳过，不影响其他按钮初始化。主菜单已启用“退出游戏”，点击后弹出“是否退出游戏”，确认后退出。暂停面板保留继续、设置、说明、重置和返回主菜单，已移除退出入口。HUD 已移除血条和血量数字。
 
 ## 游戏逻辑对接
 
@@ -25,7 +33,6 @@ HUD 已移除演示通关、演示失败、演示受伤和示例台词按钮。�
 根据实际玩法结果调用对应接口，每个接口按需要单独调用。
 
 ```csharp
-flow.SetHealth(currentHealth, maxHealth);
 flow.ShowVictory();
 flow.ShowDefeat();
 flow.ShowDialogue("角色名", "台词内容");
@@ -37,21 +44,20 @@ flow.ShowNarration("旁白或任务提示内容");
 | `flow.StartGame()` | 开始游戏，按 Gameplay Scene Name 配置加载关卡或切换当前场景 UI |
 | `flow.PauseGame()` | 暂停游戏并打开暂停菜单 |
 | `flow.ResumeGame()` | 继续游戏并关闭暂停菜单 |
-| `flow.SetHealth(current, maximum)` | 发布血量消息，供玩法系统订阅 HealthChanged |
 | `flow.ShowVictory()` | 关卡达成通关条件后显示通关弹窗 |
 | `flow.ShowDefeat()` | 角色死亡或满足失败条件后显示失败弹窗 |
 | `flow.ShowDialogue(speaker, line)` | 显示真实台词或任务提示 |
 | `flow.ShowNarration(line)` | 显示带有“旁白提示”标题的旁白弹窗 |
-| `flow.ResetLevel()` | 重置关卡并发布默认血量消息 |
+| `flow.ResetLevel()` | 重载独立关卡，或发送当前场景的重置信号 |
 | `flow.ReturnToMainMenu()` | 直接返回主菜单 |
 
-血量、伤害、死亡判定和通关条件由玩法脚本计算。SetHealth 接口继续发布血量消息，当前 HUD 不显示血条。失败条件达成时调用 ShowDefeat。Starting Health 是开始游戏和重置时发布的默认血量，对接时应与角色初始血量一致。
+通关和失败条件由正式玩法脚本判断，达成条件时分别调用 ShowVictory 或 ShowDefeat。UI 框架中的初始血量、血量接口和血量消息已移除。
 
 对白和旁白共用 `Assets/Resources/UI/HudPanel.prefab` 内的 `DialoguePanel`。美术可以在预置体中展开它，临时激活后编辑外框、角色名、正文和“继续”按钮，保存前关闭面板。角色名和正文初始为空，游戏运行后由玩法脚本传入内容。
 
 进入游戏后，调用 `flow.ShowDialogue("角色名", "对白内容")` 显示对白，调用 `flow.ShowNarration("旁白内容")` 显示旁白。角色名传空字符串时隐藏角色名区域。玩家点“继续”或按 Esc 可以关闭当前弹窗。
 
-游戏内按 Esc 打开暂停菜单，点击退出游戏后显示二次确认。UI 中的重置、返回主菜单同样有确认步骤，玩法代码直接调用 ResetLevel 或 ReturnToMainMenu 会立即执行相应流程。
+游戏内按 Esc 打开暂停菜单；退出入口在主菜单，点击后显示二次确认。暂停菜单中的重置、返回主菜单同样有确认步骤，玩法代码直接调用 ResetLevel 或 ReturnToMainMenu 会立即执行相应流程。
 
 玩法脚本可以订阅现有消息，处理游戏状态和关卡重置。
 
@@ -76,8 +82,7 @@ private void OnGameStateChanged(GameState state)
 
 private void OnLevelReset()
 {
-    // 当前场景模式下，在这里恢复角色出生点、血量和机关。
-    // 恢复完成后，用 flow.SetHealth 发布真实血量。
+    // 当前场景模式下，在这里恢复角色出生点、机关和关卡进度。
 }
 ```
 

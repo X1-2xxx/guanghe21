@@ -1724,6 +1724,7 @@ GameObject:
   - component: {fileID: 992760595124170309}
   - component: {fileID: 228830268556391560}
   - component: {fileID: 982327960656968292}
+  - component: {fileID: 990100000000000003}
   m_Layer: 0
   m_Name: HudPanel
   m_TagString: Untagged
@@ -2056,3 +2057,48 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+
+--- !u!114 &990100000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8933582619673747063}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c035728203304d72ad5a9129207e8031, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  panelKind: 2
+  elements:
+  - key: 25
+    target: {fileID: 836834910528768941}
+  - key: 28
+    target: {fileID: 1160444840079585669}
+  - key: 27
+    target: {fileID: 1835671093694819891}
+  - key: 29
+    target: {fileID: 1881487211977488062}
+  - key: 11
+    target: {fileID: 2151601624010286866}
+  - key: 24
+    target: {fileID: 2231633261528575689}
+  - key: 12
+    target: {fileID: 2693723590803443751}
+  - key: 26
+    target: {fileID: 2921635442699475363}
+  - key: 19
+    target: {fileID: 5644396885852428209}
+  - key: 15
+    target: {fileID: 5729788672054214474}
+  - key: 29
+    target: {fileID: 6300200801795235496}
+  - key: 23
+    target: {fileID: 6509421002686914825}
+  - key: 14
+    target: {fileID: 6537789267082460091}
+  - key: 10
+    target: {fileID: 7681187619178120908}
+  - key: 16
+    target: {fileID: 9182924070883563283}
