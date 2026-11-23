@@ -70,7 +70,8 @@ public sealed class CameraBubbleTestControls : MonoBehaviour
         GUILayout.BeginArea(new Rect(12f, 12f, 330f, 520f), GUI.skin.box);
         GUILayout.Label("相机演出与底部对话测试");
         GUILayout.Label("WASD / 方向键：移动蓝色玩家");
-        GUILayout.Label("靠近黄色角色：触发下一段对话");
+        GUILayout.Label("进入浅黄色范围：播放一段对话");
+        GUILayout.Label("本段结束后，离开再靠近：下一段");
         GUILayout.Label("E：下一段对话　P：暂停 / 继续");
         GUILayout.Space(8f);
         if (GUILayout.Button("1　初次对话", GUILayout.Height(30f))) PlayIntro();

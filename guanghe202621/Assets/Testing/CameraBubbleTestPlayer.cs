@@ -16,6 +16,11 @@ public sealed class CameraBubbleTestPlayer : MonoBehaviour
     private void Awake()
     {
         body = GetComponent<Rigidbody2D>();
+        // 测试玩家由 MovePosition 驱动，必须使用可移动的刚体。
+        // 同时在这里修正旧场景的 Static 设置，避免与静态触发区接触时收不到事件。
+        body.bodyType = RigidbodyType2D.Kinematic;
+        body.simulated = true;
+        body.gravityScale = 0f;
         spawnPosition = body.position;
     }
 
