@@ -104,7 +104,7 @@ Canvas（Canvas / CanvasScaler / GraphicRaycaster）
    └─ TipText（Text，已关联管理器）
 ```
 
-提示框的子 Canvas 只用于显示排序，位于暂停面板上方；不需要 GraphicRaycaster。底板和文字均不拦截鼠标，避免悬浮闪烁或挡住按钮。美术可以直接打开预制体替换底板图片、文字颜色和字号；宽度、边距、鼠标偏移在 TooltipManager 中修改。预制体在 Prefab 模式中可见，场景里的实例默认透明；不要通过关闭 TooltipPanel 根节点来隐藏预览，编辑器会恢复被误关闭的共享实例。
+提示框的子 Canvas 只用于显示排序，不需要 GraphicRaycaster。TooltipManager 会取 Inspector 中“显示层级”与当前菜单层级加一的较大值；即使正式 Main 的 GameUI 已经是 1000，说明框也会显示在它上方，避免同层的嵌套 Canvas 把说明盖在书本后面。底板和文字均不拦截鼠标，避免悬浮闪烁或挡住按钮。美术可以直接打开预制体替换底板图片、文字颜色和字号；宽度、边距、鼠标偏移在 TooltipManager 中修改。预制体在 Prefab 模式中可见，场景里的实例默认透明；不要通过关闭 TooltipPanel 根节点来隐藏预览，编辑器会恢复被误关闭的共享实例。
 
 暂停面板现有的 `item_Cardboard`、`Item_SpaceKey`、`Item_Crossbow` 三个物品底板已挂 TooltipTrigger。框内常驻名称依次为“硬纸板”“跳跃键”“驽辛难得”，鼠标悬浮时才展示用户提供的完整说明。第一个硬纸板是初始自带道具，默认已解锁；另外两个暂时保持未解锁，获取后显示各自的说明。装饰问号、物品图标和名称文字均不拦截鼠标，让整个底板接收悬浮，包括图标、名称和空白处。原有底板和图标的贴图、位置、尺寸均保留。
 

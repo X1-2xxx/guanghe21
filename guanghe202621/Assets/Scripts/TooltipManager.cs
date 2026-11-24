@@ -23,6 +23,7 @@ public sealed class TooltipManager : MonoBehaviour
     private RectTransform panelRect;
     private RectTransform canvasRect;
     private Canvas rootCanvas;
+    private Canvas tooltipCanvas;
     private CanvasGroup visibility;
     private TooltipTrigger currentTrigger;
     private Vector2 pointerPosition;
@@ -85,10 +86,10 @@ public sealed class TooltipManager : MonoBehaviour
         Instance = this;
         rootCanvas = parentCanvas.rootCanvas;
         canvasRect = transform.parent as RectTransform;
-        var overlay = GetComponent<Canvas>();
-        overlay.overrideSorting = true;
-        overlay.sortingLayerID = rootCanvas.sortingLayerID;
-        overlay.sortingOrder = sortingOrder;
+        tooltipCanvas = GetComponent<Canvas>();
+        tooltipCanvas.overrideSorting = true;
+        tooltipCanvas.sortingLayerID = rootCanvas.sortingLayerID;
+        UpdateDrawOrder(null);
         panelRect.pivot = new Vector2(0f, 1f);
         ApplyFallbackFont(contentText);
         contentText.supportRichText = false;
@@ -100,15 +101,26 @@ public sealed class TooltipManager : MonoBehaviour
     public void Show(TooltipTrigger source, PointerEventData pointer)
     {
         if (IsSuppressed || !isActiveAndEnabled || source == null || pointer == null || canvasRect == null) return;
-        if (source.GetComponentInParent<Canvas>()?.rootCanvas != rootCanvas) return;
+        Canvas sourceCanvas = source.GetComponentInParent<Canvas>();
+        if (sourceCanvas == null || sourceCanvas.rootCanvas != rootCanvas) return;
         currentTrigger = source;
         pointerPosition = pointer.position;
         eventCamera = pointer.enterEventCamera;
         transform.SetAsLastSibling();
+        UpdateDrawOrder(sourceCanvas);
         RefreshContent();
         if (currentTrigger == null) return;
         UpdatePosition();
         visibility.alpha = 1f;
+    }
+
+    /// <summary>1000 是最低显示层级；正式关卡的父 Canvas 也可能是 1000，必须再高一层。</summary>
+    private void UpdateDrawOrder(Canvas sourceCanvas)
+    {
+        if (tooltipCanvas == null || rootCanvas == null) return;
+        int menuOrder = Mathf.Max(rootCanvas.sortingOrder, sourceCanvas != null ? sourceCanvas.sortingOrder : rootCanvas.sortingOrder);
+        // 不能依靠同层的兄弟顺序：嵌套 Canvas 的实际绘制顺序可能把提示压在书本下。
+        tooltipCanvas.sortingOrder = Mathf.Clamp(Mathf.Max(sortingOrder, menuOrder + 1), short.MinValue, short.MaxValue);
     }
 
     /// <summary>只接受当前悬浮对象的位置更新，避免旧物品事件影响新提示。</summary>
