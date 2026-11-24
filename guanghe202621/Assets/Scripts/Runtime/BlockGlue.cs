@@ -277,7 +277,8 @@ namespace LevelKit
             if (!IsSolid(target)) return false;
             var body = target.attachedRigidbody;
             if (!body || body.bodyType == RigidbodyType2D.Static)
-                return target.GetComponent<Tilemap>();
+                return target.GetComponent<Tilemap>() ||
+                    (target.TryGetComponent<BridgeBank>(out var bank) && bank.isActiveAndEnabled);
             if (body.bodyType != RigidbodyType2D.Dynamic || !body.simulated || group.Contains(body)) return false;
             return (body.TryGetComponent<ManipulableBlock>(out var block) && block.isActiveAndEnabled) ||
                 (body.TryGetComponent<BalancePlatform>(out var platform) && platform.isActiveAndEnabled);
