@@ -88,6 +88,7 @@ public sealed class BubbleDialogManager : MonoBehaviour
         }
         var view = Instantiate(prefab);
         int id = ++nextId;
+        view.AdvanceRequested += () => AdvanceBubble(id);
         view.name = $"对话_{speaker}_{id}";
         view.Initialize(CurrentCamera(), text, speaker);
         view.SetVisible(false);
@@ -105,6 +106,21 @@ public sealed class BubbleDialogManager : MonoBehaviour
     }
 
     public bool IsBubbleActive(int id) => bubbles.Exists(item => item.id == id && item.view != null);
+
+    /// <summary>补齐文字，或结束已显示完整的一句；游戏暂停时不会跳过台词。</summary>
+    public bool AdvanceBubble(int id)
+    {
+        if (!isActiveAndEnabled || (!useUnscaledTime && Time.timeScale <= 0f)) return false;
+        Bubble bubble = bubbles.Find(item => item.id == id && item.view != null);
+        if (bubble == null) return false;
+        if (!bubble.view.IsFullyRevealed)
+        {
+            bubble.age = Mathf.Max(bubble.age, bubble.view.CharacterCount / Mathf.Max(1f, charactersPerSecond));
+            bubble.view.Reveal(bubble.view.CharacterCount);
+        }
+        else HideBubble(id);
+        return true;
+    }
 
     public void HideBubble(int id)
     {

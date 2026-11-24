@@ -1,10 +1,11 @@
 using System.Globalization;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 /// <summary>对话预置体显示组件，支持底部对话框和兼容原有气泡。</summary>
 [DisallowMultipleComponent]
-public sealed class BubbleDialogView : MonoBehaviour
+public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Canvas worldCanvas;
     [SerializeField] private RectTransform bubbleRect;
@@ -21,6 +22,13 @@ public sealed class BubbleDialogView : MonoBehaviour
     public bool IsConfigured => worldCanvas != null && bubbleRect != null && contentText != null;
     public int CharacterCount => characterStarts.Length;
     public bool IsScreenSpace => screenBottom;
+    public bool IsFullyRevealed => revealedCount >= CharacterCount;
+    public event System.Action AdvanceRequested;
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button == PointerEventData.InputButton.Left) AdvanceRequested?.Invoke();
+    }
 
     private string fullText = string.Empty;
     private int[] characterStarts = System.Array.Empty<int>();
