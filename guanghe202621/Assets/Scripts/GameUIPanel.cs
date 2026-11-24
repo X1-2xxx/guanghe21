@@ -60,8 +60,6 @@ public sealed class GameUIPanel : MonoBehaviour
 
     public PanelKind Kind => panelKind;
 
-    private void OnEnable() => UIFontUtility.ApplyToHierarchy(gameObject);
-
     /// <summary>只返回当前查找范围中的对象，多个弹窗里的“关闭”按钮互不混淆。</summary>
     public GameObject FindElement(string elementName, Transform scope)
     {

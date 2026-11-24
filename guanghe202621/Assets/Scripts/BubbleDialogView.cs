@@ -81,9 +81,30 @@ public sealed class BubbleDialogView : MonoBehaviour
     public void SetVisible(bool visible) => worldCanvas.enabled = visible;
 }
 
-/// <summary>保留原有调用接口，对话及测试面板统一使用项目 UI 字体。</summary>
+/// <summary>没有字体资产时优先使用系统中文字体；已指定的美术字体保持原样。</summary>
 public static class DialogueFontUtility
 {
-    public static Font GetFallbackFont() => UIFontUtility.GetFont();
-    public static void ApplyFallback(Text text) => UIFontUtility.Apply(text);
+    private static Font cachedFont;
+
+    public static Font GetFallbackFont()
+    {
+        if (cachedFont != null) return cachedFont;
+        string[] installed = Font.GetOSInstalledFontNames();
+        string[] preferred = { "Microsoft YaHei", "Microsoft YaHei UI", "PingFang SC", "Noto Sans CJK SC", "SimHei" };
+        foreach (string name in preferred)
+        {
+            if (System.Array.IndexOf(installed, name) < 0) continue;
+            cachedFont = Font.CreateDynamicFontFromOSFont(name, 24);
+            if (cachedFont != null) return cachedFont;
+        }
+        cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        return cachedFont;
+    }
+
+    public static void ApplyFallback(Text text)
+    {
+        if (text == null) return;
+        if (text.font == null || text.font.name == "Arial" || text.font.name == "LegacyRuntime")
+            text.font = GetFallbackFont();
+    }
 }
