@@ -10,6 +10,7 @@ using UnityEngine.InputSystem.UI;
 #endif
 
 /// <summary>接入美术可编辑的 UI 预置体，负责菜单、暂停、结果与对话的显示和按钮事件。</summary>
+[DefaultExecutionOrder(-200)]
 public sealed class GameFlowTemplate : MonoBehaviour
 {
     [Header("只接入本场景 Canvas 下的 UI 预置体实例")]
@@ -22,6 +23,14 @@ public sealed class GameFlowTemplate : MonoBehaviour
     [Header("关卡加载（可选）")]
     [Tooltip("留空时在当前场景开始游戏；填写后加载指定关卡。指定场景需要加入构建场景列表。")]
     [SerializeField, InspectorName("游戏关卡场景名")] private string gameplaySceneName = "";
+    [SerializeField, InspectorName("主菜单中冻结当前关卡")]
+    private bool freezeGameplayInMainMenu;
+
+    public int LastUiInteractionFrame { get; private set; } = -1;
+    public bool HasOpenGameplayModal => IsVisible(dialoguePanel) || IsVisible(mainConfirmationPanel) ||
+        IsVisible(pauseConfirmationPanel) || IsVisible(hudConfirmationPanel) ||
+        IsVisible(settingsPanel) || IsVisible(pauseSettingsPanel) || IsVisible(helpPanel) ||
+        IsVisible(pauseHelpPanel) || IsVisible(versionPanel);
 
     private GameObject mainMenu;
     private GameObject pausePanel;
@@ -109,6 +118,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
     private void Update()
     {
         if (!PausePressed()) return;
+        LastUiInteractionFrame = Time.frameCount;
         if (IsActive(dialoguePanel)) dialoguePanel.SetActive(false);
         else if (IsAnyConfirmationOpen()) CloseConfirmation();
         else if (IsActive(settingsPanel) || IsActive(pauseSettingsPanel)) { ShowPanel(settingsPanel, false); ShowPanel(pauseSettingsPanel, false); }
@@ -289,6 +299,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
     public void ResumeGame()
     {
         if (GameStateManager.Current != GameState.Paused) return;
+        HideOptionalPanels();
         GameStateManager.SetState(GameState.Playing);
         pausePanel.SetActive(false);
     }
@@ -309,7 +320,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
     private void ShowMainMenu()
     {
         GameStateManager.SetState(GameState.MainMenu);
-        Time.timeScale = 1f;
+        Time.timeScale = freezeGameplayInMainMenu ? 0f : 1f;
         mainMenu.SetActive(true);
         hudPanel.SetActive(false);
         pausePanel.SetActive(false);
@@ -385,13 +396,19 @@ public sealed class GameFlowTemplate : MonoBehaviour
     }
     private static void ShowPanel(GameObject panel, bool visible = true) { if (panel != null) panel.SetActive(visible); }
     private static bool IsActive(GameObject panel) => panel != null && panel.activeSelf;
+    private static bool IsVisible(GameObject panel) => panel != null && panel.activeInHierarchy;
     private void SetMenuCamera(bool value) { if (menuCamera != null) menuCamera.enabled = value; if (menuListener != null) menuListener.enabled = value; }
 
     private void Bind(GameObject root, string buttonName, UnityEngine.Events.UnityAction action)
     {
         var button = FindComponent<Button>(root, buttonName);
         if (button == null) return;
-        button.onClick.AddListener(() => { audioManager.PlayUiClick(); action?.Invoke(); });
+        button.onClick.AddListener(() =>
+        {
+            LastUiInteractionFrame = Time.frameCount;
+            audioManager.PlayUiClick();
+            action?.Invoke();
+        });
     }
 
     private static GameObject FindObject(GameObject root, string objectName)

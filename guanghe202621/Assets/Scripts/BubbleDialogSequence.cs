@@ -38,6 +38,10 @@ public sealed class BubbleDialogSequence : MonoBehaviour
         [InspectorName("进入二维触发区")] Trigger2D
     }
     public bool IsPlaying { get; private set; }
+    public bool LastPlaybackCompleted { get; private set; }
+
+    public bool HasConversation(string id) => conversations.Exists(item => item != null && item.id == id &&
+        item.lines != null && item.lines.Exists(line => line != null && !string.IsNullOrWhiteSpace(line.text)));
 
     [Header("角色和触发方式")]
     [SerializeField, InspectorName("默认说话角色")] private Transform defaultSpeaker;
@@ -90,6 +94,7 @@ public sealed class BubbleDialogSequence : MonoBehaviour
             StopConversation();
             return;
         }
+        if (!manager.UsesUnscaledTime && Time.timeScale <= 0f) return;
         if (waitingForBubble)
         {
             if (manager.IsBubbleActive(bubbleId)) return;
@@ -152,6 +157,7 @@ public sealed class BubbleDialogSequence : MonoBehaviour
         Conversation conversation = conversations[index];
         if (conversation == null || conversation.lines == null || conversation.lines.Count == 0) return;
         if (!conversation.allowReplay && completedConversations.Contains(index)) return;
+        LastPlaybackCompleted = false;
         manager = BubbleDialogManager.Instance;
         if (manager == null || !manager.isActiveAndEnabled)
         {
@@ -173,9 +179,27 @@ public sealed class BubbleDialogSequence : MonoBehaviour
     {
         playbackVersion++;
         IsPlaying = false;
+        LastPlaybackCompleted = false;
         if (manager != null && bubbleId != 0) manager.HideBubble(bubbleId);
         bubbleId = 0;
         waitingForBubble = false;
+    }
+
+    /// <summary>第一次补齐正在打出的文字，再次调用进入下一句。也可绑定对话框按钮。</summary>
+    public void ContinueDialogue()
+    {
+        if (!IsPlaying || manager == null || !manager.isActiveAndEnabled ||
+            (!manager.UsesUnscaledTime && Time.timeScale <= 0f)) return;
+        if (waitingForBubble)
+        {
+            manager.AdvanceBubble(bubbleId);
+            if (manager.IsBubbleActive(bubbleId)) return;
+            waitingForBubble = false;
+            bubbleId = 0;
+            lineIndex++;
+        }
+        delayRemaining = 0f;
+        BeginNextLine();
     }
 
     /// <summary>同场景重新开始剧情时调用，可再次播放禁止重复的分组。</summary>
@@ -213,6 +237,7 @@ public sealed class BubbleDialogSequence : MonoBehaviour
         completedConversations.Add(activeIndex);
         nextConversationIndex = activeIndex + 1;
         IsPlaying = false;
+        LastPlaybackCompleted = true;
         onConversationFinished.Invoke();
     }
 
