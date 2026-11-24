@@ -269,6 +269,8 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Bind(pausePanel, "ReturnToMenuButton", () => Confirm(pauseConfirmationPanel, ConfirmationDialog.Kind.ReturnToMenu, ReturnToMainMenu));
 
         Bind(hudPanel, "PauseButton", PauseGame);
+        // HUD 快捷重置也先确认，再调用现有的关卡重置接口。
+        Bind(hudPanel, "ResetButton", () => Confirm(hudConfirmationPanel, ConfirmationDialog.Kind.ResetLevel, ResetLevel));
 
         Bind(mainConfirmationPanel, "ConfirmButton", ConfirmAction);
         Bind(mainConfirmationPanel, "CancelButton", CloseConfirmation);

@@ -62,6 +62,10 @@ UIModalPanel 的“默认选中的按钮”可在预制体中指定：确认弹�
 
 ## 直接编辑确认弹窗的文字
 
+HudPanel 左上角在暂停图标旁新增“重置关卡”回转箭头按钮。点击后先询问是否重置，取消或按 Esc 不改变进度；确认后调用现有 ResetLevel，正式 Main 的 LevelGameFlow 会重新载入本关卡并回到游戏。按钮事件已通过 GameUIPanel 关联，不用手动填写 OnClick。
+
+美术修改入口：`HudPanel / ResetButton / Icon` 换箭头图，`Label` 改按钮文字；`HudPanel / ConfirmationPanel / 重置关卡文案 / Title、MessageText` 改确认标题和正文。重置和结果面板“返回主菜单”各用独立文案，不会互相覆盖。
+
 确认提示已改为读取预制体中的 Text；GameFlowTemplate 只选择对应文案物体，不会用代码里的固定字符串覆盖标题或正文。重置、返回主菜单和退出各有独立的文案，不必共用一个正文来回改。
 
 停止运行，双击 `Assets/Resources/UI/PausePanel.prefab`，展开下列对象：

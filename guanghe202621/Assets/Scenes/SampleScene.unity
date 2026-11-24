@@ -419,6 +419,7 @@ MonoBehaviour:
   pausePanelPrefab: {fileID: 582319778}
   hudPanelPrefab: {fileID: 1248934736}
   gameplaySceneName: 
+  freezeGameplayInMainMenu: 0
   uiState: 0
 --- !u!114 &519420034
 MonoBehaviour:
@@ -735,7 +736,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8933582619673747063, guid: 20ea2947aa713574186dab38706935ca, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
@@ -774,7 +775,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3548955145485646576, guid: 962b2bf9f4e331e4d91ae0b499f60caf, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8237277334563499617, guid: 962b2bf9f4e331e4d91ae0b499f60caf, type: 3}
       propertyPath: m_Pivot.x
