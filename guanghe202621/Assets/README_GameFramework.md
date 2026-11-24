@@ -1,6 +1,20 @@
 # UI Prefab 接入说明（Unity 6.6）
 
+## 和正式关卡一起使用
+
+正式游戏入口是 `Assets/Scenes/Main.unity`，双击这份场景后运行。它已在构建场景列表第一位，包含队友制作的角色、物理机关和旅馆任务。`SampleScene.unity` 是之前的 UI 模板，`CameraBubbleTest.unity` 是相机与对白测试；打开不同场景看到的内容会不同。拉取 Git 提交不会替你切换当前打开的场景；队友也需要提交 `.unity`、对应 `.meta` 及其引用的预制体和资源。
+
+正式 Main 中的 GameUI 在编辑时可以隐藏，GameFlowTemplate 会在运行时激活原有 Canvas，继续使用其下的预制体实例，不重建美术面板。Main 已补上一份共享 TooltipPanel，和主菜单、暂停面板、HUD 同级。
+
+LevelGameFlow 保留队友的关卡冻结、输入屏蔽和场景重置逻辑；GameFlowTemplate 同时保留文案预制体、按钮重载后重新绑定和模态弹窗。LevelUiCompatibility 只读取角色现有的 JumpEnabled / BreakEnabled，把拾取后的问号图标、道具图片和提示同步到暂停 UI；它不改变角色能力。重置关卡后，UI 以新角色的能力为准重新同步。此接入层不需要修改拾取、角色、机关或任务脚本。
+
+如果误用 Git 的 Revert 撤销“暂停界面”提交，可编辑文案、悬浮提示及道具 UI 等会一起被移除；应先备份，再整合需要保留的功能，不要用“全部采用一方”覆盖共享脚本或整份场景。
+
 `SampleScene` 的 `GameFlowTemplate` 只使用当前场景 Canvas 下的预置体实例。点击开始时，直接关闭 Canvas/MainMenu、打开 Canvas/HudPanel；返回主菜单时切换回来。运行时不会从 Resources 加载或另外实例化 UI。
+
+GameFlowTemplate 必须保持启用。编辑器会恢复 SampleScene 中误关闭的控制器；脚本重新启用或运行中编译后，会自动重新绑定按钮和音量事件，保留当前游戏/暂停状态，不叠加事件，也不清空美术手动配置的 OnClick。Tooltip 和场景遮罩的管理器也会接回已有对象。
+
+检查开始流程：点击“开始游戏”后主菜单应消失，右上角显示 HudPanel 的“暂停”入口；按 Esc 打开美术暂停面板，点“返回主菜单”并确认后应回到原菜单。连续重复这套操作也应有效。游戏界面已按需求去掉血条和演示按钮，对话由玩法接口触发，因此不要用血条是否出现判断是否开始成功。
 
 Inspector 中的三个 UI 字段对应 Hierarchy 中的场景对象，运行时会显示实际使用的实例。
 
@@ -19,6 +33,157 @@ GameUIPanel 的“面板类型”和“功能对象引用”已配置。换图�
 如果删除旧按钮再新建按钮，在预置体根节点的 GameUIPanel / 功能对象引用里，找到对应功能，将新按钮对象拖入“界面对象”即可；新按钮需要保留 Button 组件。替换确认弹窗时，同样更新确认面板、确认按钮、取消按钮和确认提示文字的引用。增加全新玩法按钮时仍需程序提供对应行为。
 
 已经删除的可选按钮会被跳过，不影响其他按钮初始化。主菜单已启用“退出游戏”，点击后弹出“是否退出游戏”，确认后退出。暂停面板保留继续、设置、说明、重置和返回主菜单，已移除退出入口。HUD 已移除血条和血量数字。
+
+## 项目统一字体
+
+所有 UGUI 文字统一使用 `Assets/Resources/UI/UI/ZhaiZaiJiaFenTiaoTian-2.ttf`。主菜单、暂停、HUD、设置、说明、道具名称、悬浮提示、结果弹窗、对白与旁白的预制体都已引用这份字体。
+
+运行时统一由 UIFontUtility 读取同一个字体资产；原来的系统中文字体备用逻辑已移除，编译脚本、切换面板或动态显示对话都不会换回 Arial、微软雅黑等其他字体。美术仍可直接在预制体 Text 组件中调整字号、颜色、对齐、换行和布局。
+
+已打开的正式场景会自动同步旧字体引用并保留其他美术修改，场景仍由使用者按 Ctrl+S 保存。新增 UI 时直接选择这份字体；程序动态创建其他 Text 时也可调用 `UIFontUtility.Apply(text)`。恢复用的备份场景文件保持原样。
+
+## 音量设置与操作说明
+
+主菜单和暂停面板里的 SettingsPanel、HelpPanel 均已配置为模态弹窗。打开时自动移到所属菜单最前方，全屏底板压暗书本、道具和背景按钮，并阻止鼠标穿透；此时不显示任何道具悬浮提示。关闭后自动恢复普通暂停菜单的交互和道具提示。
+
+暂停时的返回流程：音量设置 / 操作说明 → 底部“返回暂停菜单” → “继续游戏”。按 Esc 会先关闭当前设置或说明，再按一次 Esc 继续游戏。关闭设置本身仍保持暂停，音量调整立即生效。
+
+主菜单中的对应按钮显示“返回主菜单”，关闭后仍留在主菜单。
+
+美术可在原来的 MainMenu.prefab、PausePanel.prefab 中编辑这两个弹窗。DialogBackground 是居中的内容底板，可替换图片；根节点 Image 是覆盖全屏的半透明遮罩。保留根节点的 UIModalPanel、可点击的 CloseButton，以及 GameUIPanel 内已有的功能引用。UIModalPanel 会在打开时重新置顶，因此后续拖动道具框或调整其他 UI 的顺序，也不会把弹窗返回按钮盖到后面。
+
+操作说明的正文放在 HelpPanel / HelpBodyText，已填写 Esc、界面鼠标操作及三个道具的已确认规则。后续团队确定移动、跳跃、冲锋按键后，可直接编辑 Text 补充内容。
+
+TooltipManager.SetSuppressed(owner, true/false) 提供通用的悬浮屏蔽接口；设置和说明弹窗由 UIModalPanel 自动调用。每个弹窗独立登记，避免关闭其中一个时错误放开仍在显示的其他弹窗。
+
+重置关卡、返回主菜单的二次确认弹窗也使用同一套背景遮罩、居中 DialogBackground、暖色按钮和统一 UI 字体。保留“确认 / 取消”两步，默认选中取消；Esc 也可以取消。主菜单退出确认和结果面板返回确认同步使用这套样式。GameUIPanel 中的确认、取消、提示文字引用均保留，实际重置和返回接口不变。
+
+UIModalPanel 的“默认选中的按钮”可在预制体中指定：确认弹窗已关联 CancelButton，设置和说明弹窗留空时自动选中现有返回按钮。美术可以继续在 ConfirmationPanel 内调整底板和两个按钮，不需要修改业务代码。
+
+## 直接编辑确认弹窗的文字
+
+确认提示已改为读取预制体中的 Text；GameFlowTemplate 只选择对应文案物体，不会用代码里的固定字符串覆盖标题或正文。重置、返回主菜单和退出各有独立的文案，不必共用一个正文来回改。
+
+停止运行，双击 `Assets/Resources/UI/PausePanel.prefab`，展开下列对象：
+
+```text
+ConfirmationPanel（ConfirmationDialog / UIModalPanel）
+├─ 重置关卡文案
+│  ├─ Title           ← 重置弹窗标题
+│  └─ MessageText     ← 重置弹窗正文
+├─ 返回主菜单文案
+│  ├─ Title           ← 返回弹窗标题
+│  └─ MessageText     ← 返回弹窗正文
+├─ DialogBackground
+├─ ConfirmButton / Label
+└─ CancelButton / Label
+```
+
+选中相应的 MessageText，在 Inspector 下方的 Text 组件中直接修改 Text 内容；Title 修改标题。选中文案子物体时，会自动显示所属的一组并隐藏另一组，灰色的返回文案也能直接点选预览。
+
+更方便的入口：直接选中 ConfirmationPanel，在 ConfirmationDialog 选择“预览哪组文案”，其下方就有“标题”和“正文”输入框，可以直接填写。这些输入框修改的就是实际 Text，不是额外一份文案；选择预览类型后立即显示对应内容。仍保留手动预览和定位正文按钮。保存预制体后再运行。
+
+建议先停止运行再编辑。运行期间双击进入 Prefab 模式时也可以预览资产中的文字，但不要把修改场景运行实例当成保存预制体。如果在运行中刚新增过文案子物体，旧的运行实例可能还没包含它；先停止并重新运行，就会接入更新后的预制体。已有文案物体但缺少新增组件或关联时，程序会接回当前弹窗自己的文案，不重建 UI，也不替换美术布局。
+
+主菜单退出提示位于 `MainMenu.prefab / ConfirmationPanel / 退出游戏文案`，结果界面返回提示位于 `HudPanel.prefab / ConfirmationPanel / 返回主菜单文案`，同样直接改 Title 和 MessageText。确认/取消按钮的文字在各自的 Label 中修改。
+
+请保留 ConfirmationDialog 组件里已关联的文案子物体，以及各面板 GameUIPanel 中的确认、取消按钮引用。修改文字、换字体大小、调位置或换图不需要重新填写 OnClick。编辑预览可以临时显示弹窗，开始运行时仍会自动关闭，等点击相应操作再打开。
+
+## 通用悬浮 Tooltip
+
+`Assets/Resources/UI/TooltipPanel.prefab` 已放入 SampleScene 的 Canvas 下，与主菜单、暂停面板和 HudPanel 同级。全场景只保留一份，根节点保持激活；运行时通过 CanvasGroup 自动隐藏，不会随着暂停面板一起被关掉。
+
+如果 SampleScene 此刻已经在编辑器中打开，脚本编译完成或停止运行后会自动补齐缺失的 TooltipPanel，保留场景中尚未保存的美术修改。完成后按 Ctrl+S 保存场景即可。
+
+```text
+Canvas（Canvas / CanvasScaler / GraphicRaycaster）
+├─ MainMenu
+├─ PausePanel
+├─ HudPanel
+└─ TooltipPanel（RectTransform / Image / CanvasGroup / Canvas / TooltipManager）
+   └─ TipText（Text，已关联管理器）
+```
+
+提示框的子 Canvas 只用于显示排序，位于暂停面板上方；不需要 GraphicRaycaster。底板和文字均不拦截鼠标，避免悬浮闪烁或挡住按钮。美术可以直接打开预制体替换底板图片、文字颜色和字号；宽度、边距、鼠标偏移在 TooltipManager 中修改。预制体在 Prefab 模式中可见，场景里的实例默认透明；不要通过关闭 TooltipPanel 根节点来隐藏预览，编辑器会恢复被误关闭的共享实例。
+
+暂停面板现有的 `item_Cardboard`、`Item_SpaceKey`、`Item_Crossbow` 三个物品底板已挂 TooltipTrigger。框内常驻名称依次为“硬纸板”“跳跃键”“驽辛难得”，鼠标悬浮时才展示用户提供的完整说明。第一个硬纸板是初始自带道具，默认已解锁；另外两个暂时保持未解锁，获取后显示各自的说明。装饰问号、物品图标和名称文字均不拦截鼠标，让整个底板接收悬浮，包括图标、名称和空白处。原有底板和图标的贴图、位置、尺寸均保留。
+
+美术修改框内名称：在暂停预制体中展开对应物品底板，修改其子物体 `ItemNameText` 的 Text 内容；修改详细解释：选中物品底板，在 TooltipTrigger 的“提示内容”中填写。名称与详细解释分别存放，不会把整段说明挤进物品框。名称不随解锁状态隐藏，未解锁的悬浮提示仍为“【尚未解锁】”。第三个框沿用旧物体名 `Item_Crossbow` 以兼容现有引用，实际显示名称和说明均为“驽辛难得”跑鞋。
+
+复用到其他 UI：
+
+1. 在需要悬浮提示的物体上添加 TooltipTrigger。
+2. 物体或其子物体需要有 Image / Text 等 Graphic，并勾选 Raycast Target；其 Canvas 需要 GraphicRaycaster，场景需要 EventSystem。背景图片即使透明也可作为悬浮区域，不必添加 Button。
+3. 填写 `tipText`（提示内容）；`isUnlocked`（已经解锁）勾选时显示填写内容，未勾选时固定显示 `【尚未解锁】`。已解锁但内容为空时不显示。
+4. 不需要填写 OnClick。鼠标移出、禁用物品、关闭父面板或销毁物品时自动隐藏；Canvas.enabled=false 和 CanvasGroup.alpha=0 的隐藏方式也会在当帧末清除提示。
+
+普通 UI 的 TooltipTrigger 可直接修改 `isUnlocked` 切换提示内容。三个道具框现已由 ItemSlotUI 同步管理图标和说明：玩法程序统一调用下面的 ItemUnlockManager 接口，不要只修改 TooltipTrigger 字段，否则图标和状态可能不同步。悬浮系统仍不依赖 GameFlowTemplate 或玩家控制器。
+
+屏幕边缘会自动翻转并限制位置，跟随位置经过 Canvas 坐标换算，支持 Screen Space Overlay / Screen Space Camera 和 CanvasScaler；Time.timeScale=0 时仍然正常工作。超出屏幕高度的极长提示会截断显示，建议提示使用简短说明。
+
+新增场景时，只需把同一个 TooltipPanel 预制体拖到屏幕 Canvas 下，与各面板同级。不要把它放在暂停面板里面，也不要给主菜单和暂停面板各放一份。
+
+## 道具解锁：问号、图片与程序对接
+
+三个框的 ItemSlotUI 已在 PausePanel 预制体中配置完成。未解锁时只显示问号，解锁后隐藏问号、显示对应道具图片，悬浮提示同步从“【尚未解锁】”变为完整说明。名称始终显示。硬纸板初始自带，不能被重新锁定。
+
+| 道具 | 程序使用的标识 | 预制体中的物品框 | 初始状态 |
+| --- | --- | --- | --- |
+| 硬纸板 | `GameItemId.Cardboard` | `item_Cardboard` | 道具图片，已解锁 |
+| 跳跃键 | `GameItemId.JumpKey` | `Item_SpaceKey` | 问号，未解锁 |
+| 驽辛难得 | `GameItemId.Rocinante` | `Item_Crossbow`（沿用旧对象名） | 问号，未解锁 |
+
+美术替换图片的方法：双击 PausePanel 预制体，在现有 QuestionMark、Cardboard、SpaceKey、Crossbow 对象的 Image / Source Image 中换图。改图和移动布局不需要改代码。每个框的 ItemSlotUI 中，“未解锁：问号物体”“已解锁：道具图片物体”“该框的悬浮提示”都已拖好；如果删除旧图标再新建对象，把新对象重新拖到对应字段。不要把整个物品框拖成图标对象。
+
+没有拾取物体也能自行测试：运行游戏并打开暂停面板，在 Hierarchy 选中 Item_SpaceKey 或 Item_Crossbow，点击 Inspector 中 ItemSlotUI 组件右上角的菜单，选择“运行时测试 → 解锁这个道具”。问号应立刻消失并显示道具图片，悬浮说明随之更新。这个菜单调用的正是正式解锁接口；停止运行后恢复初始状态，不会修改预制体中的默认图标。
+
+交给拾取程序员：在已有的“确认拾取成功”函数里，按捡到的道具调用一次 Unlock。无需找到暂停界面、按钮或图片，也无需手动拖 UI 引用；暂停界面没打开时同样可以调用。
+
+捡到跳跃键：
+
+```csharp
+ItemUnlockManager.Unlock(GameItemId.JumpKey);
+```
+
+捡到驽辛难得跑鞋：
+
+```csharp
+ItemUnlockManager.Unlock(GameItemId.Rocinante);
+```
+
+这两句放到各自道具的拾取成功事件中。返回值首次解锁为 true，已经拥有时为 false；重复调用不会重复广播。物体回收、拾取音效等继续使用拾取程序原有逻辑。
+
+拾取成功后，打开着的面板会立刻换图；面板关闭时先记录状态，下次打开自动显示最新图标。当前悬浮说明也会更新，不必重新移开鼠标。
+
+角色程序需要判断跳跃、冲墙等能力时，查询同一份状态：
+
+```csharp
+if (ItemUnlockManager.IsUnlocked(GameItemId.JumpKey))
+{
+    // 执行你们已有的跳跃代码。
+}
+
+if (ItemUnlockManager.IsUnlocked(GameItemId.Rocinante))
+{
+    // 允许冲锋撞碎脆弱墙体。
+}
+```
+
+UI 模块只保存状态和刷新显示，实际跳跃、冲锋与墙体破坏由玩法程序实现。需要立即收到通知的模块可在 OnEnable 订阅 `ItemUnlockManager.UnlockStateChanged`（参数为 GameItemId 和 bool），在 OnDisable 取消订阅；初始化时先用 IsUnlocked 读取当前状态，避免错过之前已发生的拾取。
+
+其他可用接口：
+
+```csharp
+// 恢复存档或设置指定状态。不会改变硬纸板始终可用的规则。
+ItemUnlockManager.SetUnlocked(GameItemId.JumpKey, true);
+
+// 真正开始全新的一局时调用，回到仅有硬纸板的状态。
+ItemUnlockManager.ResetProgress();
+```
+
+状态由独立的数据管理器保存，首次调用自动创建，不需要手动挂到相机或 UI 上。本次运行内跨场景、开关面板和编译脚本都会保留；停止运行后重新开始恢复初始状态。没有写入永久存档，也没有自动更改“开始游戏 / 重置关卡 / 返回主菜单”的业务流程；是否新开一局清空道具由玩法程序明确调用 ResetProgress。
+
+以后增加剪刀等其他道具时，在 GameItemId 增加新枚举值，复制并配置一个物品框的 ItemSlotUI，拾取时调用相同的 Unlock 接口即可；状态管理器和悬浮系统不需要改写。
 
 ## 游戏逻辑对接
 
@@ -142,9 +307,9 @@ GameEventCenter.RequestSfx(GameplaySfx.PhysicsBlockDetach);
     └── 台词正文             Text
 ```
 
-美术打开 BottomDialogue.prefab，替换“对话框底板”的 Image / Source Image，调整字体、字号、颜色和底部边距。支持九宫格的背景图可以设置 Sprite Border 并使用 Sliced。根 Canvas 使用 Screen Space Overlay，CanvasScaler 的参考分辨率是 1920×1080；不要把它拖到角色头顶。角色名和正文初始为空，由玩法传入。
+美术打开 BottomDialogue.prefab，替换“对话框底板”的 Image / Source Image，调整字号、颜色和底部边距。支持九宫格的背景图可以设置 Sprite Border 并使用 Sliced。根 Canvas 使用 Screen Space Overlay，CanvasScaler 的参考分辨率是 1920×1080；不要把它拖到角色头顶。角色名和正文初始为空，由玩法传入。
 
-对白框会优先使用已指定的美术字体。使用内置占位字体时，会尝试使用本机的微软雅黑、苹方或思源黑体来显示中文。正式交付时请在预置体上指定项目内包含中文的字体，保证不同电脑显示一致。
+对白框和旁白与其他界面一致，统一使用 UI 文件夹里的 ZhaiZaiJiaFenTiaoTian-2.ttf，运行时不会替换成系统字体。
 
 原来的 `flow.ShowDialogue(...)` 和 `flow.ShowNarration(...)` 接口也仍然可用，它们对应的 HudPanel/DialoguePanel 同样已调整到屏幕底部。该面板保留“继续”按钮，沿用玩家点击关闭的流程；Sequence 对话使用独立 BottomDialogue 预置体，按填写的时长自动推进。
 
