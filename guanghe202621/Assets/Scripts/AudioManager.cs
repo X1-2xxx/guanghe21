@@ -26,9 +26,10 @@ public sealed class AudioManager : MonoBehaviour
 
     private const string MusicKey = "GameTemplate.MusicVolume";
     private const string SfxKey = "GameTemplate.SfxVolume";
-    private AudioSource musicSource;
-    private AudioSource sfxSource;
-    private AudioClip uiTone;
+    // 保留运行中编译前的音源和提示音，重新绑定 UI 时复用，避免重复添加音源。
+    [SerializeField, HideInInspector] private AudioSource musicSource;
+    [SerializeField, HideInInspector] private AudioSource sfxSource;
+    [SerializeField, HideInInspector] private AudioClip uiTone;
 
     public float MusicVolume { get; private set; }
     public float SfxVolume { get; private set; }
@@ -39,7 +40,12 @@ public sealed class AudioManager : MonoBehaviour
 
     public void Initialize()
     {
-        if (musicSource != null) return;
+        if (musicSource != null)
+        {
+            MusicVolume = musicSource.volume;
+            SfxVolume = sfxSource != null ? sfxSource.volume : PlayerPrefs.GetFloat(SfxKey, 0.8f);
+            return;
+        }
         musicSource = gameObject.AddComponent<AudioSource>();
         musicSource.loop = true;
         musicSource.playOnAwake = false;

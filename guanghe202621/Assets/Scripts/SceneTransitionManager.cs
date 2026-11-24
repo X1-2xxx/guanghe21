@@ -8,12 +8,15 @@ using UnityEngine.UI;
 public sealed class SceneTransitionManager : MonoBehaviour
 {
     public static SceneTransitionManager Instance { get; private set; }
-    private CanvasGroup fadeGroup;
+    [SerializeField, HideInInspector] private CanvasGroup fadeGroup;
     private bool transitioning;
     private const float FadeDuration = 0.28f;
 
     public static SceneTransitionManager Create()
     {
+        if (Instance != null) return Instance;
+        // 重载脚本会清空静态引用，接回已有管理器，避免重复创建遮罩。
+        Instance = FindAnyObjectByType<SceneTransitionManager>();
         if (Instance != null) return Instance;
         var root = new GameObject("Scene Transition Manager");
         return root.AddComponent<SceneTransitionManager>();
@@ -30,6 +33,20 @@ public sealed class SceneTransitionManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         BuildFadeOverlay();
     }
+
+    private void OnEnable()
+    {
+        if (Instance == null) Instance = this;
+        if (Instance != this) return;
+        transitioning = false;
+        if (fadeGroup != null)
+        {
+            fadeGroup.alpha = 0f;
+            fadeGroup.blocksRaycasts = false;
+        }
+    }
+
+    private void OnDestroy() { if (Instance == this) Instance = null; }
 
     public void FadeAction(Action action)
     {

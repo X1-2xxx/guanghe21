@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -47,15 +48,29 @@ public sealed class GameFlowTemplate : MonoBehaviour
     private Scene menuScene;
     private Action confirmAction;
     private bool levelLoaded;
+    // Unity 重载脚本时保存 UI 状态，但运行时事件必须重新绑定。
+    [SerializeField, HideInInspector] private GameState uiState = GameState.MainMenu;
+    [NonSerialized] private bool callbacksBound;
+    [NonSerialized] private List<Action> releaseBindings = new List<Action>();
 
-    private void Awake()
+    private void Awake() => InitializeUi(false);
+
+    private void OnEnable()
     {
+        // Awake 不会在运行中编译后再次调用，OnEnable 会，因此在这里恢复事件。
+        if (!callbacksBound) InitializeUi(true);
+    }
+
+    private bool InitializeUi(bool restoreState)
+    {
+        if (callbacksBound) return true;
+        releaseBindings ??= new List<Action>();
         menuScene = gameObject.scene;
         menuCamera = GetComponent<Camera>();
         menuListener = GetComponent<AudioListener>();
         audioManager = GetComponent<AudioManager>() ?? gameObject.AddComponent<AudioManager>();
         audioManager.Initialize();
-        transitions = SceneTransitionManager.Create();
+        if (transitions == null) transitions = SceneTransitionManager.Create();
         EnsureEventSystem();
 
         mainMenu = ResolveUiPanel(mainMenuPrefab, GameUIPanel.PanelKind.MainMenu, "MainMenu", "MainMenuPanel");
@@ -63,8 +78,8 @@ public sealed class GameFlowTemplate : MonoBehaviour
         hudPanel = ResolveUiPanel(hudPanelPrefab, GameUIPanel.PanelKind.HudPanel, "HudPanel", "GameplayHUD");
         if (mainMenu == null || pausePanel == null || hudPanel == null)
         {
-            enabled = false;
-            return;
+            // 配置暂时缺失时保留组件启用状态，修正引用后仍可重新接入。
+            return false;
         }
 
         // Inspector 在运行时直接显示当前使用的场景对象，方便确认美术改的是哪一份。
@@ -96,14 +111,49 @@ public sealed class GameFlowTemplate : MonoBehaviour
         if (FindComponent<Button>(mainMenu, "StartButton") == null)
             Debug.LogError("主菜单缺少开始按钮的功能引用。请在 GameUIPanel 中把“开始游戏按钮”关联到实际 Button。", mainMenu);
         BindSettings();
+        GameEventCenter.DialogueRequested -= OnDialogueRequested;
         GameEventCenter.DialogueRequested += OnDialogueRequested;
-        ShowMainMenu();
+        callbacksBound = true;
+        if (restoreState) RestoreVisibleState();
+        else ShowMainMenu();
+        return true;
     }
+
+    private void OnDisable() => ReleaseBindings();
 
     private void OnDestroy()
     {
-        GameEventCenter.DialogueRequested -= OnDialogueRequested;
+        ReleaseBindings();
         if (GameStateManager.Current == GameState.Paused) Time.timeScale = 1f;
+    }
+
+    private void ReleaseBindings()
+    {
+        GameEventCenter.DialogueRequested -= OnDialogueRequested;
+        if (releaseBindings != null)
+        {
+            foreach (Action release in releaseBindings) release();
+            releaseBindings.Clear();
+        }
+        callbacksBound = false;
+    }
+
+    private void RestoreVisibleState()
+    {
+        mainMenu.SetActive(uiState == GameState.MainMenu);
+        hudPanel.SetActive(uiState != GameState.MainMenu);
+        pausePanel.SetActive(uiState == GameState.Paused);
+        GameStateManager.SetState(uiState);
+        Time.timeScale = uiState == GameState.Paused ? 0f : 1f;
+        // 确认操作的委托无法跨脚本重载保存，取消旧确认框，避免出现空确认按钮。
+        if (confirmAction == null) CloseConfirmation();
+        Canvas.ForceUpdateCanvases();
+    }
+
+    private void ChangeState(GameState next)
+    {
+        uiState = next;
+        GameStateManager.SetState(next);
     }
 
     private void Update()
@@ -186,12 +236,12 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Bind(mainMenu, "SettingsButton", () => ShowPanel(settingsPanel));
         Bind(mainMenu, "HelpButton", () => ShowPanel(helpPanel));
         Bind(mainMenu, "VersionButton", () => ShowPanel(versionPanel));
-        Bind(mainMenu, "ExitButton", () => Confirm(mainConfirmationPanel, "是否退出游戏？", ExitGame));
+        Bind(mainMenu, "ExitButton", () => Confirm(mainConfirmationPanel, ConfirmationDialog.Kind.ExitGame, ExitGame));
         Bind(pausePanel, "ResumeButton", ResumeGame);
         Bind(pausePanel, "PauseSettingsButton", () => ShowPanel(pauseSettingsPanel));
         Bind(pausePanel, "PauseHelpButton", () => ShowPanel(pauseHelpPanel));
-        Bind(pausePanel, "ResetButton", () => Confirm(pauseConfirmationPanel, "重置当前关卡？当前进度将丢失。", ResetLevel));
-        Bind(pausePanel, "ReturnToMenuButton", () => Confirm(pauseConfirmationPanel, "返回主菜单？当前关卡进度将丢失。", ReturnToMainMenu));
+        Bind(pausePanel, "ResetButton", () => Confirm(pauseConfirmationPanel, ConfirmationDialog.Kind.ResetLevel, ResetLevel));
+        Bind(pausePanel, "ReturnToMenuButton", () => Confirm(pauseConfirmationPanel, ConfirmationDialog.Kind.ReturnToMenu, ReturnToMainMenu));
 
         Bind(hudPanel, "PauseButton", PauseGame);
 
@@ -208,7 +258,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Bind(versionPanel, "CloseButton", () => ShowPanel(versionPanel, false));
         Bind(dialoguePanel, "DialogueContinueButton", () => ShowPanel(dialoguePanel, false));
         Bind(resultPanel, "RetryButton", () => { ShowPanel(resultPanel, false); ResetLevel(); });
-        Bind(resultPanel, "ResultMenuButton", () => Confirm(hudConfirmationPanel, "返回主菜单？当前关卡进度将丢失。", ReturnToMainMenu));
+        Bind(resultPanel, "ResultMenuButton", () => Confirm(hudConfirmationPanel, ConfirmationDialog.Kind.ReturnToMenu, ReturnToMainMenu));
     }
 
     private void BindSettings()
@@ -222,12 +272,23 @@ public sealed class GameFlowTemplate : MonoBehaviour
     {
         var music = FindComponent<Slider>(panel, "MusicVolumeSlider");
         var sfx = FindComponent<Slider>(panel, "SfxVolumeSlider");
-        if (music != null) { music.SetValueWithoutNotify(audioManager.MusicVolume); music.onValueChanged.AddListener(audioManager.SetMusicVolume); }
-        if (sfx != null) { sfx.SetValueWithoutNotify(audioManager.SfxVolume); sfx.onValueChanged.AddListener(audioManager.SetSfxVolume); }
+        if (music != null)
+        {
+            music.SetValueWithoutNotify(audioManager.MusicVolume);
+            music.onValueChanged.AddListener(audioManager.SetMusicVolume);
+            releaseBindings.Add(() => { if (music != null) music.onValueChanged.RemoveListener(audioManager.SetMusicVolume); });
+        }
+        if (sfx != null)
+        {
+            sfx.SetValueWithoutNotify(audioManager.SfxVolume);
+            sfx.onValueChanged.AddListener(audioManager.SetSfxVolume);
+            releaseBindings.Add(() => { if (sfx != null) sfx.onValueChanged.RemoveListener(audioManager.SetSfxVolume); });
+        }
     }
 
     public void StartGame()
     {
+        if (!callbacksBound && !InitializeUi(true)) return;
         if (!string.IsNullOrWhiteSpace(gameplaySceneName) && gameplaySceneName != menuScene.name)
         {
             // 场景名误填为项目名等情况，仍然进入当前 Canvas 的游戏界面。
@@ -257,7 +318,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         pausePanel.SetActive(false);
         Time.timeScale = 1f;
         Canvas.ForceUpdateCanvases();
-        GameStateManager.SetState(GameState.Playing);
+        ChangeState(GameState.Playing);
         audioManager.PlayGameplayMusic();
     }
 
@@ -282,14 +343,14 @@ public sealed class GameFlowTemplate : MonoBehaviour
     public void PauseGame()
     {
         if (GameStateManager.Current != GameState.Playing) return;
-        GameStateManager.SetState(GameState.Paused);
+        ChangeState(GameState.Paused);
         pausePanel.SetActive(true);
     }
 
     public void ResumeGame()
     {
         if (GameStateManager.Current != GameState.Paused) return;
-        GameStateManager.SetState(GameState.Playing);
+        ChangeState(GameState.Playing);
         pausePanel.SetActive(false);
     }
 
@@ -308,7 +369,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
 
     private void ShowMainMenu()
     {
-        GameStateManager.SetState(GameState.MainMenu);
+        ChangeState(GameState.MainMenu);
         Time.timeScale = 1f;
         mainMenu.SetActive(true);
         hudPanel.SetActive(false);
@@ -322,7 +383,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Action finish = () =>
         {
             GameEventCenter.PublishLevelReset();
-            GameStateManager.SetState(GameState.Playing);
+            ChangeState(GameState.Playing);
             pausePanel.SetActive(false);
             ShowPanel(resultPanel, false);
         };
@@ -337,7 +398,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
 
     private void ShowResult(bool victory)
     {
-        GameStateManager.SetState(victory ? GameState.Victory : GameState.Defeat);
+        ChangeState(victory ? GameState.Victory : GameState.Defeat);
         if (resultTitle != null) resultTitle.text = victory ? "关卡完成" : "挑战失败";
         ShowPanel(resultPanel);
     }
@@ -358,12 +419,15 @@ public sealed class GameFlowTemplate : MonoBehaviour
         if (dialoguePanel != null) dialoguePanel.transform.SetAsLastSibling();
     }
 
-    private void Confirm(GameObject panel, string message, Action action)
+    private void Confirm(GameObject panel, ConfirmationDialog.Kind kind, Action action)
     {
         if (panel == null) { Debug.LogError("确认弹窗缺失：请在对应 prefab 内添加 ConfirmationPanel。"); return; }
+        if (!ConfirmationDialog.TryShow(panel, kind))
+        {
+            Debug.LogError("当前运行中的确认弹窗还是旧实例，缺少对应的文案物体。若刚在运行中更新过预制体，请停止运行后重新开始，让场景使用更新后的预制体；无需手动添加 OnClick。", panel);
+            return;
+        }
         confirmAction = action;
-        var text = FindComponent<Text>(panel, "MessageText");
-        if (text != null) text.text = message;
         ShowPanel(panel);
         panel.transform.SetAsLastSibling();
     }
@@ -391,7 +455,10 @@ public sealed class GameFlowTemplate : MonoBehaviour
     {
         var button = FindComponent<Button>(root, buttonName);
         if (button == null) return;
-        button.onClick.AddListener(() => { audioManager.PlayUiClick(); action?.Invoke(); });
+        UnityEngine.Events.UnityAction listener = () => { audioManager.PlayUiClick(); action?.Invoke(); };
+        button.onClick.AddListener(listener);
+        // 只移除本脚本添加的事件，美术在 Inspector 中配置的其他事件保留。
+        releaseBindings.Add(() => { if (button != null) button.onClick.RemoveListener(listener); });
     }
 
     private static GameObject FindObject(GameObject root, string objectName)
