@@ -56,8 +56,8 @@ public static class PresentationInnRevision
         var sky = view.transform.Find("SkySubtitle");
         if (!sky)
         {
-            sky = Panel("SkySubtitle", view.transform, new Vector2(.16f, .72f), new Vector2(.84f, .91f));
-            var label = Label("SkyText", sky, new Vector2(.04f, .12f), new Vector2(.96f, .86f), 40);
+            sky = Panel("SkySubtitle", view.transform, new Vector2(.26f, .62f), new Vector2(.74f, .88f));
+            var label = Label("SkyText", sky, new Vector2(.04f, .08f), new Vector2(.96f, .92f), 40);
             label.text = "天空旁白在这里显示";
             label.gameObject.AddComponent<StoryTextReveal>();
         }

@@ -1309,7 +1309,7 @@ MonoBehaviour:
       kind: 13
       speaker: "\u65C1\u767D"
       expression: 0
-      text: "\u79BB\u5F00\u6811\u6797\u540E\uFF0C\u9A91\u58EB\u51B3\u5B9A\u524D\u5F80\u524D\u65B9\u7684\u65C5\u9986\u6B47\u811A\uFF0C\u987A\u4FBF\u5BFB\u4E00\u5339\u79F0\u5FC3\u7684\u597D\u9A6C\u3002"
+      text: "离开树林后，\n骑士决定前往前方的旅馆歇脚，\n顺便寻一匹称心的好马。"
       next: s003
       alternate:
       argument:

@@ -17,6 +17,7 @@ namespace GamePresentation
         [Header("天空字幕与装备提示（均由预制体提供）")]
         public GameObject skySubtitlePanel, equipmentNotice;
         public Text skySubtitleText;
+        [SerializeField, Min(1), InspectorName("天空字幕每页最多行数")] private int skySubtitleMaxLines = 4;
         [SerializeField, Min(1f), InspectorName("装备提示显示秒数")] private float equipmentNoticeSeconds = 4f;
         public Image portrait, endingImage;
         [InspectorName("双人立绘显示与亮度")] public StoryPortraitStage portraitStage;
@@ -105,7 +106,7 @@ namespace GamePresentation
             if (step.kind == StoryStepKind.SkySubtitle)
             {
                 skySubtitlePanel.SetActive(true);
-                SetTextPages(skySubtitleText, step.text);
+                SetTextPages(skySubtitleText, step.text, skySubtitleMaxLines);
                 return;
             }
             dialoguePanel.SetActive(true);
@@ -181,11 +182,11 @@ namespace GamePresentation
             pageReveal.SetVisibleCharacters(0);
         }
 
-        private void SetTextPages(Text target, string text)
+        private void SetTextPages(Text target, string text, int maxLines = 2)
         {
             pagedText = target;
             target.horizontalOverflow = HorizontalWrapMode.Overflow;
-            textPages = LayoutFor(target).Paginate(text, Mathf.Max(1f, target.rectTransform.rect.height - 4f), 2);
+            textPages = LayoutFor(target).Paginate(text, Mathf.Max(1f, target.rectTransform.rect.height - 4f), maxLines);
             pageIndex = 0;
             ShowPage(textPages.Count > 0 ? textPages[0] : string.Empty);
         }
