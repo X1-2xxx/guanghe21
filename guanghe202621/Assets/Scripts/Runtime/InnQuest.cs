@@ -29,6 +29,8 @@ namespace LevelKit
         [SerializeField, HideInInspector] private string[] finalLines =
             { "老板：三件物品都找到了，谢谢你！这件驽骍难得送给你。", "老板：拿好它，右侧的门板就拦不住你了。" };
 
+        private GamePresentation.PresentationRuntime presentation;
+        private string presentationEpisode;
         private Stage stage;
         private int collectedCount;
         private bool rewardReleased;
@@ -53,6 +55,12 @@ namespace LevelKit
             if (LevelGameFlow.BlocksGameplayInput(this)) return;
             AdvanceRewardThrow(Time.deltaTime);
             if (!OwnsDialogue) return;
+            if (presentationEpisode != null)
+            {
+                if (presentation && presentation.Director.HasCompleted(presentationEpisode)) FinishDialogue();
+                else if (!presentation || !presentation.Director.HasScheduled(presentationEpisode)) CancelDialogue();
+                return;
+            }
             if (!bossDialogue || !bossDialogue.IsPlaying)
             {
                 if (bossDialogue && bossDialogue.LastPlaybackCompleted) FinishDialogue();
@@ -70,6 +78,17 @@ namespace LevelKit
                 (stage != Stage.WaitingForIntro && stage != Stage.ReadyToReturn)) return;
             bool introduction = stage == Stage.WaitingForIntro;
             string conversation = introduction ? introConversation : finalConversation;
+            var runtime = GamePresentation.PresentationRuntime.Instance;
+            if (runtime && runtime.UsesCollectionQuest && runtime.Scene.legacyInnQuest == this)
+            {
+                string episode = introduction ? "inn.intro" : "inn.quest_done";
+                if (runtime.library.FindEpisode(episode) == null)
+                { Debug.LogError("旅馆剧情缺少章节：" + episode, this); return; }
+                presentation = runtime; presentationEpisode = episode;
+                stage = introduction ? Stage.IntroDialogue : Stage.FinalDialogue;
+                runtime.Director.Enqueue(episode);
+                return;
+            }
             if (!bossDialogue || !bossDialogue.isActiveAndEnabled || !bossDialogue.HasConversation(conversation))
             {
                 Debug.LogError("请给旅馆任务绑定老板的 BubbleDialogSequence，并配置 intro 与 quest_done 对话分组。", this);
@@ -95,6 +114,7 @@ namespace LevelKit
         {
             if (LevelGameFlow.BlocksGameplayInput(this)) return;
             if (!OwnsDialogue) return;
+            if (presentationEpisode != null) { if (presentation) presentation.Director.Advance(); return; }
             if (bossDialogue) bossDialogue.ContinueDialogue();
             if (bossDialogue && !bossDialogue.IsPlaying && bossDialogue.LastPlaybackCompleted) FinishDialogue();
         }
@@ -102,6 +122,7 @@ namespace LevelKit
         private void FinishDialogue()
         {
             if (!OwnsDialogue) return;
+            presentationEpisode = null; presentation = null;
             bool finished = stage == Stage.FinalDialogue;
             stage = finished ? Stage.Finished : Stage.Collecting;
             if (dialoguePanel) dialoguePanel.SetActive(false);
@@ -116,6 +137,7 @@ namespace LevelKit
         private void CancelDialogue()
         {
             if (!OwnsDialogue) return;
+            presentationEpisode = null; presentation = null;
             stage = stage == Stage.IntroDialogue ? Stage.WaitingForIntro : Stage.ReadyToReturn;
             if (dialoguePanel) dialoguePanel.SetActive(false);
             if (player) player.EndConversation();
@@ -178,6 +200,8 @@ namespace LevelKit
         {
             if (rewardFlying) LandReward();
             if (!OwnsDialogue) return;
+            if (presentationEpisode != null && presentation) presentation.CancelCurrentStory();
+            presentationEpisode = null; presentation = null;
             if (bossDialogue && bossDialogue.IsPlaying) bossDialogue.StopConversation();
             bool intro = stage == Stage.IntroDialogue;
             stage = intro ? Stage.WaitingForIntro : Stage.ReadyToReturn;

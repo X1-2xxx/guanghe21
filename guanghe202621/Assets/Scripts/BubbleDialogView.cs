@@ -1,4 +1,5 @@
 using System.Globalization;
+using GamePresentation;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -17,6 +18,7 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
     [SerializeField, Min(32f)] private float maxWidth = 340f;
     [SerializeField, Min(16f)] private float minHeight = 64f;
     [SerializeField] private Vector2 padding = new Vector2(32f, 24f);
+    [SerializeField, Min(0f), InspectorName("正文上移（为气泡尾巴留空）")] private float contentLift;
 
     public RectTransform Rect => bubbleRect;
     public bool IsConfigured => worldCanvas != null && bubbleRect != null && contentText != null;
@@ -46,18 +48,16 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
             DialogueFontUtility.ApplyFallback(speakerText);
             speakerText.text = speaker ?? string.Empty;
         }
-        fullText = text;
-        characterStarts = StringInfo.ParseCombiningCharacters(fullText);
-        revealedCount = -1;
         contentText.supportRichText = false;
-        contentText.horizontalOverflow = HorizontalWrapMode.Wrap;
+        contentText.horizontalOverflow = HorizontalWrapMode.Overflow;
         contentText.verticalOverflow = VerticalWrapMode.Overflow;
-        contentText.text = fullText;
+        contentText.text = text ?? string.Empty;
 
         if (screenBottom)
         {
             // 宽度、锚点和边距由美术在预置体中编辑，长台词只增大对话框高度。
             Canvas.ForceUpdateCanvases();
+            WrapText(text);
             float panelHeight = Mathf.Max(minHeight, contentText.preferredHeight + Mathf.Max(0f, padding.y));
             bubbleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, panelHeight);
             return;
@@ -71,10 +71,21 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
         var textRect = contentText.rectTransform;
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(horizontalPadding, verticalPadding) * 0.5f;
-        textRect.offsetMax = -textRect.offsetMin;
+        var halfPadding = new Vector2(horizontalPadding, verticalPadding) * 0.5f;
+        var lift = Vector2.up * Mathf.Min(contentLift, halfPadding.y);
+        textRect.offsetMin = halfPadding + lift;
+        textRect.offsetMax = -halfPadding + lift;
+        WrapText(text);
         float height = Mathf.Max(minHeight, contentText.preferredHeight + verticalPadding);
         bubbleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+    }
+
+    private void WrapText(string text)
+    {
+        fullText = new StoryTextLayout(contentText, contentText.fontSize).Wrap(text);
+        characterStarts = StringInfo.ParseCombiningCharacters(fullText);
+        revealedCount = -1;
+        contentText.text = fullText;
     }
 
     public void Reveal(int count)
@@ -89,30 +100,9 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
     public void SetVisible(bool visible) => worldCanvas.enabled = visible;
 }
 
-/// <summary>没有字体资产时优先使用系统中文字体；已指定的美术字体保持原样。</summary>
+/// <summary>保留原有调用接口，对话及测试面板统一使用项目 UI 字体。</summary>
 public static class DialogueFontUtility
 {
-    private static Font cachedFont;
-
-    public static Font GetFallbackFont()
-    {
-        if (cachedFont != null) return cachedFont;
-        string[] installed = Font.GetOSInstalledFontNames();
-        string[] preferred = { "Microsoft YaHei", "Microsoft YaHei UI", "PingFang SC", "Noto Sans CJK SC", "SimHei" };
-        foreach (string name in preferred)
-        {
-            if (System.Array.IndexOf(installed, name) < 0) continue;
-            cachedFont = Font.CreateDynamicFontFromOSFont(name, 24);
-            if (cachedFont != null) return cachedFont;
-        }
-        cachedFont = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        return cachedFont;
-    }
-
-    public static void ApplyFallback(Text text)
-    {
-        if (text == null) return;
-        if (text.font == null || text.font.name == "Arial" || text.font.name == "LegacyRuntime")
-            text.font = GetFallbackFont();
-    }
+    public static Font GetFallbackFont() => UIFontUtility.GetFont();
+    public static void ApplyFallback(Text text) => UIFontUtility.Apply(text);
 }

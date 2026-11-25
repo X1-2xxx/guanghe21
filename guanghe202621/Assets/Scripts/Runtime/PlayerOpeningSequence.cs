@@ -50,7 +50,9 @@ namespace LevelKit
             arrival = destination.position;
             emergence = emergePoint.position;
             bodyWasSimulated = body.simulated;
-            animator = player.GetComponentInChildren<Animator>(true);
+            // Prefer the visible Spine actor over an old placeholder Animator on the player root.
+            var spineAnimator = player.GetComponentInChildren<SkeletonMecanim>(true);
+            animator = spineAnimator ? spineAnimator.GetComponent<Animator>() : player.GetComponentInChildren<Animator>(true);
             sprites = player.GetComponentsInChildren<SpriteRenderer>(true);
             spriteColors = new Color[sprites.Length];
             for (int i = 0; i < sprites.Length; i++) spriteColors[i] = sprites[i].color;

@@ -144,7 +144,7 @@ namespace LevelKit
 
         private void Update()
         {
-            if (LevelGameFlow.BlocksGameplayInput(this) || LevelGameFlow.PointerOverUi(this)) return;
+            if (LevelGameFlow.BlocksGameplayInput(this) || GamePresentation.PresentationEvents.BlocksInput) return;
             var now = Time.unscaledTimeAsDouble;
             if (now >= dialogueDeadline) HideDialogue();
             if (ConversationBlocksInput) return;
@@ -154,15 +154,17 @@ namespace LevelKit
             if (keyboard != null && keyboard.rKey.wasPressedThisFrame)
             {
                 ReturnToCheckpoint();
+                GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.CheckpointReset, this);
                 return;
             }
             if (reaction != Reaction.None) return;
-            bool left = mouse != null && mouse.leftButton.wasPressedThisFrame;
-            bool right = mouse != null && mouse.rightButton.wasPressedThisFrame;
+            bool overUi = LevelGameFlow.PointerOverUi(this);
+            bool left = !overUi && mouse != null && mouse.leftButton.wasPressedThisFrame;
+            bool right = !overUi && mouse != null && mouse.rightButton.wasPressedThisFrame;
             bool overPlayer = false;
             if (mouse != null && TryGetPointer(mouse.position.ReadValue(), out var pointer))
             {
-                if (!IsActing) FacePointer(pointer.x);
+                if (!IsActing && !overUi) FacePointer(pointer.x);
                 overPlayer = (left || right) && hitbox.OverlapPoint(pointer);
             }
             if (left && overPlayer) leftClickFrame = Time.frameCount;
@@ -174,22 +176,27 @@ namespace LevelKit
                 if (now - lastPlayerClick <= doubleClickSeconds)
                 {
                     ReturnToCheckpoint();
+                    GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.CheckpointReset, this);
                     return;
                 }
                 lastPlayerClick = now;
             }
 
+            if (GamePresentation.PresentationEvents.ResetOnly) return;
             bool space = keyboard != null && keyboard.spaceKey.wasPressedThisFrame;
+            if (space && GamePresentation.PresentationEvents.BlocksRun) return;
             if (IsActing && (space || (left && overPlayer)))
             {
                 StopWalking();
                 ShowDialogue(now);
+                GamePresentation.PresentationEvents.Report(space ? GamePresentation.PlayEvent.StopBySpace : GamePresentation.PlayEvent.StopByClick, this);
             }
             else if (space)
             {
                 walkDirection = facing;
                 HideDialogue();
                 SetActing(true);
+                GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.RunStarted, this);
             }
             else if (!IsActing && right && overPlayer)
             {
@@ -241,7 +248,10 @@ namespace LevelKit
             cameraPositionHistory.Clear();
         }
 
-        private void LateUpdate() => AdvanceCamera(Time.deltaTime);
+        private void LateUpdate()
+        {
+            if (!GamePresentation.PresentationEvents.CameraOwned) AdvanceCamera(Time.deltaTime);
+        }
 
         private void AdvanceCamera(float deltaTime)
         {
@@ -268,7 +278,9 @@ namespace LevelKit
         {
             float offset = pointerX - body.position.x;
             if (Mathf.Abs(offset) < 0.025f) return;
-            facing = offset > 0f ? 1 : -1;
+            int nextFacing = offset > 0f ? 1 : -1;
+            if (nextFacing != facing) GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.Turned, this);
+            facing = nextFacing;
             ApplyFacing();
         }
 
@@ -316,6 +328,7 @@ namespace LevelKit
             checkpoint.SetCurrent(true);
             returnPosition = campfire.Position + Vector2.up * SpawnLift;
             MoveCameraToCheckpoint(snapCamera);
+            if (!snapCamera) GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.CheckpointReached, this, campfire);
         }
 
         private void UpdateCameraCrossing(Vector2 from, Vector2 to)
@@ -490,6 +503,24 @@ namespace LevelKit
             lastPosition = position;
             ResetCameraHistory(position);
         }
+        // 仅供主线演出调用；沿用原来的行走和碰撞，不改写寻路、速度或角色能力。
+        public void RunForPresentation(int direction)
+        {
+            StopWalking(); EndConversation(); facing = walkDirection = direction >= 0 ? 1 : -1;
+            ApplyFacing(); HideDialogue(); SetActing(true);
+        }
+        public void StopForPresentation() { StopWalking(); HideDialogue(); }
+        public void HideLegacySpeechForPresentation() => HideDialogue();
+        // 镜头演出使用原关卡当前相机目标，返回后清理旧插值，避免镜头再次跳走。
+        public bool TryGetPresentationCameraPosition(out Vector3 position)
+        {
+            var view = levelCamera ? levelCamera : Camera.main;
+            position = view ? view.transform.position : Vector3.zero;
+            if (!activeCameraCenter) return false;
+            position.x = activeCameraCenter.position.x; position.y = activeCameraCenter.position.y;
+            return true;
+        }
+        public void FinishPresentationCamera() => movingCamera = null;
 
         internal bool BeginConversation()
         {
@@ -516,7 +547,10 @@ namespace LevelKit
         internal void BounceFromBed(Vector2 velocity)
         {
             if (reaction == Reaction.None && isActiveAndEnabled && body && body.simulated && body.bodyType == RigidbodyType2D.Dynamic)
+            {
                 traversal.BounceFromBed(velocity);
+                GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.Bounced, this);
+            }
         }
 
         internal bool TryLaunchUpwards(float speed)
@@ -524,6 +558,7 @@ namespace LevelKit
             if (reaction != Reaction.None || !isActiveAndEnabled || !body || !body.simulated || body.bodyType != RigidbodyType2D.Dynamic)
                 return false;
             traversal.LaunchUpwards(speed);
+            GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.Bounced, this);
             return true;
         }
 
@@ -580,6 +615,7 @@ namespace LevelKit
             TriggerAnimation(WallStopParameter, hasWallStopParameter);
             ShowDialogue(Time.unscaledTimeAsDouble);
             onWallStopped?.Invoke(reason);
+            GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.WallBlocked, this);
         }
 
         private void AdvanceReaction(float deltaTime)

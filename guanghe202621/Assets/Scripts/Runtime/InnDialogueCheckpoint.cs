@@ -13,6 +13,12 @@ namespace LevelKit
 
         private void OnTriggerEnter2D(Collider2D other)
         {
+            if (GamePresentation.PresentationRuntime.Instance && GamePresentation.PresentationRuntime.Instance.V4Mode &&
+                other.attachedRigidbody && other.attachedRigidbody.TryGetComponent<PlayerActionController>(out var storyPlayer))
+            {
+                GamePresentation.PresentationEvents.Signal("inn.enter", storyPlayer);
+                return;
+            }
             if (!quest || !isActiveAndEnabled) return;
             var body = other.attachedRigidbody;
             if (body && body.TryGetComponent<PlayerActionController>(out var player) && player.isActiveAndEnabled)

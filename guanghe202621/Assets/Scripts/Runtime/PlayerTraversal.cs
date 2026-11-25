@@ -228,6 +228,7 @@ namespace LevelKit
                 SettleTime = jump ? 0.12f : 0.055f,
                 Arc = jump ? Mathf.Min(0.05f, Mathf.Max(0f, raised.y - clearY)) : 0f
             };
+            if (jump) GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.Jumped, player);
             return true;
         }
 
