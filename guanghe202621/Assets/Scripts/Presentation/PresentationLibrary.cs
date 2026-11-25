@@ -18,7 +18,8 @@ namespace GamePresentation
         [InspectorName("原型结束图")] End,
         [InspectorName("黑幕淡出")] FadeOut,
         [InspectorName("是否已完成指定剧情")] BranchEpisodeComplete,
-        [InspectorName("等待入口镜头就位")] RoomEntranceCamera
+        [InspectorName("等待入口镜头就位")] RoomEntranceCamera,
+        [InspectorName("天空字幕（无纸框）")] SkySubtitle
     }
 
     public enum StoryExpression
@@ -52,6 +53,20 @@ namespace GamePresentation
         [InspectorName("立绘 Sprite")] public Sprite portrait;
     }
 
+    public enum InnkeeperExpression
+    {
+        [InspectorName("通常")] Normal,
+        [InspectorName("嘻嘻")] Chuckle,
+        [InspectorName("心虚")] SelfConscious,
+        [InspectorName("苦恼")] Troubled
+    }
+
+    [Serializable] public sealed class InnkeeperPortraitVariant
+    {
+        [InspectorName("表情")] public InnkeeperExpression expression;
+        [InspectorName("立绘 Sprite")] public Sprite portrait;
+    }
+
     [Serializable] public sealed class StoryChoice
     {
         [InspectorName("选项文字"), TextArea(2, 5)] public string text;
@@ -62,7 +77,8 @@ namespace GamePresentation
         [InspectorName("节点标识")] public string id;
         [InspectorName("演出类型")] public StoryStepKind kind;
         [InspectorName("说话人")] public string speaker = "堂吉诃德";
-        [InspectorName("立绘表情")] public StoryExpression expression;
+        [InspectorName("堂吉诃德表情")] public StoryExpression expression;
+        [InspectorName("帕洛梅克表情")] public InnkeeperExpression innkeeperExpression;
         [InspectorName("台词"), TextArea(2, 10), Tooltip("对白和报幕遇到空行会换页，较长的段落会自动分段。")]
         public string text;
         [InspectorName("下一节点")] public string next;
@@ -70,6 +86,7 @@ namespace GamePresentation
         [InspectorName("镜头目标 / 等待信号 / 指令")] public string argument;
         [InspectorName("等待期间显示头顶小气泡")] public bool showHeadWhileWaiting;
         [InspectorName("黑幕报幕自动播放")] public bool autoAdvance;
+        [InspectorName("选项出现时隐藏上一句与立绘")] public bool hidePreviousDialogue;
         [InspectorName("阅读或停留秒数")] public float seconds = 3f;
         [InspectorName("选项")] public List<StoryChoice> choices = new List<StoryChoice>();
     }
@@ -79,6 +96,7 @@ namespace GamePresentation
         [InspectorName("章节名称")] public string title;
         [InspectorName("入口节点")] public string entry;
         [InspectorName("只播放一次")] public bool once = true;
+        [InspectorName("堂吉诃德与帕洛梅克双人同屏")] public bool showInnkeeper;
         [InspectorName("剧情节点")] public List<StoryStep> steps = new List<StoryStep>();
     }
     [Serializable] public sealed class BarkRule
@@ -101,6 +119,7 @@ namespace GamePresentation
         [InspectorName("堂吉诃德无语差分")] public Sprite heroSpeechlessPortrait;
         [InspectorName("堂吉诃德其他表情差分")] public List<StoryPortraitVariant> heroExpressions = new List<StoryPortraitVariant>();
         [InspectorName("旅馆老板立绘")] public Sprite innkeeperPortrait;
+        [InspectorName("帕洛梅克表情差分")] public List<InnkeeperPortraitVariant> innkeeperExpressions = new List<InnkeeperPortraitVariant>();
         [InspectorName("未能拖动物块的音效（可留空）")] public AudioClip deniedClip;
         [InspectorName("开场坠坑音效（可留空）")] public AudioClip pitImpactClip;
         [InspectorName("原型结束图片（可留空）")] public Sprite endingSprite;
@@ -112,12 +131,25 @@ namespace GamePresentation
         /// <summary>表情随对白节点切换。未提供差分时继续使用角色的默认立绘。</summary>
         public Sprite ResolvePortrait(StoryStep step)
         {
-            if (step.speaker == "旅馆老板") return innkeeperPortrait;
-            if (step.expression == StoryExpression.Default) return heroPortrait;
-            if (step.expression == StoryExpression.Speechless) return heroSpeechlessPortrait ? heroSpeechlessPortrait : heroPortrait;
+            return IsInnkeeper(step.speaker) ? ResolveInnkeeperPortrait(step.innkeeperExpression) : ResolveHeroPortrait(step.expression);
+        }
+
+        public static bool IsInnkeeper(string speaker) => speaker == "旅馆老板" || speaker == "帕洛梅克";
+
+        public Sprite ResolveInnkeeperPortrait(InnkeeperExpression expression)
+        {
+            foreach (var variant in innkeeperExpressions)
+                if (variant != null && variant.expression == expression && variant.portrait) return variant.portrait;
+            return innkeeperPortrait;
+        }
+
+        public Sprite ResolveHeroPortrait(StoryExpression expression)
+        {
+            if (expression == StoryExpression.Default) return heroPortrait;
+            if (expression == StoryExpression.Speechless) return heroSpeechlessPortrait ? heroSpeechlessPortrait : heroPortrait;
             foreach (var variant in heroExpressions)
             {
-                if (variant != null && variant.expression == step.expression && variant.portrait) return variant.portrait;
+                if (variant != null && variant.expression == expression && variant.portrait) return variant.portrait;
             }
             return heroPortrait;
         }

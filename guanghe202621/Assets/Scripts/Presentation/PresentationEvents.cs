@@ -8,7 +8,8 @@ namespace GamePresentation
         RunStarted, StopBySpace, StopByClick, UnderfootDenied, RunningEditDenied,
         Turned, CheckpointReset, PitDeath, Jumped, Bounced, JumpAcquired, ShoesAcquired,
         WallBlocked, WallBroken, TapeConnected, TapeRemoved, BlockGrabbed, CheckpointReached,
-        Falling, StuckInPit, BridgeShook, CrookedBridgePassed, SupportCollapsed, TreeNearMiss, Idle
+        Falling, StuckInPit, BridgeShook, CrookedBridgePassed, SupportCollapsed, TreeNearMiss, Idle,
+        InnVaseCollected, InnChocolateCollected, InnPortraitCollected
     }
 
     public static class PresentationEvents

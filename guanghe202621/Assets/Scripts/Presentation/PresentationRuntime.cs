@@ -37,6 +37,7 @@ namespace GamePresentation
         private readonly HashSet<string> onceBarks = new HashSet<string>();
         private readonly Dictionary<Renderer, bool> hiddenActorRenderers = new Dictionary<Renderer, bool>();
         private readonly Queue<float> turns = new Queue<float>();
+        private readonly Queue<string> pickupBarks = new Queue<string>();
         private float headRemaining, headElapsed, lastInput, runStarted, nudgeAt;
         private int headPriority, shownFrame, quickStops, tapeCount;
         private bool headIsStory, began, forcedRun, pitHeld, villageSunk, openingReset, jumpAcquired, wallBroken;
@@ -80,7 +81,7 @@ namespace GamePresentation
                 if (controls.gameObject.scene == Scene.gameObject.scene) { manipulation = controls; break; }
             audioRouter = FindAnyObjectByType<AudioManager>();
             began = forcedRun = pitHeld = villageSunk = openingReset = jumpAcquired = wallBroken = actorHeld = false;
-            counts.Clear(); cooldowns.Clear(); turns.Clear(); tapeCount = quickStops = 0;
+            counts.Clear(); cooldowns.Clear(); turns.Clear(); pickupBarks.Clear(); tapeCount = quickStops = 0;
             previousPosition = body.position; stationarySeconds = 0f; lastInput = Time.unscaledTime;
             currentHint = null;
             // 其他关卡若已经带有镜头管理器，复用它；不因重复单例而丢失场景引用。
@@ -106,11 +107,12 @@ namespace GamePresentation
         {
             if (Scene != binding) return;
             RestoreActorArt(); RestorePit(); Director.Clear(); Scene = null; body = null; capsule = null;
+            storyView.ClearEquipmentNotice(); pickupBarks.Clear();
             inventoryTray.SetActive(false);
         }
         private void OnStateChanged(GameState state)
         {
-            if (state == GameState.MainMenu) { RestorePit(); Director.Clear(); began = false; }
+            if (state == GameState.MainMenu) { RestorePit(); Director.Clear(); storyView.ClearEquipmentNotice(); pickupBarks.Clear(); began = false; }
             if (state != GameState.Playing && !(state == GameState.Paused && headIsStory)) InterruptBubble();
         }
         private void Update()
@@ -126,6 +128,8 @@ namespace GamePresentation
             Director.Tick(Time.deltaTime);
             if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame) Director.Advance();
             if (Director.Active || HadInput()) lastInput = Time.unscaledTime;
+            // 末件失物先报拾取，再报集齐；这些气泡不会持有剧情输入锁。
+            if (!Director.Active && !HeadVisible && pickupBarks.Count > 0) PlayBark(pickupBarks.Dequeue());
             if (!Director.Active && !HeadVisible && currentHint != null && Time.time >= nextHint)
             { ShowHead(currentHint, 5f, 15); nextHint = Time.time + 18f; }
             if (!Director.Active && Time.unscaledTime - lastInput >= 18f)
@@ -224,7 +228,7 @@ namespace GamePresentation
         private void UpdateActorArt()
         {
             bool hide = hideWorldActorWithPortrait && CanPresent && Director.Active &&
-                storyView.dialoguePanel.activeSelf && storyView.portrait.gameObject.activeSelf;
+                storyView.HeroPortraitVisible;
             if (!hide) { RestoreActorArt(); return; }
             if (hiddenActorRenderers.Count == 0)
                 foreach (var renderer in Scene.player.GetComponentsInChildren<Renderer>(true)) hiddenActorRenderers[renderer] = renderer.enabled;
@@ -275,7 +279,7 @@ namespace GamePresentation
                     turns.Enqueue(Time.time); while (turns.Count > 0 && Time.time - turns.Peek() > 3f) turns.Dequeue();
                     if (turns.Count >= 3) { PlayBark("turns"); turns.Clear(); } break;
                 case PlayEvent.CheckpointReset:
-                    RestorePit(); forcedRun = false; InterruptBubble();
+                    RestorePit(); forcedRun = false; InterruptBubble(); pickupBarks.Clear();
                     if (Director.ResetOnly) { Director.AllowResetOnly(false); openingReset = true; Signal("village.reset", actor); }
                     else PlayBark("reset"); break;
                 case PlayEvent.PitDeath:
@@ -289,7 +293,12 @@ namespace GamePresentation
                     if (V4Mode) Director.Enqueue("jump.acquired"); break;
                 case PlayEvent.ShoesAcquired:
                     ItemUnlockManager.Unlock(GameItemId.Rocinante);
+                    storyView.ShowEquipmentNotice();
                     if (V4Mode) Director.Enqueue("inn.shoes"); break;
+                case PlayEvent.InnVaseCollected: pickupBarks.Enqueue("inn_vase"); break;
+                case PlayEvent.InnChocolateCollected: pickupBarks.Enqueue("inn_chocolate"); break;
+                case PlayEvent.InnPortraitCollected:
+                    pickupBarks.Enqueue("inn_portrait"); pickupBarks.Enqueue("inn_all_items"); break;
                 case PlayEvent.WallBlocked:
                     if (forcedRun && Scene.villagePit.Contains(body.position)) CatchOpeningFall(Scene.player);
                     else if (body.position.x > 80f && !Scene.player.BreakEnabled) PlayBark("wall_no_shoes");
@@ -335,7 +344,7 @@ namespace GamePresentation
                 case "jump.enter": Director.Enqueue("jump.intro"); break;
                 case "inn.approach": Director.Enqueue("inn.approach"); break;
                 case "inn.enter":
-                    Director.Enqueue("inn.approach");
+                    pickupBarks.Clear();
                     if (UsesCollectionQuest) ((InnQuest)Scene.legacyInnQuest).TryTalk(Scene.player);
                     else Director.Enqueue("inn.intro");
                     break;
@@ -447,8 +456,8 @@ namespace GamePresentation
                 "forest.intro" => "试着转动那些歪掉的树，给吾搭出台阶吧！",
                 "jump.discover" => "用石头和木板搭个向上的缓坡，让吾去拿跳跃键！",
                 "inn.intro" when !flag_taught_midstop => "跑动时再按空格或点吾，就能让吾半路停下！",
-                "inn.quest_done" => "老板把奖励抛下来了，去拿起驽骍难得吧！",
-                "inn.shoes" => "穿上驽骍难得，去撞破右边的裂墙！", _ => null };
+                "inn.quest_done" => "帕洛梅克把好马抛下来了，去拿起驽辛难得吧！",
+                "inn.shoes" => "对准右边的裂墙按空格冲锋，撞碎它！", _ => null };
             if (hint != null) ShowHead(hint, 7f, 40);
             currentHint = hint; nextHint = Time.time + 18f; lastInput = Time.unscaledTime;
         }

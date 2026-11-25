@@ -39,7 +39,8 @@ namespace GamePresentation
             {
                 if (pending.Count == 0) return;
                 episode = host.library.FindEpisode(pending.Dequeue());
-                host.storyView.ResetDialogueMemory();
+                host.storyView.BeginEpisode(episode.showInnkeeper, host.library.ResolveHeroPortrait(StoryExpression.NeutralClosedMouth),
+                    host.library.ResolveInnkeeperPortrait(InnkeeperExpression.Normal));
                 host.InterruptBubble(); host.HoldActor(true);
                 Enter(episode.entry); return;
             }
@@ -90,6 +91,8 @@ namespace GamePresentation
                 enteredFrame = Time.frameCount; remaining = Mathf.Max(0.1f, step.seconds);
                 host.storyView.Hide();
                 host.InterruptBubble();
+                // 空白对白不能变成需要玩家点击的空纸框；选项节点可以没有正文。
+                if (step.kind == StoryStepKind.Dialogue && string.IsNullOrWhiteSpace(step.text)) { id = step.next; continue; }
                 if (step.kind == StoryStepKind.BranchMidStop) { id = host.flag_taught_midstop ? step.alternate : step.next; continue; }
                 if (step.kind == StoryStepKind.BranchEpisodeComplete) { id = HasCompleted(step.argument) ? step.alternate : step.next; continue; }
                 if (step.kind == StoryStepKind.Command) { host.Command(step.argument); id = step.next; continue; }
@@ -125,7 +128,7 @@ namespace GamePresentation
             Debug.LogError("剧情即时节点形成循环，请检查下一节点。", host); Finish();
         }
 
-        private static bool IsTimedText(StoryStep node) => node.kind == StoryStepKind.Narration ||
+        private static bool IsTimedText(StoryStep node) => node.kind == StoryStepKind.Narration || node.kind == StoryStepKind.SkySubtitle ||
             (node.kind == StoryStepKind.BlackTitle && node.autoAdvance);
 
         private float ReadingTime() => Mathf.Max(step.seconds, 0.65f + host.storyView.CurrentPageLength / 22f);

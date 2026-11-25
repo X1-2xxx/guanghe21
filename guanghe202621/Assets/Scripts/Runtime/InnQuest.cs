@@ -107,6 +107,10 @@ namespace LevelKit
                 itemNumber != collectedCount + 1) return false;
             collectedCount++;
             if (collectedCount == 3) stage = Stage.ReadyToReturn;
+            // 只在真实拾取成功后通知演出，不让 UI 决定任务结果。
+            var picked = itemNumber == 1 ? GamePresentation.PlayEvent.InnVaseCollected :
+                itemNumber == 2 ? GamePresentation.PlayEvent.InnChocolateCollected : GamePresentation.PlayEvent.InnPortraitCollected;
+            GamePresentation.PresentationEvents.Report(picked, visitor, this);
             return true;
         }
 

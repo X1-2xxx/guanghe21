@@ -28,6 +28,7 @@ public static class PresentationV4Setup
             library.heroPortrait = StoryReferenceLayout.HeroPortrait();
             library.heroSpeechlessPortrait = StoryReferenceLayout.HeroPortrait(StoryExpression.Speechless);
             AddDefaultHeroExpressions(library);
+            StoryPortraitSetup.ConfigureLibrary(library);
             AssetDatabase.CreateAsset(library, Folder + "PresentationLibrary.asset");
         }
         var story = AssetDatabase.LoadAssetAtPath<StoryPanelView>(Folder + "StoryPanel.prefab");
@@ -145,8 +146,8 @@ public static class PresentationV4Setup
         view.narratorText = Label("NarratorText", narrationFrame.transform, new Vector2(.035f,.22f), new Vector2(.965f,.97f), "旁白文字", 32, TextAnchor.MiddleLeft);
         view.narratorContinueButton = Button("NarratorContinueButton", narrationFrame.transform, new Vector2(.79f,.01f), new Vector2(.98f,.23f), "继续 ›");
         view.resetHint = Label("ResetHint", root.transform, new Vector2(.22f,.87f), new Vector2(.78f,.98f), "按 R 键 / 双击主角重置回存档点", 30, TextAnchor.MiddleCenter);
-        view.resetHint.gameObject.AddComponent<Outline>().effectColor = Color.black;
         StoryReferenceLayout.ApplyView(view);
+        PresentationInnRevision.ConfigureView(view);
         view.Hide(); view.dialoguePanel.SetActive(true); view.resetHint.gameObject.SetActive(false);
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, Folder + "StoryPanel.prefab"); Object.DestroyImmediate(root);
         return prefab.GetComponent<StoryPanelView>();
@@ -239,7 +240,7 @@ public static class PresentationV4Setup
             SignalZone(root.transform,"剧情触发区_进入树林","forest.enter",new Vector2(10,-1.5f),new Vector2(.4f,3));
             SignalZone(root.transform,"剧情触发区_进入跳跃小关","jump.enter",new Vector2(36.5f,-1.5f),new Vector2(.4f,3));
             SignalZone(root.transform,"剧情触发区_发现跳跃键","jump.lower",new Vector2(40,-1.5f),new Vector2(1,3));
-            float innApproachX = binding.entranceCamera ? binding.entranceCamera.transform.position.x + 1.575f : 64f;
+            float innApproachX = binding.entranceCamera ? binding.entranceCamera.transform.position.x - 1.925f : 60.5f;
             SignalZone(root.transform,"剧情触发区_旅馆前平台","inn.approach",new Vector2(innApproachX,7.35f),new Vector2(1.1f,2.5f));
             SignalZone(root.transform,"剧情触发区_破墙后结束","inn.exit",new Vector2(93,7),new Vector2(1,4));
             foreach(var name in new[]{"左侧木板","右侧木板","树木1","树木2","树木3"})

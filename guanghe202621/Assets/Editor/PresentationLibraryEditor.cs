@@ -22,6 +22,7 @@ public sealed class PresentationLibraryEditor : Editor
             EditorGUILayout.HelpBox("在下方的对白节点选择「立绘表情」。更换同尺寸的差分图片可保持立绘位置。", MessageType.None);
             EditorGUILayout.PropertyField(serializedObject.FindProperty("heroExpressions"), true);
         }
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("innkeeperExpressions"), true);
         var library=(PresentationLibrary)target;
         if(library.episodes.Count>0)
         {
@@ -32,6 +33,7 @@ public sealed class PresentationLibraryEditor : Editor
             EditorGUILayout.PropertyField(episode.FindPropertyRelative("id"));
             EditorGUILayout.PropertyField(episode.FindPropertyRelative("title"));
             EditorGUILayout.PropertyField(episode.FindPropertyRelative("entry"));
+            EditorGUILayout.PropertyField(episode.FindPropertyRelative("showInnkeeper"));
             var steps=episode.FindPropertyRelative("steps");
             var labels=library.episodes[chapter].steps.ConvertAll(s=>s.id+" · "+s.kind+" · "+(s.text??"").Replace("\n"," ")).ToArray();
             if(labels.Length>0)

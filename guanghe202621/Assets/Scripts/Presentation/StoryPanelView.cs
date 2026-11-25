@@ -14,7 +14,12 @@ namespace GamePresentation
         public GameObject blackPanel, dialoguePanel, choicesPanel, narratorPanel;
         [InspectorName("底部对白大框")] public GameObject dialogueFrame;
         public Text blackText, speakerText, dialogueText, narratorText;
+        [Header("天空字幕与装备提示（均由预制体提供）")]
+        public GameObject skySubtitlePanel, equipmentNotice;
+        public Text skySubtitleText;
+        [SerializeField, Min(1f), InspectorName("装备提示显示秒数")] private float equipmentNoticeSeconds = 4f;
         public Image portrait, endingImage;
+        [InspectorName("双人立绘显示与亮度")] public StoryPortraitStage portraitStage;
         public Button continueButton, blackContinueButton, narratorContinueButton;
         public Button choiceA, choiceB;
         [InspectorName("点击纸张对话框继续")] public Button dialogueAdvanceButton;
@@ -33,9 +38,11 @@ namespace GamePresentation
         private StoryTextReveal pageReveal;
         private int[] subtitleCharacters = Array.Empty<int>();
         private float revealedCharacters;
+        private float equipmentRemaining;
 
         public int CurrentPageLength => pagedText && pagedText.text != null ? pagedText.text.Length : 0;
         public bool IsPageRevealed => !pageReveal || revealedCharacters >= subtitleCharacters.Length;
+        public bool HeroPortraitVisible => portraitStage ? portraitStage.HeroVisible : portrait && portrait.gameObject.activeInHierarchy;
 
         public void Bind(Action advance, Action<int> choose)
         {
@@ -46,17 +53,30 @@ namespace GamePresentation
             choiceA.onClick.AddListener(() => onChoice?.Invoke(0));
             choiceB.onClick.AddListener(() => onChoice?.Invoke(1));
             UIFontUtility.ApplyToHierarchy(gameObject);
-            Hide(); SetResetHint(false);
+            Hide(); ClearEquipmentNotice(); SetResetHint(false);
         }
         public void RememberDialogue(string text, string speaker, Sprite image)
         { lastLine = text; lastSpeaker = speaker; lastPortrait = image; }
         public void ResetDialogueMemory() { lastLine = lastSpeaker = null; lastPortrait = null; }
+        public void BeginEpisode(bool twoCharacters, Sprite hero, Sprite innkeeper)
+        {
+            ResetDialogueMemory();
+            if (portraitStage) portraitStage.BeginEpisode(twoCharacters, hero, innkeeper);
+        }
         private void Continue() => onContinue?.Invoke();
-        private void LateUpdate() => choiceLayout?.RefreshIfNeeded();
+        private void LateUpdate()
+        {
+            choiceLayout?.RefreshIfNeeded();
+            if (equipmentRemaining <= 0f || group.alpha <= 0f) return;
+            equipmentRemaining -= Time.deltaTime;
+            if (equipmentRemaining <= 0f) ClearEquipmentNotice();
+        }
         public void Hide()
         {
             blackPanel.SetActive(false); dialoguePanel.SetActive(false);
             choicesPanel.SetActive(false); narratorPanel.SetActive(false);
+            if (skySubtitlePanel) skySubtitlePanel.SetActive(false);
+            if (portraitStage) portraitStage.Hide();
             if (endingImage) endingImage.gameObject.SetActive(false);
             group.blocksRaycasts = false;
             pagedText = null;
@@ -82,15 +102,23 @@ namespace GamePresentation
                 SetTextPages(narratorText, step.text);
                 return;
             }
+            if (step.kind == StoryStepKind.SkySubtitle)
+            {
+                skySubtitlePanel.SetActive(true);
+                SetTextPages(skySubtitleText, step.text);
+                return;
+            }
             dialoguePanel.SetActive(true);
             bool choices = step.kind == StoryStepKind.Choice;
             // 选项放到右侧后，底部保留角色上一句台词，避免对话框突然变空。
-            bool retain = choices && string.IsNullOrWhiteSpace(step.text) && !string.IsNullOrEmpty(lastLine);
-            bool showDialogue = !choices || retain || !string.IsNullOrWhiteSpace(step.text);
+            bool retain = choices && !step.hidePreviousDialogue && string.IsNullOrWhiteSpace(step.text) && !string.IsNullOrEmpty(lastLine);
+            bool showDialogue = retain || !string.IsNullOrWhiteSpace(step.text);
+            dialoguePanel.SetActive(showDialogue || choices);
             if (dialogueFrame) dialogueFrame.SetActive(showDialogue);
             speakerText.text = retain ? lastSpeaker : step.speaker;
             Sprite image = !showDialogue ? null : (retain ? lastPortrait : actorPortrait);
-            portrait.sprite = image; portrait.gameObject.SetActive(image != null);
+            if (portraitStage) portraitStage.Show(PresentationLibrary.IsInnkeeper(retain ? lastSpeaker : step.speaker), image, choices, showDialogue);
+            else { portrait.sprite = image; portrait.gameObject.SetActive(image != null); }
             if (choices)
             {
                 dialogueText.horizontalOverflow = HorizontalWrapMode.Overflow;
@@ -101,7 +129,7 @@ namespace GamePresentation
                 SetTextPages(dialogueText, step.text);
                 RememberDialogue(dialogueText.text, step.speaker, image);
             }
-            choicesPanel.SetActive(choices); continueButton.gameObject.SetActive(!choices);
+            choicesPanel.SetActive(choices); continueButton.gameObject.SetActive(!choices && showDialogue);
             if (dialogueAdvanceButton) dialogueAdvanceButton.interactable = !choices;
             if (choices)
             {
@@ -168,7 +196,16 @@ namespace GamePresentation
             int fontSize = label.resizeTextForBestFit ? label.resizeTextMaxSize : label.fontSize;
             return new StoryTextLayout(label, fontSize, spacing ? spacing.Spacing : 0f);
         }
-        public void SetPaused(bool paused) { group.alpha = paused ? 0f : 1f; group.blocksRaycasts = !paused && (blackPanel.activeSelf || dialoguePanel.activeSelf || narratorPanel.activeSelf); }
+        public void SetPaused(bool paused) { group.alpha = paused ? 0f : 1f; group.blocksRaycasts = !paused && (blackPanel.activeSelf || dialoguePanel.activeSelf || narratorPanel.activeSelf || (skySubtitlePanel && skySubtitlePanel.activeSelf)); }
+        /// <summary>装备提示与主线纸框独立，不暂停或拦截操作，内容和图标直接在预制体中修改。</summary>
+        public void ShowEquipmentNotice()
+        {
+            if (!equipmentNotice) return;
+            equipmentRemaining = equipmentNoticeSeconds;
+            equipmentNotice.SetActive(true);
+        }
+        public void ClearEquipmentNotice()
+        { equipmentRemaining = 0f; if (equipmentNotice) equipmentNotice.SetActive(false); }
         public void SetResetHint(bool visible) => resetHint.gameObject.SetActive(visible);
         public void FadeBlack(float alpha)
         { blackPanel.SetActive(true); blackText.text = string.Empty; blackGroup.alpha = alpha; }

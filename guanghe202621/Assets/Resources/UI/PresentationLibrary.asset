@@ -53,7 +53,14 @@ MonoBehaviour:
     portrait: {fileID: 1257492897972424411, guid: f5a908e21c4ebf342ae82118a2dd6a6c, type: 3}
   - expression: 20
     portrait: {fileID: -3287980030834762617, guid: ebf2dc1e749aea24ea0f57ec4d9678e4, type: 3}
-  innkeeperPortrait: {fileID: 0}
+  innkeeperPortrait: {fileID: 2104764090818324080, guid: 77300fd272b38474c8c920035300f506, type: 3}
+  innkeeperExpressions:
+  - expression: 1
+    portrait: {fileID: -5171176250345756334, guid: 43b07c4d213d225468d25628bba187b5, type: 3}
+  - expression: 2
+    portrait: {fileID: 4338542327460891761, guid: 9842948b7f40e0348aa20d72123510ef, type: 3}
+  - expression: 3
+    portrait: {fileID: -5364316545418375737, guid: 89c436d2c67a80b46b8acf5442eb5c30, type: 3}
   deniedClip: {fileID: 0}
   pitImpactClip: {fileID: 0}
   endingSprite: {fileID: 0}
@@ -301,12 +308,12 @@ MonoBehaviour:
     once: 0
   - id: wall_no_shoes
     lines:
-    - "撞不开！看着全是缝，结果硬得要命，还是先帮老板收齐三件物品，再去领马吧！"
+    - "\u649E\u4E0D\u5F00\uFF01\u770B\u7740\u5168\u662F\u7F1D\uFF0C\u7ED3\u679C\u786C\u5F97\u8981\u547D\uFF0C\u8FD8\u662F\u5148\u5E2E\u8001\u677F\u627E\u74F7\u74F6\u3001\u5DE7\u514B\u529B\u548C\u753B\u50CF\u5427\uFF01"
     repeat:
-    - "真撞不开，别再让吾拿头撞了！"
-    - "头都要撞晕了，先上楼看看吧！"
+    - "\u771F\u649E\u4E0D\u5F00\uFF0C\u522B\u518D\u8BA9\u543E\u62FF\u5934\u649E\u4E86\uFF01"
+    - "\u5934\u90FD\u8981\u649E\u6655\u4E86\uFF0C\u5148\u4E0A\u697C\u770B\u770B\u5427\uFF01"
     brief:
-    - "……"
+    - "\u2026\u2026"
     duration: 3.8
     cooldown: 6
     priority: 10
@@ -422,6 +429,42 @@ MonoBehaviour:
     duration: 4
     cooldown: 8
     priority: 30
+    once: 1
+  - id: inn_vase
+    lines:
+    - "\u74F7\u74F6\u5230\u624B\uFF01\u8FD9\u74F6\u5B50\u5C45\u7136\u6CA1\u6454\u788E\uFF0C\u771F\u7ED3\u5B9E\u3002"
+    repeat: []
+    brief: []
+    duration: 4
+    cooldown: 0
+    priority: 60
+    once: 1
+  - id: inn_chocolate
+    lines:
+    - "\u627E\u5230\u5DE7\u514B\u529B\u4E86\uFF01\u2026\u2026\u597D\u5927\u4E00\u5757\uFF0C\u770B\u7740\u602A\u751C\u7684\u3002"
+    repeat: []
+    brief: []
+    duration: 4
+    cooldown: 0
+    priority: 60
+    once: 1
+  - id: inn_portrait
+    lines:
+    - "\u753B\u50CF\u4E5F\u62FF\u5230\u5566\uFF01"
+    repeat: []
+    brief: []
+    duration: 3
+    cooldown: 0
+    priority: 60
+    once: 1
+  - id: inn_all_items
+    lines:
+    - "\u8FD9\u4E0B\u74F7\u74F6\u3001\u5DE7\u514B\u529B\u3001\u753B\u50CF\u5168\u9F50\u4E86\uFF01\u56DE\u4E00\u697C\u627E\u5E15\u6D1B\u6885\u514B\u8001\u677F\u6362\u597D\u9A6C\u5427\uFF01"
+    repeat: []
+    brief: []
+    duration: 6.5
+    cooldown: 0
+    priority: 60
     once: 1
   episodes:
   - id: village.opening
@@ -1245,45 +1288,60 @@ MonoBehaviour:
       seconds: 3
       choices: []
   - id: inn.approach
-    title: "\u7B2C\u4E09\u5E55 3.1\uFF1A\u62B5\u8FBE\u65C5\u9986\u524D\u5E73\u53F0"
+    title: "\u65C5\u9986\u95E8\u5916\xB7\u5929\u7A7A\u5B57\u5E55\u4E0E\u627E\u9A6C"
     entry: entrance_camera
     once: 1
     steps:
     - id: entrance_camera
       kind: 12
       speaker:
+      expression: 0
       text:
       next: s002
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 0
       choices: []
     - id: s002
-      kind: 1
+      kind: 13
       speaker: "\u65C1\u767D"
+      expression: 0
       text: "\u79BB\u5F00\u6811\u6797\u540E\uFF0C\u9A91\u58EB\u51B3\u5B9A\u524D\u5F80\u524D\u65B9\u7684\u65C5\u9986\u6B47\u811A\uFF0C\u987A\u4FBF\u5BFB\u4E00\u5339\u79F0\u5FC3\u7684\u597D\u9A6C\u3002"
       next: s003
       alternate:
       argument:
+      showHeadWhileWaiting: 0
       autoAdvance: 1
-      seconds: 3
+      hidePreviousDialogue: 0
+      seconds: 4.5
       choices: []
     - id: s003
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u8BF6\uFF1F\u5929\u4E0A\u7684\u5B57\u5E55\u53C8\u51FA\u6765\u4E86\u2014\u2014\u53BB\u65C5\u9986\u627E\u4E00\u5339\u597D\u9A6C\uFF01\n\u542C\u8D77\u6765\u4E0D\u9519\u554A\uFF0C\u80FD\u9A91\u9A6C\u5C31\u4E0D\u7528\u8001\u9760\u543E\u81EA\u5DF1\u8DD1\u4E86\uFF01"
+      expression: 0
+      text: "\u8BF6\uFF1F\u5929\u4E0A\u7684\u5B57\u5E55\u53C8\u51FA\u6765\u4E86\u2014\u2014\u53BB\u65C5\u9986\u627E\u4E00\u5339\u597D\u9A6C\uFF01\n\n\u542C\u8D77\u6765\u4E0D\u9519\u554A\uFF0C\u80FD\u9A91\u9A6C\u5C31\u4E0D\u7528\u8001\u9760\u543E\u81EA\u5DF1\u8DD1\u4E86\uFF01"
       next: s004
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s004
       kind: 3
       speaker: "\u6851\u4E18"
+      expression: 0
       text:
       next:
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices:
       - text: "\u65E2\u7136\u5267\u672C\u8FD9\u4E48\u5199\uFF0C\u90A3\u5C31\u53BB\u770B\u770B\u5427\u3002"
@@ -1293,161 +1351,354 @@ MonoBehaviour:
     - id: s005
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
       text: "\u55EF\u55EF\uFF0C\u8D70\u5427\uFF01"
       next: s007
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s006
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
       text: "\u522B\u8BF4\u4E0D\u5409\u5229\u7684\u8BDD\u554A\uFF01\u9A6C\u80FD\u51FA\u4EC0\u4E48Bug\uFF0C\u9876\u591A\u817F\u957F\u4E00\u70B9\u5427\u2026\u2026"
       next: s007
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s007
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
       text: "\u524D\u9762\u5C31\u662F\u65C5\u9986\u4E86\uFF0C\u51FA\u53D1\u5427\uFF0C\u6851\u4E18\uFF01"
       next:
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
   - id: inn.intro
-    title: "\u7B2C\u4E09\u5E55 3.1\uFF1A\u8001\u677F\u3001\u88C2\u5899\u4E0E\u534A\u8DEF\u53EB\u505C\u5206\u652F"
-    entry: s001
+    title: "\u7B2C\u4E09\u5E55\xB7\u5E15\u6D1B\u6885\u514B\u7684\u4E09\u4EF6\u5931\u7269\u59D4\u6258"
+    entry: entrance_camera
     once: 1
+    showInnkeeper: 1
     steps:
+    - id: entrance_camera
+      kind: 12
+      speaker:
+      expression: 0
+      innkeeperExpression: 0
+      text:
+      next: s001
+      alternate:
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices: []
     - id: s001
       kind: 0
-      speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u6253\u6270\u4E86\uFF01\u8BF7\u95EE\u8FD9\u91CC\u6709\u80FD\u9A91\u7684\u597D\u9A6C\u5417\uFF1F"
+      speaker: "\u5E15\u6D1B\u6885\u514B"
+      expression: 0
+      innkeeperExpression: 0
+      text: "\u54CE\u5440\uFF0C\u6B22\u8FCE\u5149\u4E34\uFF5E\u8FD9\u4E48\u5306\u5FD9\u8D76\u8DEF\uFF0C\u662F\u6765\u6B47\u811A\u7684\u5417\uFF0C\u9A91\u58EB\u8001\u7237\uFF1F"
       next: s002
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s002
       kind: 0
-      speaker: "\u65C5\u9986\u8001\u677F"
-      text: "马？有是有……不过今早旅馆里乱得一塌糊涂，楼梯也断了。\n请先帮我按顺序找回散落在旅馆里的三件物品。找齐后回来找我，我就把那匹“好马”送给你。"
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
+      innkeeperExpression: 0
+      text: "\u6B47\u811A\u5C31\u4E0D\u4E86\u3002\u542C\u8BF4\u8FD9\u91CC\u6709\u5339\u597D\u9A6C\uFF0C\u8BF7\u95EE\u5728\u54EA\u513F\uFF1F"
       next: s003
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s003
       kind: 0
-      speaker: "\u5802\u5409\u8BC3\u5FB7"
-      expression: 1
-      text: "还要先帮忙找东西？好吧，骑士可不能对需要帮助的人置之不理！"
+      speaker: "\u5E15\u6D1B\u6885\u514B"
+      expression: 0
+      innkeeperExpression: 0
+      text: "\u9A6C\u561B\u2026\u2026\u4E4B\u524D\u7684\u786E\u6709\u4EBA\u5728\u6211\u8FD9\u91CC\u5BC4\u5B58\u4E86\u4E00\u5339\u597D\u9A6C\uFF0C\u53EA\u7559\u7ED9\u6709\u9700\u8981\u7684\u9A91\u58EB\u3002"
       next: s004
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s004
-      kind: 4
+      kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text:
+      expression: 0
+      innkeeperExpression: 0
+      text: "\u6211\u5C31\u662F\u6709\u9700\u8981\u7684\u9A91\u58EB\uFF01\u2026\u2026\u81F3\u5C11\u6851\u4E18\u7684\u6545\u4E8B\u91CC\u662F\u8FD9\u4E48\u5199\u7684\u3002"
       next: s005
       alternate:
-      argument: inn_wall,inn_stairs
-      seconds: 1
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
       choices: []
     - id: s005
       kind: 0
-      speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "右边出口也被一堵裂墙封死了。先想办法上楼，按顺序收齐三件物品，再回到老板这里吧。"
+      speaker: "\u5E15\u6D1B\u6885\u514B"
+      expression: 0
+      innkeeperExpression: 1
+      text: "\u6851\u4E18\uFF1F\u542C\u4E0A\u53BB\u50CF\u662F\u60A8\u7684\u4F8D\u4ECE\u5427\uFF0C\u867D\u7136\u73B0\u5728\u597D\u50CF\u4E0D\u5728\u60A8\u8EAB\u8FB9\u5462\u3002"
       next: s006
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s006
-      kind: 7
-      speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text:
+      kind: 0
+      speaker: "\u5E15\u6D1B\u6885\u514B"
+      expression: 0
+      innkeeperExpression: 2
+      text: "\u6211\u613F\u610F\u76F8\u4FE1\u60A8\u5C31\u662F\u90A3\u5339\u826F\u9A6C\u6240\u7B49\u5F85\u7684\u9A91\u58EB\uFF0C\u53EA\u662F\u2026\u2026"
       next: s007
-      alternate: s008
+      alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s007
       kind: 0
-      speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u901A\u5F80\u4E8C\u697C\u7684\u697C\u68AF\u65AD\u4E86\uFF0C\u624B\u5934\u53EA\u6709\u8FD9\u4E9B\u6728\u677F\u3001\u6728\u7BB1\u548C\u9152\u6876\u3002\n\u770B\u7740\u6750\u6599\u597D\u50CF\u4E0D\u591F\u4E00\u53E3\u6C14\u94FA\u5230\u4E8C\u697C\u554A\uFF0C\u6851\u4E18\u3002"
-      next: s009
+      speaker: "\u5E15\u6D1B\u6885\u514B"
+      expression: 0
+      innkeeperExpression: 3
+      text: "\u4ECA\u5929\u4E00\u65E9\uFF0C\u65C5\u9986\u91CC\u4E0D\u77E5\u600E\u4E48\u4E71\u6210\u4E00\u56E2\uFF0C\u697C\u4E0A\u7684\u4E1C\u897F\u5168\u6492\u5F97\u5230\u5904\u90FD\u662F\uFF0C\u6211\u4E00\u4E2A\u4EBA\u53EF\u722C\u4E0D\u4E0A\u53BB\u6536\u62FE\u3002"
+      next: s008
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s008
       kind: 0
-      speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u901A\u5F80\u4E8C\u697C\u7684\u697C\u68AF\u65AD\u4E86\uFF0C\u6750\u6599\u770B\u7740\u4E0D\u592A\u591F\u4E00\u53E3\u6C14\u94FA\u5230\u9876\u554A\u3002\n\u8001\u89C4\u77E9\uFF0C\u534A\u8DEF\u6309\u7A7A\u683C\u53EB\u505C\u543E\uFF0C\u628A\u540E\u9762\u8D70\u8FC7\u7684\u7269\u5757\u62C6\u4E0B\u6765\u63A5\u7740\u94FA\u5427\uFF0C\u6851\u4E18\uFF01"
-      next:
+      speaker: "\u5E15\u6D1B\u6885\u514B"
+      expression: 0
+      innkeeperExpression: 2
+      text: "\u5509\uFF0C\u65C5\u9986\u4E71\u6210\u8FD9\u6837\uFF0C\u641E\u5F97\u6211\u4E00\u65F6\u60F3\u4E0D\u8D77\u6765\u90A3\u5339\u9A6C\u5728\u54EA\u513F\u4E86\u2026\u2026"
+      next: s009
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s009
-      kind: 3
-      speaker: "\u6851\u4E18"
-      text:
-      next:
+      kind: 0
+      speaker: "\u5E15\u6D1B\u6885\u514B"
+      expression: 0
+      innkeeperExpression: 0
+      text: "\u8FD9\u6837\u5427\uFF5E\u53EA\u8981\u4F60\u4EEC\u5E2E\u6211\u628A\u697C\u4E0A\u6563\u843D\u7684\u74F7\u74F6\u3001\u5DE7\u514B\u529B\u548C\u753B\u50CF\u8FD9\u4E09\u6837\u4E1C\u897F\u90FD\u627E\u56DE\u6765\uFF0C\u6211\u4E5F\u8BB8\u5C31\u80FD\u60F3\u8D77\u6765\u90A3\u5339\u9A6C\u5728\u54EA\u513F\u4E86\uFF1F"
+      next: request_choices
       alternate:
       argument:
-      seconds: 3
-      choices:
-      - text: "\u5982\u679C\u4F60\u5728\u534A\u8DEF\u80FD\u505C\u4E0B\u6765\uFF0C\u6211\u5C31\u53EF\u4EE5\u628A\u540E\u9762\u8D70\u8FC7\u7684\u6728\u677F\u62C6\u4E0B\u6765\uFF0C\u7EE7\u7EED\u5F80\u524D\u94FA\u3002"
-        next: s010
-      - text: "\u6211\u770BUI\u63D0\u793A\uFF0C\u4F60\u8DD1\u8D77\u6765\u7684\u65F6\u5019\u518D\u6309\u7A7A\u683C\u6216\u8005\u70B9\u4F60\u672C\u4EBA\uFF0C\u597D\u50CF\u5C31\u80FD\u8BA9\u4F60\u505C\u4E0B\u3002"
-        next: s010
-    - id: s010
-      kind: 6
-      speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text:
-      next: s011
-      alternate:
-      argument: noop
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
-    - id: s011
-      kind: 0
-      speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u5C45\u7136\u8FD8\u80FD\u534A\u8DEF\u6025\u5239\u8F66\u5417\uFF01\n\u90A3\u5C31\u8BD5\u8BD5\u770B\uFF01\u543E\u5148\u8DD1\u4E0A\u53BB\uFF0C\u6C5D\u770B\u51C6\u65F6\u673A\u53EB\u505C\u543E\uFF01"
+    - id: request_choices
+      kind: 3
+      speaker: "\u6851\u4E18"
+      expression: 0
+      innkeeperExpression: 0
+      text:
       next:
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 1
+      seconds: 3
+      choices:
+      - text: "\u597D\u6807\u51C6\u7684\u901A\u9A6C\u6876\u4EFB\u52A1\u2026\u2026"
+        next: request_a
+      - text: "\u8001\u677F\u5A18\u7684\u7ACB\u7ED8\u548C\u6E38\u620F\u5185\u770B\u8D77\u6765\u5B8C\u5168\u4E0D\u4E00\u6837\u5427\u3002"
+        next: request_b
+    - id: request_a
+      kind: 0
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 1
+      innkeeperExpression: 0
+      text: "\u662F\u554A\uFF0C\u4F46\u73B0\u5728\u4E5F\u53EA\u80FD\u5E72\u4E86\u3002"
+      next: request_common
+      alternate:
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices: []
+    - id: request_b
+      kind: 0
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 5
+      innkeeperExpression: 0
+      text: "\u4F60\u5173\u6CE8\u70B9\u5C45\u7136\u5728\u8FD9\u91CC\u5417\uFF1F"
+      next: request_common
+      alternate:
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices: []
+    - id: request_common
+      kind: 0
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
+      innkeeperExpression: 0
+      text: "\u603B\u4E4B\uFF0C\u8981\u4E0A\u697C\u627E\u4E09\u6837\u4E1C\u897F\uFF1A\u74F7\u74F6\uFF0C\u5DE7\u514B\u529B\uFF0C\u8FD8\u6709\u753B\u50CF\u3002\u8D70\u5427\uFF0C\u6851\u4E18\u3002"
+      next: midstop_branch
+      alternate:
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices: []
+    - id: midstop_branch
+      kind: 7
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
+      innkeeperExpression: 0
+      text:
+      next: midstop_intro
+      alternate: midstop_known
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices: []
+    - id: midstop_intro
+      kind: 0
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
+      innkeeperExpression: 0
+      text: "\u901A\u5F80\u4E8C\u697C\u7684\u697C\u68AF\u65AD\u4E86\uFF0C\u624B\u5934\u53EA\u6709\u8FD9\u4E9B\u6728\u677F\u3001\u6728\u7BB1\u548C\u9152\u6876\u3002\n\u770B\u7740\u6750\u6599\u597D\u50CF\u4E0D\u591F\u4E00\u53E3\u6C14\u94FA\u5230\u4E8C\u697C\u554A\uFF0C\u6851\u4E18\u3002"
+      next: midstop_choices
+      alternate:
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices: []
+    - id: midstop_choices
+      kind: 3
+      speaker: "\u6851\u4E18"
+      expression: 0
+      innkeeperExpression: 0
+      text:
+      next:
+      alternate:
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices:
+      - text: "\u5982\u679C\u4F60\u5728\u534A\u8DEF\u80FD\u505C\u4E0B\u6765\uFF0C\u6211\u5C31\u53EF\u4EE5\u628A\u5DF2\u7ECF\u8D70\u8FC7\u7684\u6728\u677F\u62C6\u4E0B\u6765\u7EE7\u7EED\u94FA\u3002"
+        next: midstop_try
+      - text: "\u611F\u89C9\u8FD9\u79CD\u6E38\u620F\u53EF\u4EE5\u4E2D\u9014\u505C\u4E0B\u7684\u5427\uFF1F\u6BD4\u5982\u518D\u6309\u4E00\u6B21\u7A7A\u683C\uFF0C\u6216\u8005\u70B9\u4E00\u4E0B\u4F60\uFF1F"
+        next: midstop_try
+    - id: midstop_try
+      kind: 0
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
+      innkeeperExpression: 0
+      text: "\u6709\u9053\u7406\uFF0C\u5F88\u6709\u5C1D\u8BD5\u7684\u4EF7\u503C\u3002\n\n\u90A3\u5C31\u8BD5\u8BD5\u770B\uFF01\u543E\u5148\u8DD1\u4E0A\u53BB\uFF0C\u6C5D\u770B\u51C6\u65F6\u673A\u53EB\u505C\u543E\uFF01"
+      next:
+      alternate:
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices: []
+    - id: midstop_known
+      kind: 0
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
+      innkeeperExpression: 0
+      text: "\u901A\u5F80\u4E8C\u697C\u7684\u697C\u68AF\u65AD\u4E86\uFF0C\u6750\u6599\u770B\u7740\u4E0D\u592A\u591F\u4E00\u53E3\u6C14\u94FA\u5230\u9876\u554A\u3002\n\n\u8001\u89C4\u77E9\uFF0C\u534A\u8DEF\u6309\u7A7A\u683C\u53EB\u505C\u543E\uFF0C\u628A\u540E\u9762\u8D70\u8FC7\u7684\u7269\u5757\u62C6\u4E0B\u6765\u63A5\u7740\u94FA\u5427\uFF0C\u6851\u4E18\uFF01"
+      next:
+      alternate:
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
   - id: inn.shoes
-    title: "第三幕：老板奖励揭晓马头跑鞋"
+    title: "\u7B2C\u4E09\u5E55\xB7\u83B7\u8D60\u9A7D\u8F9B\u96BE\u5F97\u4E0E\u7834\u5899\u80FD\u529B"
     entry: s001
     once: 1
+    showInnkeeper: 1
     steps:
     - id: s001
       kind: 0
-      expression: 4
       speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u2026\u2026\n\u6851\u4E18\uFF0C\u5E2E\u543E\u770B\u770B\uFF0C\u8FD9\u662F\u4EC0\u4E48\u4E1C\u897F\u3002"
+      expression: 4
+      innkeeperExpression: 0
+      text: "\u2026\u2026\n\u6851\u4E18\uFF0C\u5E2E\u543E\u770B\u770B\uFF0C\u543E\u662F\u4E0D\u662F\u773C\u82B1\u4E86\uFF0C\u8FD9\u662F\u4EC0\u4E48\u4E1C\u897F\u3002"
       next: s002
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s002
       kind: 3
       speaker: "\u6851\u4E18"
+      expression: 0
+      innkeeperExpression: 0
       text:
       next:
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices:
       - text: "\u4E00\u53CC\u957F\u7740\u9A6C\u5934\u7684\u8FD0\u52A8\u978B\u3002"
@@ -1458,78 +1709,130 @@ MonoBehaviour:
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
       expression: 1
-      text: "这就是吾辛苦找齐三件物品，老板送给吾的“好马”？！这也太敷衍了吧！"
+      innkeeperExpression: 0
+      text: "\u8FD9\u5C31\u662F\u8001\u677F\u548C\u5267\u672C\u91CC\u8BF4\u7684\u201C\u597D\u9A6C\u201D\uFF1F\uFF01\u8FD9\u4E5F\u592A\u6577\u884D\u4E86\u5427\uFF01"
       next: s005
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s004
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
       expression: 1
-      text: "\u522B\u5149\u542C\u540D\u5B57\u554A\uFF01\u8FD9\u5206\u660E\u5C31\u662F\u4E00\u53CC\u978B\uFF01"
+      innkeeperExpression: 0
+      text: "\u522B\u5149\u770B\u540D\u5B57\u554A\uFF01\u8FD9\u5206\u660E\u5C31\u662F\u4E00\u53CC\u978B\uFF01"
       next: s005
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s005
       kind: 0
-      speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u7B97\u4E86\uFF0C\u771F\u6765\u4E00\u5339\u6D3B\u9A6C\uFF0C\u6C5D\u7C98\u7684\u6865\u4F30\u8BA1\u4E5F\u6491\u4E0D\u4F4F\u3002\u7A7F\u4E0A\u8BD5\u8BD5\u5427\u2026\u2026\n\u8BF6\uFF1F\u8FD9\u978B\u7A7F\u8D77\u6765\u597D\u8F7B\uFF0C\u800C\u4E14\u811A\u4E0B\u597D\u50CF\u6512\u7740\u4E00\u80A1\u51B2\u52B2\uFF01"
+      speaker: "\u5E15\u6D1B\u6885\u514B"
+      expression: 0
+      innkeeperExpression: 1
+      text: "\u54CE\u5440\uFF0C\u4E0D\u8981\u592A\u5728\u610F\u7EC6\u8282\u561B\uFF5E\n\n\u771F\u8981\u662F\u4E00\u5339\u5927\u9A6C\uFF0C\u53EF\u4E0A\u4E0D\u4E86\u90A3\u4E9B\u7C98\u8D77\u6765\u7684\u6728\u677F\u6865\u54E6\uFF1F\n\n\u8FD9\u53CC\u978B\u8DD1\u8D77\u6765\u53C8\u8F7B\u53C8\u5FEB\uFF0C\u649E\u5F00\u53F3\u8FB9\u90A3\u5835\u65E7\u5899\u4E5F\u4E0D\u5728\u8BDD\u4E0B\u5462\u3002"
       next: s006
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s006
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u6851\u4E18\uFF01\u7A7F\u4E0A\u5B83\u7684\u8BDD\uFF0C\u4E00\u697C\u90A3\u5835\u88C2\u5899\u8BF4\u4E0D\u5B9A\u80FD\u76F4\u63A5\u649E\u7834\uFF01\n......\u4E0D\u8FC7\u543E\u7684\u5916\u89C2\u4E3A\u4F55\u6CA1\u6709\u53D8\u5316\uFF1F"
+      expression: 7
+      innkeeperExpression: 0
+      text: "\u5514\u2026\u2026\u8FD9\u4E48\u4E00\u8BF4\u597D\u50CF\u4E5F\u6709\u9053\u7406\u3002\n\n\u8BF6\uFF1F\u7A7F\u8D77\u6765\u771F\u7684\u597D\u8F7B\uFF0C\u800C\u4E14\u811A\u4E0B\u597D\u50CF\u6512\u7740\u4E00\u80A1\u51B2\u52B2\uFF01"
       next: s007
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s007
+      kind: 0
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 4
+      innkeeperExpression: 0
+      text: "\u6851\u4E18\uFF01\u7A7F\u4E0A\u5B83\u7684\u8BDD\uFF0C\u4E00\u697C\u53F3\u8FB9\u90A3\u5835\u88C2\u5899\u80AF\u5B9A\u80FD\u76F4\u63A5\u649E\u7834\uFF01\n\n\u2026\u2026\u4E0D\u8FC7\u543E\u7684\u5916\u89C2\u4E3A\u4F55\u6CA1\u6709\u53D8\u5316\uFF1F"
+      next: s008
+      alternate:
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices: []
+    - id: s008
       kind: 3
       speaker: "\u6851\u4E18"
+      expression: 0
+      innkeeperExpression: 0
       text:
       next:
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices:
       - text: "\u53EF\u80FD\u662F\u5236\u4F5C\u7EC4\u5DE5\u671F\u4E0D\u591F\u4E86\u5427\u3002"
-        next: s008
-      - text: "\u8FD9\u6837\u7684\u8BDD\uFF0C\u6211\u4EEC\u662F\u4E0D\u662F\u53EF\u4EE5\u901A\u8FC7\u90A3\u5835\u88C2\u5899\u4E86\uFF1F\u5F80\u5DE6\u8D70\u597D\u50CF\u80FD\u56DE\u5230\u4E00\u697C\u7684\u6837\u5B50\u3002"
         next: s009
-    - id: s008
-      kind: 0
-      speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u597D\u73B0\u5B9E\u7684\u539F\u56E0......"
-      next: s010
-      alternate:
-      argument:
-      seconds: 3
-      choices: []
+      - text: "\u8FD9\u6837\u7684\u8BDD\uFF0C\u6211\u4EEC\u662F\u4E0D\u662F\u80FD\u76F4\u63A5\u51B2\u51FA\u65C5\u9986\u4E86\uFF1F"
+        next: s010
     - id: s009
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u597D\u4E3B\u610F\uFF01"
-      next: s010
+      expression: 1
+      innkeeperExpression: 0
+      text: "\u597D\u73B0\u5B9E\u7684\u539F\u56E0\u2026\u2026"
+      next: s011
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s010
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
-      text: "\u8D70\u5427\uFF0C\u6851\u4E18\uFF0C\u8BA9\u6211\u4EEC\u53BB\u628A\u90A3\u5835\u5899\u649E\u5F00\uFF01"
+      expression: 7
+      innkeeperExpression: 0
+      text: "\u6CA1\u9519\uFF01"
+      next: s011
+      alternate:
+      argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices: []
+    - id: s011
+      kind: 0
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 7
+      innkeeperExpression: 0
+      text: "\u8C22\u5566\uFF0C\u5E15\u6D1B\u6885\u514B\u8001\u677F\uFF01\u8D70\u5427\uFF0C\u6851\u4E18\uFF0C\u53BB\u628A\u90A3\u5835\u5899\u649E\u5F00\uFF01"
       next:
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
   - id: inn.ending
@@ -1539,21 +1842,28 @@ MonoBehaviour:
     steps:
     - id: s001
       kind: 0
-      expression: 13
       speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 13
       text: "\u505A\u5230\u4E86\uFF01\u771F\u7684\u649E\u5F00\u4E86\uFF01\n\u8FD9\u53CC\u9A6C\u5934\u978B\uFF0C\u6BD4\u543E\u60F3\u7684\u8FD8\u7BA1\u7528\u561B\uFF01"
       next: s002
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s002
       kind: 3
       speaker: "\u6851\u4E18"
+      expression: 0
       text:
       next:
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices:
       - text: "\u5E72\u5F97\u6F02\u4EAE\uFF0C\u9A91\u58EB\u3002"
@@ -1563,80 +1873,72 @@ MonoBehaviour:
     - id: s003
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
       text: "\u54FC\u54FC\uFF0C\u8FD9\u4E5F\u662F\u591A\u4E8F\u4E86\u543E\u8F88\u7684\u5B9E\u529B\u2014\u2014\u5F53\u7136\uFF0C\u4E5F\u6709\u6851\u4E18\u6C5D\u7684\u4E00\u4EFD\u529F\u52B3\u3002"
       next: s005
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s004
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
       text: "\u6CA1\u9519\uFF01\u80FD\u8DF3\uFF0C\u80FD\u8DD1\uFF0C\u8FD8\u80FD\u7834\u5899\uFF0C\u543E\u73B0\u5728\u5DF2\u7ECF\u5B8C\u5168\u662F\u5408\u683C\u7684\u9A91\u58EB\u4E86\uFF01"
       next: s005
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s005
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
       text: "\u8D70\u5427\uFF0C\u6851\u4E18\uFF01\u4E0D\u7BA1\u524D\u9762\u8FD8\u6709\u591A\u5C11\u79BB\u8C31\u7684Bug\uFF0C\u53EA\u8981\u54B1\u4FE9\u4E00\u8D77\uFF0C\u80AF\u5B9A\u90FD\u80FD\u8FC7\u53BB\uFF01"
       next: s006
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
     - id: s006
       kind: 9
       speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
       text:
       next:
       alternate:
       argument:
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []
   - id: inn.quest_done
-    title: "第三幕：三物品交付与老板赠礼"
+    title: "\u7B2C\u4E09\u5E55\xB7\u56DE\u5230\u5E15\u6D1B\u6885\u514B\u8EAB\u65C1\u4EA4\u5DEE"
     entry: s001
     once: 1
+    showInnkeeper: 1
     steps:
     - id: s001
       kind: 0
-      speaker: "旅馆老板"
+      speaker: "\u5E15\u6D1B\u6885\u514B"
       expression: 0
-      text: "三件物品都找到了，谢谢你！骑士大人果然说到做到。"
-      next: s002
-      alternate:
-      argument:
-      showHeadWhileWaiting: 0
-      autoAdvance: 0
-      showChoicesWithBubble: 0
-      seconds: 3
-      choices: []
-    - id: s002
-      kind: 0
-      speaker: "堂吉诃德"
-      expression: 0
-      text: "举手之劳！那么，答应吾的好马呢？"
-      next: s003
-      alternate:
-      argument:
-      showHeadWhileWaiting: 0
-      autoAdvance: 0
-      showChoicesWithBubble: 0
-      seconds: 3
-      choices: []
-    - id: s003
-      kind: 0
-      speaker: "旅馆老板"
-      expression: 0
-      text: "这件驽骍难得就送给你了。接好！拿上它，右侧那堵裂墙便拦不住你。"
+      innkeeperExpression: 1
+      text: "\u8F9B\u82E6\u5566\uFF5E\u74F7\u74F6\u3001\u5DE7\u514B\u529B\u8FD8\u6709\u753B\u50CF\uFF0C\u4E00\u4EF6\u4E0D\u843D\u5462\u3002\n\n\u8BF4\u8BDD\u7B97\u6570\uFF0C\u8FD9\u5C31\u662F\u8981\u7ED9\u9A91\u58EB\u8001\u7237\u7684\u597D\u9A6C\u2014\u2014\u201C\u9A7D\u8F9B\u96BE\u5F97\u201D\uFF0C\u62FF\u53BB\u5427\uFF01"
       next:
       alternate:
       argument:
       showHeadWhileWaiting: 0
       autoAdvance: 0
-      showChoicesWithBubble: 0
+      hidePreviousDialogue: 0
       seconds: 3
       choices: []

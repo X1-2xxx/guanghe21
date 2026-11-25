@@ -10,10 +10,12 @@ namespace GamePresentation
     /// <summary>按实际字体和文本区域排版，兼顾中文标点和剧本中的手动分行。</summary>
     internal sealed class StoryTextLayout
     {
-        private const int PageCharacterLimit = 64;
+        // 只约束被迫拆开的长句；剧本原有的短句（例如“好快！”）不受这个下限影响。
+        private const int MinimumFragmentCharacters = 6;
         private const string NoLineStart = "，。、．！？；：…‥）》〉】〕］｝」』〗”’％°!?.,:;)]}";
         private const string NoLineEnd = "（《〈【〔［｛「『〖“‘([{";
-        private const string SentenceEnd = "。！？!?…";
+        private const string SentenceEnd = "。！？!?";
+        private const string ClosingPunctuation = "）》〉】〕］｝」』〗”’)]}";
         private static readonly Regex ParagraphBreak = new Regex(@"\n[ \t]*\n(?:[ \t]*\n)*");
         private static readonly Regex StrandedPunctuation =
             new Regex(@"(?<=\S)[ \t]*\n(?:[ \t]*\n)*[ \t]*(?=[" + Regex.Escape(NoLineStart).Replace("]", "\\]") + "])");
@@ -44,30 +46,32 @@ namespace GamePresentation
             var pages = new List<string>();
             foreach (string paragraph in ParagraphBreak.Split(Normalize(text)))
             {
-                foreach (string part in SplitLongParagraph(paragraph.Trim()))
+                string page = string.Empty;
+                foreach (string sentence in SplitSentences(paragraph.Trim()))
                 {
-                    var lines = WrapLines(part);
-                    string page = string.Empty;
-                    int lineCount = 0;
-                    foreach (string line in lines)
+                    // 能放下的完整句子一起排版；放不下时整句留到下一页。
+                    foreach (string part in SplitLongSentence(sentence, height, maxLines))
                     {
-                        string next = lineCount == 0 ? line : page + "\n" + line;
-                        if (lineCount > 0 && (lineCount >= maxLines || MeasureHeight(next) > height))
+                        string next = page + part;
+                        if (page.Length > 0 && !FitsPage(next.Trim(), height, maxLines))
                         {
-                            pages.Add(page);
-                            page = line;
-                            lineCount = 1;
+                            pages.Add(Wrap(page.Trim()));
+                            page = part.TrimStart();
                         }
-                        else
-                        {
-                            page = next;
-                            lineCount++;
-                        }
+                        else page = next;
                     }
-                    if (lineCount > 0) pages.Add(page);
                 }
+                // 空行是剧本明确的分段要求，不把两个段落重新挤回同一张卡片。
+                if (!string.IsNullOrWhiteSpace(page)) pages.Add(Wrap(page.Trim()));
             }
             return pages;
+        }
+
+        private bool FitsPage(string text, float height, int maxLines)
+        {
+            var lines = WrapLines(text);
+            return lines.Count <= Mathf.Max(1, maxLines) &&
+                MeasureHeight(string.Join("\n", lines)) <= Mathf.Max(1f, height);
         }
 
         private List<string> WrapLines(string text)
@@ -122,33 +126,108 @@ namespace GamePresentation
             return low;
         }
 
-        private static IEnumerable<string> SplitLongParagraph(string paragraph)
+        private static IEnumerable<string> SplitSentences(string paragraph)
         {
-            int[] characters = StringInfo.ParseCombiningCharacters(paragraph);
-            for (int start = 0; start < characters.Length;)
+            int start = 0;
+            for (int i = 0; i < paragraph.Length; i++)
             {
-                int end = Mathf.Min(start + PageCharacterLimit, characters.Length);
-                if (end < characters.Length)
-                {
-                    int best = -1;
-                    for (int i = end; i > start + PageCharacterLimit / 2; i--)
-                    {
-                        char last = paragraph[characters[i - 1]];
-                        if (SentenceEnd.IndexOf(last) >= 0 || last == '\n')
-                        {
-                            best = i;
-                            break;
-                        }
-                        if (best < 0 && "，；：、,;: \t".IndexOf(last) >= 0) best = i;
-                    }
-                    if (best > start) end = best;
-                    while (end < characters.Length && !CanBreakAt(paragraph, characters, end, false)) end++;
-                }
-                int offset = Offset(paragraph, characters, end);
-                string part = paragraph.Substring(characters[start], offset - characters[start]).Trim();
-                if (part.Length > 0) yield return part;
-                start = SkipWhitespace(paragraph, characters, end);
+                char c = paragraph[i];
+                // 省略号是语气停顿，不能把开头的“……”切成一张空有标点的卡片。
+                bool period = c == '.' && (i == 0 || paragraph[i - 1] != '.') &&
+                    (i + 1 == paragraph.Length || (paragraph[i + 1] != '.' && !char.IsDigit(paragraph[i + 1])));
+                if (SentenceEnd.IndexOf(c) < 0 && !period) continue;
+                int end = i + 1;
+                while (end < paragraph.Length &&
+                    (SentenceEnd.IndexOf(paragraph[end]) >= 0 || ClosingPunctuation.IndexOf(paragraph[end]) >= 0 ||
+                     paragraph[end] == '…' || paragraph[end] == '.')) end++;
+                yield return paragraph.Substring(start, end - start);
+                start = end;
+                i = end - 1;
             }
+            if (start < paragraph.Length) yield return paragraph.Substring(start);
+        }
+
+        private IEnumerable<string> SplitLongSentence(string sentence, float height, int maxLines)
+        {
+            if (FitsPage(sentence.Trim(), height, maxLines))
+            {
+                yield return sentence;
+                yield break;
+            }
+
+            string leadingWhitespace = sentence.Substring(0, sentence.Length - sentence.TrimStart().Length);
+            string remaining = sentence.Trim();
+            bool firstPart = true;
+            while (remaining.Length > 0)
+            {
+                if (FitsPage(remaining, height, maxLines))
+                {
+                    yield return firstPart ? leadingWhitespace + remaining : remaining;
+                    yield break;
+                }
+
+                int[] characters = StringInfo.ParseCombiningCharacters(remaining);
+                int fittingEnd = FittingPageEnd(remaining, characters, height, maxLines);
+                int minimumTail = Mathf.Min(MinimumFragmentCharacters, Mathf.Max(1, MeaningfulLength(remaining) / 2));
+                // 先在逗号、分号和手动换行处找自然停顿，避免下一页只剩一两个尾字。
+                int end = NaturalPageBreak(remaining, characters, fittingEnd, minimumTail, false);
+                if (end == 0) end = NaturalPageBreak(remaining, characters, fittingEnd, minimumTail, true);
+                if (end == 0)
+                {
+                    end = fittingEnd;
+                    if (MeaningfulLength(remaining.Substring(Offset(remaining, characters, end))) < minimumTail)
+                        end = Mathf.Min(end, Mathf.Max(1, characters.Length / 2));
+                    int safeEnd = end;
+                    while (safeEnd > 0 && !CanBreakAt(remaining, characters, safeEnd, false)) safeEnd--;
+                    if (safeEnd > 0) end = safeEnd;
+                    // 超长英文词无合法词界时，在可容纳的位置拆开，避免逐字各占一页。
+                    else while (end < characters.Length && !CanBreakAt(remaining, characters, end, true)) end++;
+                }
+
+                int offset = Offset(remaining, characters, end);
+                string part = remaining.Substring(0, offset).Trim();
+                if (part.Length > 0)
+                {
+                    yield return firstPart ? leadingWhitespace + part : part;
+                    firstPart = false;
+                }
+                remaining = remaining.Substring(offset).TrimStart();
+            }
+        }
+
+        private int FittingPageEnd(string text, int[] characters, float height, int maxLines)
+        {
+            int low = 1, high = characters.Length;
+            while (low < high)
+            {
+                int end = low + (high - low + 1) / 2;
+                if (FitsPage(text.Substring(0, Offset(text, characters, end)).TrimEnd(), height, maxLines)) low = end;
+                else high = end - 1;
+            }
+            return low;
+        }
+
+        private static int NaturalPageBreak(string text, int[] characters, int limit, int minimumTail, bool secondary)
+        {
+            for (int end = Mathf.Min(limit, characters.Length - 1); end > 0; end--)
+            {
+                char last = text[characters[end - 1]];
+                bool boundary = secondary ? last == '、' || last == ' ' || last == '\t' : "，；：,;:\n".IndexOf(last) >= 0;
+                if (!boundary || !CanBreakAt(text, characters, end, false)) continue;
+                int offset = Offset(text, characters, end);
+                if (MeaningfulLength(text.Substring(0, offset)) < minimumTail ||
+                    MeaningfulLength(text.Substring(offset)) < minimumTail) continue;
+                return end;
+            }
+            return 0;
+        }
+
+        private static int MeaningfulLength(string text)
+        {
+            int count = 0;
+            foreach (int index in StringInfo.ParseCombiningCharacters(text))
+                if (!char.IsWhiteSpace(text[index]) && !char.IsPunctuation(text[index])) count++;
+            return count;
         }
 
         private static string Normalize(string text) =>

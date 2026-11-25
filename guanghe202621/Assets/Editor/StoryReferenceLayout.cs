@@ -64,8 +64,8 @@ public static class StoryReferenceLayout
             if (!text.GetComponent<StoryTextReveal>()) text.gameObject.AddComponent<StoryTextReveal>();
         view.resetHint.color = Ink;
         view.resetHint.fontSize = 34;
-        if (view.resetHint.TryGetComponent<Outline>(out var hintOutline))
-            hintOutline.effectColor = new Color(1f, .94f, .78f, .7f);
+        foreach (var text in new[] { view.resetHint, view.narratorText, view.blackText })
+            foreach (var effect in text.GetComponents<Shadow>()) Object.DestroyImmediate(effect);
         ApplyNarrationLayout(view);
         UIFontUtility.ApplyToHierarchy(view.gameObject);
     }

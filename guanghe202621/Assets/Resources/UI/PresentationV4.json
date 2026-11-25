@@ -320,7 +320,7 @@
     {
       "id": "wall_no_shoes",
       "lines": [
-        "撞不开！看着全是缝，结果硬得要命，还是先帮老板收齐三件物品，再去领马吧！"
+        "撞不开！看着全是缝，结果硬得要命，还是先帮老板找瓷瓶、巧克力和画像吧！"
       ],
       "repeat": [
         "真撞不开，别再让吾拿头撞了！",
@@ -482,6 +482,54 @@
       "duration": 4,
       "cooldown": 8,
       "priority": 30,
+      "once": true
+    },
+    {
+      "id": "inn_vase",
+      "lines": [
+        "瓷瓶到手！这瓶子居然没摔碎，真结实。"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 4,
+      "cooldown": 0,
+      "priority": 60,
+      "once": true
+    },
+    {
+      "id": "inn_chocolate",
+      "lines": [
+        "找到巧克力了！……好大一块，看着怪甜的。"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 4,
+      "cooldown": 0,
+      "priority": 60,
+      "once": true
+    },
+    {
+      "id": "inn_portrait",
+      "lines": [
+        "画像也拿到啦！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3,
+      "cooldown": 0,
+      "priority": 60,
+      "once": true
+    },
+    {
+      "id": "inn_all_items",
+      "lines": [
+        "这下瓷瓶、巧克力、画像全齐了！回一楼找帕洛梅克老板换好马吧！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 6.5,
+      "cooldown": 0,
+      "priority": 60,
       "once": true
     }
   ],
@@ -1568,7 +1616,7 @@
     },
     {
       "id": "inn.approach",
-      "title": "第三幕 3.1：抵达旅馆前平台",
+      "title": "旅馆门外·天空字幕与找马",
       "entry": "entrance_camera",
       "once": true,
       "steps": [
@@ -1585,21 +1633,21 @@
         },
         {
           "id": "s002",
-          "kind": 1,
+          "kind": 13,
           "speaker": "旁白",
           "text": "离开树林后，骑士决定前往前方的旅馆歇脚，顺便寻一匹称心的好马。",
           "next": "s003",
           "alternate": "",
           "argument": "",
           "autoAdvance": true,
-          "seconds": 3,
+          "seconds": 4.5,
           "choices": []
         },
         {
           "id": "s003",
           "kind": 0,
           "speaker": "堂吉诃德",
-          "text": "诶？天上的字幕又出来了——去旅馆找一匹好马！\n听起来不错啊，能骑马就不用老靠吾自己跑了！",
+          "text": "诶？天上的字幕又出来了——去旅馆找一匹好马！\n\n听起来不错啊，能骑马就不用老靠吾自己跑了！",
           "next": "s004",
           "alternate": "",
           "argument": "",
@@ -1663,158 +1711,341 @@
     },
     {
       "id": "inn.intro",
-      "title": "第三幕 3.1：老板、裂墙与半路叫停分支",
-      "entry": "s001",
+      "title": "第三幕·帕洛梅克的三件失物委托",
+      "entry": "entrance_camera",
       "once": true,
       "steps": [
         {
-          "id": "s001",
-          "kind": 0,
-          "speaker": "堂吉诃德",
-          "text": "打扰了！请问这里有能骑的好马吗？",
-          "next": "s002",
+          "id": "entrance_camera",
+          "kind": 12,
+          "speaker": "",
+          "expression": 0,
+          "text": "",
+          "next": "s001",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
         },
         {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "帕洛梅克",
+          "expression": 0,
+          "text": "哎呀，欢迎光临～这么匆忙赶路，是来歇脚的吗，骑士老爷？",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": [],
+          "innkeeperExpression": 0
+        },
+        {
           "id": "s002",
           "kind": 0,
-          "speaker": "旅馆老板",
-          "text": "马？有是有……不过今早旅馆里乱得一塌糊涂，楼梯也断了。\n请先帮我按顺序找回散落在旅馆里的三件物品。找齐后回来找我，我就把那匹“好马”送给你。",
+          "speaker": "堂吉诃德",
+          "expression": 0,
+          "text": "歇脚就不了。听说这里有匹好马，请问在哪儿？",
           "next": "s003",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
         },
         {
           "id": "s003",
           "kind": 0,
-          "speaker": "堂吉诃德",
-          "expression": 1,
-          "text": "还要先帮忙找东西？好吧，骑士可不能对需要帮助的人置之不理！",
+          "speaker": "帕洛梅克",
+          "expression": 0,
+          "text": "马嘛……之前的确有人在我这里寄存了一匹好马，只留给有需要的骑士。",
           "next": "s004",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
-          "choices": []
+          "choices": [],
+          "innkeeperExpression": 0
         },
         {
           "id": "s004",
-          "kind": 4,
+          "kind": 0,
           "speaker": "堂吉诃德",
-          "text": "",
+          "expression": 0,
+          "text": "我就是有需要的骑士！……至少桑丘的故事里是这么写的。",
           "next": "s005",
           "alternate": "",
-          "argument": "inn_wall,inn_stairs",
-          "seconds": 1,
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
           "choices": []
         },
         {
           "id": "s005",
           "kind": 0,
-          "speaker": "堂吉诃德",
-          "text": "右边出口也被一堵裂墙封死了。先想办法上楼，按顺序收齐三件物品，再回到老板这里吧。",
+          "speaker": "帕洛梅克",
+          "expression": 0,
+          "text": "桑丘？听上去像是您的侍从吧，虽然现在好像不在您身边呢。",
           "next": "s006",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
-          "choices": []
+          "choices": [],
+          "innkeeperExpression": 1
         },
         {
           "id": "s006",
-          "kind": 7,
-          "speaker": "堂吉诃德",
-          "text": "",
+          "kind": 0,
+          "speaker": "帕洛梅克",
+          "expression": 0,
+          "text": "我愿意相信您就是那匹良马所等待的骑士，只是……",
           "next": "s007",
-          "alternate": "s008",
+          "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
-          "choices": []
+          "choices": [],
+          "innkeeperExpression": 2
         },
         {
           "id": "s007",
           "kind": 0,
-          "speaker": "堂吉诃德",
-          "text": "通往二楼的楼梯断了，手头只有这些木板、木箱和酒桶。\n看着材料好像不够一口气铺到二楼啊，桑丘。",
-          "next": "s009",
+          "speaker": "帕洛梅克",
+          "expression": 0,
+          "text": "今天一早，旅馆里不知怎么乱成一团，楼上的东西全撒得到处都是，我一个人可爬不上去收拾。",
+          "next": "s008",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
-          "choices": []
+          "choices": [],
+          "innkeeperExpression": 3
         },
         {
           "id": "s008",
           "kind": 0,
-          "speaker": "堂吉诃德",
-          "text": "通往二楼的楼梯断了，材料看着不太够一口气铺到顶啊。\n老规矩，半路按空格叫停吾，把后面走过的物块拆下来接着铺吧，桑丘！",
-          "next": "",
+          "speaker": "帕洛梅克",
+          "expression": 0,
+          "text": "唉，旅馆乱成这样，搞得我一时想不起来那匹马在哪儿了……",
+          "next": "s009",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
-          "choices": []
+          "choices": [],
+          "innkeeperExpression": 2
         },
         {
           "id": "s009",
+          "kind": 0,
+          "speaker": "帕洛梅克",
+          "expression": 0,
+          "text": "这样吧～只要你们帮我把楼上散落的瓷瓶、巧克力和画像这三样东西都找回来，我也许就能想起来那匹马在哪儿了？",
+          "next": "request_choices",
+          "alternate": "",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": [],
+          "innkeeperExpression": 0
+        },
+        {
+          "id": "request_choices",
           "kind": 3,
           "speaker": "桑丘",
+          "expression": 0,
           "text": "",
           "next": "",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": true,
           "seconds": 3,
           "choices": [
             {
-              "text": "如果你在半路能停下来，我就可以把后面走过的木板拆下来，继续往前铺。",
-              "next": "s010"
+              "text": "好标准的通马桶任务……",
+              "next": "request_a"
             },
             {
-              "text": "我看UI提示，你跑起来的时候再按空格或者点你本人，好像就能让你停下。",
-              "next": "s010"
+              "text": "老板娘的立绘和游戏内看起来完全不一样吧。",
+              "next": "request_b"
             }
           ]
         },
         {
-          "id": "s010",
-          "kind": 6,
+          "id": "request_a",
+          "kind": 0,
           "speaker": "堂吉诃德",
-          "text": "",
-          "next": "s011",
+          "expression": 1,
+          "text": "是啊，但现在也只能干了。",
+          "next": "request_common",
           "alternate": "",
-          "argument": "noop",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
         },
         {
-          "id": "s011",
+          "id": "request_b",
           "kind": 0,
           "speaker": "堂吉诃德",
-          "text": "居然还能半路急刹车吗！\n那就试试看！吾先跑上去，汝看准时机叫停吾！",
+          "expression": 5,
+          "text": "你关注点居然在这里吗？",
+          "next": "request_common",
+          "alternate": "",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "request_common",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "expression": 0,
+          "text": "总之，要上楼找三样东西：瓷瓶，巧克力，还有画像。走吧，桑丘。",
+          "next": "midstop_branch",
+          "alternate": "",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "midstop_branch",
+          "kind": 7,
+          "speaker": "堂吉诃德",
+          "expression": 0,
+          "text": "",
+          "next": "midstop_intro",
+          "alternate": "midstop_known",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "midstop_intro",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "expression": 0,
+          "text": "通往二楼的楼梯断了，手头只有这些木板、木箱和酒桶。\n看着材料好像不够一口气铺到二楼啊，桑丘。",
+          "next": "midstop_choices",
+          "alternate": "",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "midstop_choices",
+          "kind": 3,
+          "speaker": "桑丘",
+          "expression": 0,
+          "text": "",
           "next": "",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "如果你在半路能停下来，我就可以把已经走过的木板拆下来继续铺。",
+              "next": "midstop_try"
+            },
+            {
+              "text": "感觉这种游戏可以中途停下的吧？比如再按一次空格，或者点一下你？",
+              "next": "midstop_try"
+            }
+          ]
+        },
+        {
+          "id": "midstop_try",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "expression": 0,
+          "text": "有道理，很有尝试的价值。\n\n那就试试看！吾先跑上去，汝看准时机叫停吾！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "midstop_known",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "expression": 0,
+          "text": "通往二楼的楼梯断了，材料看着不太够一口气铺到顶啊。\n\n老规矩，半路按空格叫停吾，把后面走过的物块拆下来接着铺吧，桑丘！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
         }
-      ]
+      ],
+      "showInnkeeper": true
     },
     {
       "id": "inn.shoes",
-      "title": "第三幕：老板奖励揭晓马头跑鞋",
+      "title": "第三幕·获赠驽辛难得与破墙能力",
       "entry": "s001",
       "once": true,
       "steps": [
         {
           "id": "s001",
           "kind": 0,
-          "expression": 4,
           "speaker": "堂吉诃德",
-          "text": "……\n桑丘，帮吾看看，这是什么东西。",
+          "expression": 4,
+          "text": "……\n桑丘，帮吾看看，吾是不是眼花了，这是什么东西。",
           "next": "s002",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
         },
@@ -1822,10 +2053,14 @@
           "id": "s002",
           "kind": 3,
           "speaker": "桑丘",
+          "expression": 0,
           "text": "",
           "next": "",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": [
             {
@@ -1843,10 +2078,13 @@
           "kind": 0,
           "speaker": "堂吉诃德",
           "expression": 1,
-          "text": "这就是吾辛苦找齐三件物品，老板送给吾的“好马”？！这也太敷衍了吧！",
+          "text": "这就是老板和剧本里说的“好马”？！这也太敷衍了吧！",
           "next": "s005",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
         },
@@ -1855,74 +2093,98 @@
           "kind": 0,
           "speaker": "堂吉诃德",
           "expression": 1,
-          "text": "别光听名字啊！这分明就是一双鞋！",
+          "text": "别光看名字啊！这分明就是一双鞋！",
           "next": "s005",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
         },
         {
           "id": "s005",
           "kind": 0,
-          "speaker": "堂吉诃德",
-          "text": "算了，真来一匹活马，汝粘的桥估计也撑不住。穿上试试吧……\n诶？这鞋穿起来好轻，而且脚下好像攒着一股冲劲！",
+          "speaker": "帕洛梅克",
+          "expression": 0,
+          "text": "哎呀，不要太在意细节嘛～\n\n真要是一匹大马，可上不了那些粘起来的木板桥哦？\n\n这双鞋跑起来又轻又快，撞开右边那堵旧墙也不在话下呢。",
           "next": "s006",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
-          "choices": []
+          "choices": [],
+          "innkeeperExpression": 1
         },
         {
           "id": "s006",
           "kind": 0,
           "speaker": "堂吉诃德",
-          "text": "桑丘！穿上它的话，一楼那堵裂墙说不定能直接撞破！\n......不过吾的外观为何没有变化？",
+          "expression": 7,
+          "text": "唔……这么一说好像也有道理。\n\n诶？穿起来真的好轻，而且脚下好像攒着一股冲劲！",
           "next": "s007",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
         },
         {
           "id": "s007",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "expression": 4,
+          "text": "桑丘！穿上它的话，一楼右边那堵裂墙肯定能直接撞破！\n\n……不过吾的外观为何没有变化？",
+          "next": "s008",
+          "alternate": "",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s008",
           "kind": 3,
           "speaker": "桑丘",
+          "expression": 0,
           "text": "",
           "next": "",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": [
             {
               "text": "可能是制作组工期不够了吧。",
-              "next": "s008"
+              "next": "s009"
             },
             {
-              "text": "这样的话，我们是不是可以通过那堵裂墙了？往左走好像能回到一楼的样子。",
-              "next": "s009"
+              "text": "这样的话，我们是不是能直接冲出旅馆了？",
+              "next": "s010"
             }
           ]
-        },
-        {
-          "id": "s008",
-          "kind": 0,
-          "speaker": "堂吉诃德",
-          "text": "好现实的原因......",
-          "next": "s010",
-          "alternate": "",
-          "argument": "",
-          "seconds": 3,
-          "choices": []
         },
         {
           "id": "s009",
           "kind": 0,
           "speaker": "堂吉诃德",
-          "text": "好主意！",
-          "next": "s010",
+          "expression": 1,
+          "text": "好现实的原因……",
+          "next": "s011",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
         },
@@ -1930,14 +2192,34 @@
           "id": "s010",
           "kind": 0,
           "speaker": "堂吉诃德",
-          "text": "走吧，桑丘，让我们去把那堵墙撞开！",
+          "expression": 7,
+          "text": "没错！",
+          "next": "s011",
+          "alternate": "",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s011",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "expression": 7,
+          "text": "谢啦，帕洛梅克老板！走吧，桑丘，去把那堵墙撞开！",
           "next": "",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
         }
-      ]
+      ],
+      "showInnkeeper": true
     },
     {
       "id": "inn.ending",
@@ -2025,38 +2307,28 @@
     },
     {
       "id": "inn.quest_done",
-      "title": "第三幕：三物品交付与老板赠礼",
+      "title": "第三幕·回到帕洛梅克身旁交差",
       "entry": "s001",
       "once": true,
       "steps": [
         {
           "id": "s001",
           "kind": 0,
-          "speaker": "旅馆老板",
-          "text": "三件物品都找到了，谢谢你！骑士大人果然说到做到。",
-          "next": "s002",
-          "seconds": 3,
-          "choices": []
-        },
-        {
-          "id": "s002",
-          "kind": 0,
-          "speaker": "堂吉诃德",
-          "text": "举手之劳！那么，答应吾的好马呢？",
-          "next": "s003",
-          "seconds": 3,
-          "choices": []
-        },
-        {
-          "id": "s003",
-          "kind": 0,
-          "speaker": "旅馆老板",
-          "text": "这件驽骍难得就送给你了。接好！拿上它，右侧那堵裂墙便拦不住你。",
+          "speaker": "帕洛梅克",
+          "expression": 0,
+          "text": "辛苦啦～瓷瓶、巧克力还有画像，一件不落呢。\n\n说话算数，这就是要给骑士老爷的好马——“驽辛难得”，拿去吧！",
           "next": "",
+          "alternate": "",
+          "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
           "seconds": 3,
-          "choices": []
+          "choices": [],
+          "innkeeperExpression": 1
         }
-      ]
+      ],
+      "showInnkeeper": true
     }
   ]
 }
