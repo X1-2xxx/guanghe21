@@ -31,19 +31,13 @@ public static class StoryReferenceLayout
         view.portrait.transform.SetAsFirstSibling();
         Area(view.portrait.rectTransform,new Vector2(.025f,.09f),new Vector2(.37f,.93f));
         view.portrait.preserveAspect=true;view.portrait.raycastTarget=false;
-        // 纸张 PNG 顶部留给羽毛笔，文字放进下方真正的纸面，避免压在轮廓外。
-        Area(view.speakerText.rectTransform,new Vector2(.095f,.55f),new Vector2(.81f,.68f));
-        Area(view.dialogueText.rectTransform,new Vector2(.095f,.16f),new Vector2(.82f,.53f));
-        view.speakerText.fontSize=34;view.dialogueText.fontSize=32;
-        view.speakerText.color=view.dialogueText.color=Ink;
-        view.dialogueText.alignment=TextAnchor.UpperLeft;
-        view.dialogueText.resizeTextForBestFit=true;view.dialogueText.resizeTextMinSize=26;view.dialogueText.resizeTextMaxSize=32;
+        ApplyDialogueTextLayout(view, frame);
 
         view.dialogueAdvanceButton=frame.GetComponent<Button>();
         if(!view.dialogueAdvanceButton)view.dialogueAdvanceButton=frame.gameObject.AddComponent<Button>();
         view.dialogueAdvanceButton.targetGraphic=frame;view.dialogueAdvanceButton.transition=Selectable.Transition.None;
         var navigation=view.dialogueAdvanceButton.navigation;navigation.mode=Navigation.Mode.None;view.dialogueAdvanceButton.navigation=navigation;
-        Area((RectTransform)view.continueButton.transform,new Vector2(.72f,.07f),new Vector2(.84f,.18f));
+        Area((RectTransform)view.continueButton.transform,new Vector2(.72f,.067f),new Vector2(.84f,.145f));
         view.continueButton.GetComponent<Image>().color=Color.clear;
         var continueText=view.continueButton.GetComponentInChildren<Text>();continueText.color=Ink;continueText.fontSize=26;continueText.text="继续 ›";
 
@@ -63,6 +57,39 @@ public static class StoryReferenceLayout
         view.choiceAPrefix="A. ";view.choiceBPrefix="B. ";
         UIFontUtility.ApplyToHierarchy(view.gameObject);
     }
+
+    private static void ApplyDialogueTextLayout(StoryPanelView view, Image frame)
+    {
+        // 小纸牌和大纸卷是独立的 UI 部件，可以分别在预制体里调整。
+        var nameplateTransform = frame.transform.Find("SpeakerNameplate");
+        var nameplate = nameplateTransform
+            ? nameplateTransform.GetComponent<Image>()
+            : new GameObject("SpeakerNameplate", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+        nameplate.transform.SetParent(frame.transform, false);
+        Area(nameplate.rectTransform, new Vector2(.07f, .52f), new Vector2(.24f, .81f));
+        nameplate.sprite = Sprite("uisc/IMG_1079.png");
+        nameplate.raycastTarget = false;
+
+        var speaker = view.speakerText;
+        speaker.transform.SetParent(nameplate.transform, false);
+        Area(speaker.rectTransform, new Vector2(.215f, .23f), new Vector2(.94f, .76f));
+        speaker.alignment = TextAnchor.MiddleCenter;
+        speaker.fontSize = 48;
+        speaker.resizeTextForBestFit = true;
+        speaker.resizeTextMinSize = 44;
+        speaker.resizeTextMaxSize = 48;
+        speaker.color = Ink;
+
+        var body = view.dialogueText;
+        Area(body.rectTransform, new Vector2(.095f, .145f), new Vector2(.82f, .505f));
+        body.alignment = TextAnchor.UpperLeft;
+        body.fontSize = 40;
+        body.resizeTextForBestFit = true;
+        body.resizeTextMinSize = 33;
+        body.resizeTextMaxSize = 40;
+        body.color = Ink;
+    }
+
     public static void ApplyTray(GameObject root)
     {
         var slots=root.GetComponentsInChildren<ItemSlotUI>(true).OrderBy(s=>(int)s.ItemId).ToArray();

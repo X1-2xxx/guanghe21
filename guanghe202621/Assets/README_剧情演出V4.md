@@ -38,6 +38,8 @@
 
 底部纸张使用 `UI/uisc/IMG_1126.png`，A/B 花纹框使用 `IMG_1180.png`、`IMG_1183.png`。`PresentationRuntime` 上的「显示大立绘时隐藏场景角色外观」控制对白期间的角色显示。
 
+在 `StoryPanel.prefab` 的纸张对话框下，`SpeakerNameplate` 是独立的小纸牌，其子物体 `Speaker` 显示角色名。大纸卷里的 `Content` 显示对白。角色名默认 48，正文默认 40，长对白会在纸面内换行和适度缩小。
+
 在 **停止运行** 时编辑 Project 中的预制体并保存。若在场景实例上调整，按需要用 Overrides → Apply 写回该预制体。运行中的临时实例调整在停止后不会保存。
 
 ## 已接好的真实触发
