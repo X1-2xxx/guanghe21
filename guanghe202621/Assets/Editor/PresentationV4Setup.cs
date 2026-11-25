@@ -220,6 +220,7 @@ public static class PresentationV4Setup
             var root = new GameObject("V4剧情场景绑定"); var binding = root.AddComponent<PresentationSceneBinding>();
             binding.runtimePrefab = AssetDatabase.LoadAssetAtPath<PresentationRuntime>(Folder + "PresentationRuntime.prefab");
             binding.player = Object.FindAnyObjectByType<PlayerActionController>(); binding.levelCamera=Camera.main;
+            binding.entranceCamera = GameObject.Find("相机切换3")?.GetComponent<CameraTarget>();
             binding.villageStone = GameObject.Find("石块1").GetComponent<Rigidbody2D>();
             binding.checkpoints = Object.FindObjectsByType<Campfire>(FindObjectsSortMode.None).OrderBy(c=>c.transform.position.x).ToArray();
             binding.legacyInnQuest = Object.FindAnyObjectByType<InnQuest>();
@@ -229,17 +230,16 @@ public static class PresentationV4Setup
             var stone=binding.villageStone.transform;
             binding.targets=new[] {
                 Target("village_ground",new Vector2(-17.65f,-1.4f),horizontalOnly:true),
-                Target("village_pit",new Vector2(-15,-1.4f),orthographicSize:3.8f),
+                Target("village_pit",new Vector2(-15,-1.4f),horizontalOnly:true,orthographicSize:3.8f),
                 new PresentationSceneBinding.Target{key="village_stone",value=stone,horizontalOnly=true},
                 Target("lower_platform",new Vector2(41.41f,-2.64f)), Target("jump_key",new Vector2(46,-1.5f)),
                 new PresentationSceneBinding.Target{key="inn_wall",value=wall.transform}, Target("inn_stairs",new Vector2(81.47f,9.26f)) };
             foreach (var target in binding.targets) if(target.value!=stone && target.value!=wall.transform) target.value.SetParent(root.transform,true);
             binding.shoesPoint=RectMarker("V4跑鞋位置_美术关卡可拖动",root.transform,new Vector2(77,23));
-            SignalZone(root.transform,"剧情触发区_进入断桥","bridge.enter",new Vector2(-6, -1.5f),new Vector2(.4f,3));
             SignalZone(root.transform,"剧情触发区_进入树林","forest.enter",new Vector2(10,-1.5f),new Vector2(.4f,3));
             SignalZone(root.transform,"剧情触发区_进入跳跃小关","jump.enter",new Vector2(36.5f,-1.5f),new Vector2(.4f,3));
             SignalZone(root.transform,"剧情触发区_发现跳跃键","jump.lower",new Vector2(40,-1.5f),new Vector2(1,3));
-            SignalZone(root.transform,"剧情触发区_旅馆入口","inn.enter",new Vector2(63,7),new Vector2(1,3));
+            SignalZone(root.transform,"剧情触发区_旅馆前平台","inn.approach",new Vector2(62.2f,7.35f),new Vector2(1.1f,2.5f));
             SignalZone(root.transform,"剧情触发区_破墙后结束","inn.exit",new Vector2(93,7),new Vector2(1,4));
             foreach(var name in new[]{"左侧木板","右侧木板","树木1","树木2","树木3"})
             {

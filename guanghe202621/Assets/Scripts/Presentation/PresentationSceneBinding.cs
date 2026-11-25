@@ -21,6 +21,7 @@ namespace GamePresentation
         [InspectorName("演出管理器预制体")] public PresentationRuntime runtimePrefab;
         [InspectorName("玩家")] public PlayerActionController player;
         [InspectorName("相机")] public Camera levelCamera;
+        [InspectorName("入口关卡镜头")] public CameraTarget entranceCamera;
         [InspectorName("村口石头")] public Rigidbody2D villageStone;
         [InspectorName("村口坑范围（世界坐标）")] public Rect villagePit = new Rect(-16.05f, -5.1f, 2.1f, 2.3f);
         [InspectorName("村口地面高度")] public float villageGroundY = -3f;

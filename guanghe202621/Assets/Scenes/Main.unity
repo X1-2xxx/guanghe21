@@ -18047,7 +18047,7 @@ GameObject:
   - component: {fileID: 200140996}
   - component: {fileID: 200140995}
   m_Layer: 0
-  m_Name: "\u5267\u60C5\u89E6\u53D1\u533A_\u65C5\u9986\u5165\u53E3"
+  m_Name: "\u5267\u60C5\u89E6\u53D1\u533A_\u65C5\u9986\u524D\u5E73\u53F0"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -18062,7 +18062,7 @@ Transform:
   m_GameObject: {fileID: 200140993}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 63, y: 7, z: 0}
+  m_LocalPosition: {x: 62.2, y: 7.35, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18080,7 +18080,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40cea78ee51d0b54c9e45f350728e8d0, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::GamePresentation.StorySignalTrigger
-  signal: inn.enter
+  signal: inn.approach
   once: 1
   bark:
 --- !u!61 &200140996
@@ -18127,7 +18127,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 3}
+  m_Size: {x: 1.1, y: 2.5}
   m_EdgeRadius: 0
 --- !u!50 &416242808 stripped
 Rigidbody2D:
@@ -18241,6 +18241,7 @@ MonoBehaviour:
   runtimePrefab: {fileID: 245573191955928962, guid: a95501397744ec8438e17532c23fb568, type: 3}
   player: {fileID: 404335228}
   levelCamera: {fileID: 209933207}
+  entranceCamera: {fileID: 2016265051}
   villageStone: {fileID: 589636708}
   villagePit:
     serializedVersion: 2
@@ -18262,6 +18263,7 @@ MonoBehaviour:
     horizontalOnly: 1
   - key: village_pit
     value: {fileID: 1197247313}
+    horizontalOnly: 1
     orthographicSize: 3.8
   - key: village_stone
     value: {fileID: 589636707}
@@ -18902,7 +18904,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1983840352
 Transform:
   m_ObjectHideFlags: 0
@@ -19236,6 +19238,17 @@ TilemapRenderer:
   m_SortOrder: 0
   m_Mode: 0
   m_DetectChunkCullingBounds: 0
+--- !u!114 &2016265051 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9088849641661413758, guid: 9a8b791467365f84f9c9aa7f468afcf3, type: 3}
+  m_PrefabInstance: {fileID: 1889605040}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87ba1a9833554bf4f8816e146069041e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::LevelKit.CameraTarget
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

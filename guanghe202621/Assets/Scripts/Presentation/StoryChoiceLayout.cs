@@ -7,8 +7,8 @@ namespace GamePresentation
     internal sealed class StoryChoiceLayout
     {
         private const float MinimumGap = 12f;
-        private const float TextHeightMargin = 4f;
-        private const float ExpandedTopInset = 24f;
+        private const float TextHeightMargin = 6f;
+        private const float ExpandedTopInset = 16f;
         private readonly RectTransform panel;
         private readonly Row first, second;
         private Vector2 lastSize;
@@ -118,7 +118,12 @@ namespace GamePresentation
                 // 长文首行留出纸框花边与手写字体的上沿。
                 topPadding = Mathf.Max(0f, OriginalHeight * (1f - labelAnchorMax) - labelOffsetMax) + ExpandedTopInset;
                 FitsOriginal = TextHeight(FontSize, out string formatted) + TextHeightMargin + ExpandedTopInset <= label.rectTransform.rect.height;
-                if (FitsOriginal) label.text = formatted;
+                if (FitsOriginal)
+                {
+                    label.resizeTextForBestFit = false;
+                    label.fontSize = FontSize;
+                    label.text = formatted;
+                }
             }
 
             public float RequiredHeight(int fontLimit) => FitsOriginal

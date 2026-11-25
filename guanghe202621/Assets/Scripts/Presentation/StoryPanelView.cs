@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,6 +21,7 @@ namespace GamePresentation
         [InspectorName("A 选项前缀")] public string choiceAPrefix = "A. ";
         [InspectorName("B 选项前缀")] public string choiceBPrefix = "B. ";
         public Text choiceAText, choiceBText, resetHint;
+        [SerializeField, Min(1f), InspectorName("字幕每秒字数")] private float subtitleCharactersPerSecond = 32f;
         private Action onContinue;
         private Action<int> onChoice;
         private string lastLine, lastSpeaker;
@@ -28,15 +30,18 @@ namespace GamePresentation
         private List<string> textPages;
         private int pageIndex;
         private StoryChoiceLayout choiceLayout;
+        private StoryTextReveal pageReveal;
+        private int[] subtitleCharacters = Array.Empty<int>();
+        private float revealedCharacters;
 
         public int CurrentPageLength => pagedText && pagedText.text != null ? pagedText.text.Length : 0;
+        public bool IsPageRevealed => !pageReveal || revealedCharacters >= subtitleCharacters.Length;
 
         public void Bind(Action advance, Action<int> choose)
         {
             onContinue = advance; onChoice = choose;
             continueButton.onClick.AddListener(Continue);
             blackContinueButton.onClick.AddListener(Continue);
-            narratorContinueButton.onClick.AddListener(Continue);
             if (dialogueAdvanceButton) dialogueAdvanceButton.onClick.AddListener(Continue);
             choiceA.onClick.AddListener(() => onChoice?.Invoke(0));
             choiceB.onClick.AddListener(() => onChoice?.Invoke(1));
@@ -57,6 +62,7 @@ namespace GamePresentation
             pagedText = null;
             textPages = null;
             pageIndex = 0;
+            StopSubtitle();
         }
         public void Show(StoryStep step, Sprite actorPortrait)
         {
@@ -71,7 +77,7 @@ namespace GamePresentation
             }
             if (step.kind == StoryStepKind.Narration)
             {
-                narratorContinueButton.gameObject.SetActive(!step.autoAdvance);
+                if (narratorContinueButton) narratorContinueButton.gameObject.SetActive(false);
                 narratorPanel.SetActive(true);
                 SetTextPages(narratorText, step.text);
                 return;
@@ -110,18 +116,50 @@ namespace GamePresentation
         public bool TryAdvanceTextPage()
         {
             if (!pagedText || textPages == null || pageIndex + 1 >= textPages.Count) return false;
-            pagedText.text = textPages[++pageIndex];
+            ShowPage(textPages[++pageIndex]);
             if (pagedText == dialogueText) lastLine = pagedText.text;
             return true;
+        }
+
+        internal void TickSubtitle(float delta)
+        {
+            if (IsPageRevealed) return;
+            revealedCharacters += delta * Mathf.Max(1f, subtitleCharactersPerSecond);
+            int count = Mathf.FloorToInt(revealedCharacters);
+            pageReveal.SetVisibleCharacters(count >= subtitleCharacters.Length ? int.MaxValue : subtitleCharacters[count]);
+        }
+
+        internal bool CompleteSubtitle()
+        {
+            if (IsPageRevealed) return false;
+            revealedCharacters = subtitleCharacters.Length;
+            pageReveal.SetVisibleCharacters(int.MaxValue);
+            return true;
+        }
+
+        private void StopSubtitle()
+        {
+            if (pageReveal) pageReveal.SetVisibleCharacters(int.MaxValue);
+            pageReveal = null;
+        }
+
+        private void ShowPage(string text)
+        {
+            pagedText.text = text;
+            pageReveal = pagedText.GetComponent<StoryTextReveal>();
+            if (!pageReveal) return;
+            subtitleCharacters = StringInfo.ParseCombiningCharacters(text);
+            revealedCharacters = 0f;
+            pageReveal.SetVisibleCharacters(0);
         }
 
         private void SetTextPages(Text target, string text)
         {
             pagedText = target;
             target.horizontalOverflow = HorizontalWrapMode.Overflow;
-            textPages = LayoutFor(target).Paginate(text, target.rectTransform.rect.height, target == dialogueText ? 3 : 4);
+            textPages = LayoutFor(target).Paginate(text, Mathf.Max(1f, target.rectTransform.rect.height - 4f), 2);
             pageIndex = 0;
-            target.text = textPages.Count > 0 ? textPages[0] : string.Empty;
+            ShowPage(textPages.Count > 0 ? textPages[0] : string.Empty);
         }
 
         private static StoryTextLayout LayoutFor(Text label)

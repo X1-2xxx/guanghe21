@@ -17,7 +17,8 @@ namespace GamePresentation
         [InspectorName("黑幕开场文字")] BlackTitle,
         [InspectorName("原型结束图")] End,
         [InspectorName("黑幕淡出")] FadeOut,
-        [InspectorName("是否已完成指定剧情")] BranchEpisodeComplete
+        [InspectorName("是否已完成指定剧情")] BranchEpisodeComplete,
+        [InspectorName("等待入口镜头就位")] RoomEntranceCamera
     }
 
     public enum StoryExpression
@@ -68,8 +69,7 @@ namespace GamePresentation
         [InspectorName("条件成立时节点")] public string alternate;
         [InspectorName("镜头目标 / 等待信号 / 指令")] public string argument;
         [InspectorName("等待期间显示头顶小气泡")] public bool showHeadWhileWaiting;
-        [InspectorName("报幕自动消失")] public bool autoAdvance;
-        [InspectorName("气泡与下一个选项组同时显示")] public bool showChoicesWithBubble;
+        [InspectorName("黑幕报幕自动播放")] public bool autoAdvance;
         [InspectorName("阅读或停留秒数")] public float seconds = 3f;
         [InspectorName("选项")] public List<StoryChoice> choices = new List<StoryChoice>();
     }

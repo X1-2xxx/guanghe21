@@ -86,6 +86,7 @@ namespace LevelKit
         public WallStopReason LastWallStopReason { get; private set; }
         public UnityEvent<WallStopReason> OnWallStopped => onWallStopped;
         internal int WalkDirection => walkDirection;
+        internal bool IsGameplayCameraMoving => movingCamera != null;
         private int conversationInputFrame = -1;
         internal bool ConversationBlocksInput => IsInConversation || conversationInputFrame == Time.frameCount;
         internal void UnlockJump() => jumpEnabled = true;
@@ -439,9 +440,9 @@ namespace LevelKit
             movingCamera = view.transform;
         }
 
-        internal void EnterRoomCamera(CameraTarget target)
+        internal void EnterRoomCamera(CameraTarget target, bool refreshSide = false)
         {
-            if (!target || activeCameraTarget == target) return;
+            if (!target || (!refreshSide && activeCameraTarget == target)) return;
             bool crossingSide = cameraSides.TryGetValue(target, out bool previous)
                 ? target.ResolveSide(body.position, previous)
                 : target.IsPosition2Side(body.position);

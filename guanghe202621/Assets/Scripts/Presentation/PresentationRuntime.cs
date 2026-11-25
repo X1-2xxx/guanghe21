@@ -16,7 +16,7 @@ namespace GamePresentation
         [InspectorName("游玩时道具栏")] public GameObject inventoryTray;
         [InspectorName("镜头演出组件")] public CameraPerformanceManager cameraPerformance;
         [InspectorName("镜头返回位置提供器")] public PresentationCameraAnchor cameraAnchor;
-        [InspectorName("气泡使用打字机")] public bool useTypewriter;
+        [InspectorName("游玩小台词使用打字机")] public bool useTypewriter;
         [InspectorName("每秒显示字数"), Min(1)] public float charactersPerSecond = 32f;
         [InspectorName("显示大立绘时隐藏场景角色外观")] public bool hideWorldActorWithPortrait = true;
         [InspectorName("全局教学：半路叫停"), SerializeField] public bool flag_taught_midstop;
@@ -161,9 +161,9 @@ namespace GamePresentation
             }
             headView.transform.position = position;
             headView.transform.rotation = Quaternion.identity;
-            if (useTypewriter)
+            if (headIsStory || useTypewriter)
             {
-                int count = Mathf.FloorToInt(headElapsed * charactersPerSecond);
+                int count = Mathf.FloorToInt(headElapsed * Mathf.Max(1f, charactersPerSecond));
                 if (shownCharacters != count) { shownCharacters = count; headView.Reveal(count); }
             }
         }
@@ -206,7 +206,9 @@ namespace GamePresentation
             VisibleHeadText = text; headRemaining = Mathf.Max(0.1f, seconds); headElapsed = 0f;
             headPriority = priority; headIsStory = story; shownFrame = Time.frameCount; shownCharacters = -1;
             headView.Initialize(Scene.levelCamera, text);
-            headView.Reveal(useTypewriter ? 0 : headView.CharacterCount);
+            bool animate = story || useTypewriter;
+            if (story) headRemaining = Mathf.Max(headRemaining, headView.CharacterCount / Mathf.Max(1f, charactersPerSecond) + 0.9f);
+            headView.Reveal(animate ? 0 : headView.CharacterCount);
             headView.SetVisible(true);
         }
         public void InterruptBubble()
@@ -307,7 +309,11 @@ namespace GamePresentation
         {
             if (!V4Mode || Scene.checkpoints == null) return;
             int index = System.Array.FindIndex(Scene.checkpoints, c => c == source);
-            if (index == 1 && openingReset) Director.Enqueue("village.crossed");
+            if (index == 1)
+            {
+                if (openingReset) Director.Enqueue("village.crossed");
+                Director.Enqueue("bridge.intro");
+            }
             if (index == 2) { Scene.player.StopForPresentation(); PlayBark("bridge_complete"); }
             if (index == 3) { Scene.player.StopForPresentation(); PlayBark("forest_complete"); }
         }
@@ -321,7 +327,11 @@ namespace GamePresentation
                 case "bridge.enter": Director.Enqueue("bridge.intro"); break;
                 case "forest.enter": if (Scene.includeForest) Director.Enqueue("forest.intro"); break;
                 case "jump.enter": Director.Enqueue("jump.intro"); break;
-                case "inn.enter": Director.Enqueue("inn.intro"); break;
+                case "inn.approach": Director.Enqueue("inn.approach"); break;
+                case "inn.enter":
+                    Director.Enqueue("inn.approach");
+                    Director.Enqueue("inn.intro");
+                    break;
                 case "jump.lower": if (!jumpAcquired) Director.Enqueue("jump.discover"); break;
                 case "inn.exit": if (wallBroken && Scene.player.BreakEnabled) Director.Enqueue("inn.ending"); break;
                 case "inventory.cardboard": nudgeAt = Mathf.Min(nudgeAt, Time.time + 10f); break;

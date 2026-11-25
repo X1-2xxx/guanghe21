@@ -54,12 +54,18 @@ public static class StoryReferenceLayout
         foreach(var image in images){image.color=Color.white;image.type=Image.Type.Simple;image.preserveAspect=false;}
         foreach(var text in new[]{view.choiceAText,view.choiceBText})
         {
-            Area(text.rectTransform,new Vector2(.075f,.15f),new Vector2(.91f,.83f));
-            text.color=Ink;text.fontSize=30;text.alignment=TextAnchor.MiddleLeft;text.lineSpacing=1.14f;
-            text.resizeTextForBestFit=true;text.resizeTextMinSize=22;text.resizeTextMaxSize=30;
+            Area(text.rectTransform,new Vector2(.09f,.19f),new Vector2(.87f,.79f));
+            text.color=Ink;text.fontSize=40;text.alignment=TextAnchor.MiddleLeft;text.lineSpacing=1.14f;
+            text.resizeTextForBestFit=true;text.resizeTextMinSize=24;text.resizeTextMaxSize=40;
         }
         view.choiceAPrefix="A. ";view.choiceBPrefix="B. ";
         view.blackText.lineSpacing=1.15f;
+        foreach (var text in new[] { view.blackText, view.narratorText, view.dialogueText })
+            if (!text.GetComponent<StoryTextReveal>()) text.gameObject.AddComponent<StoryTextReveal>();
+        view.resetHint.color = Ink;
+        view.resetHint.fontSize = 34;
+        if (view.resetHint.TryGetComponent<Outline>(out var hintOutline))
+            hintOutline.effectColor = new Color(1f, .94f, .78f, .7f);
         ApplyNarrationLayout(view);
         UIFontUtility.ApplyToHierarchy(view.gameObject);
     }
@@ -75,28 +81,14 @@ public static class StoryReferenceLayout
             .OfType<Sprite>().First(sprite => sprite.name == "IMG_1124_0");
         frame.color = Color.white;
 
-        Area(text.rectTransform, new Vector2(.11f, .17f), new Vector2(.935f, .84f));
+        Area(text.rectTransform, new Vector2(.14f, .23f), new Vector2(.89f, .79f));
         text.color = Ink;
         text.alignment = TextAnchor.MiddleCenter;
         text.fontSize = 42;
         text.lineSpacing = 1.18f;
         text.resizeTextForBestFit = false;
 
-        var button = view.narratorContinueButton;
-        var buttonImage = button.GetComponent<Image>();
-        Area(buttonImage.rectTransform, new Vector2(.355f, -.255f), new Vector2(.645f, -.045f));
-        buttonImage.sprite = Sprite("uisc/IMG_1184.png");
-        buttonImage.preserveAspect = true;
-        buttonImage.color = new Color(1f, .96f, .88f);
-        var colors = button.colors;
-        colors.highlightedColor = colors.selectedColor = new Color(1f, .94f, .80f);
-        colors.pressedColor = new Color(.91f, .79f, .62f);
-        button.colors = colors;
-
-        var label = button.GetComponentInChildren<Text>();
-        Area(label.rectTransform, new Vector2(.12f, .14f), new Vector2(.85f, .82f));
-        label.color = Ink;
-        label.fontSize = 34;
+        if (view.narratorContinueButton) view.narratorContinueButton.gameObject.SetActive(false);
     }
 
     private static void ApplyDialogueTextLayout(StoryPanelView view, Image frame)
@@ -122,7 +114,7 @@ public static class StoryReferenceLayout
         speaker.color = Ink;
 
         var body = view.dialogueText;
-        Area(body.rectTransform, new Vector2(.105f, .105f), new Vector2(.81f, .475f));
+        Area(body.rectTransform, new Vector2(.112f, .21f), new Vector2(.80f, .475f));
         body.alignment = TextAnchor.UpperLeft;
         body.fontSize = 40;
         body.resizeTextForBestFit = false;

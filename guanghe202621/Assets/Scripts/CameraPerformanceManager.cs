@@ -57,6 +57,7 @@ public sealed class CameraPerformanceManager : MonoBehaviour
     private int shotIndex;
     private float elapsed;
     private float activeReturnDuration;
+    private bool returnHorizontally;
     private Vector3 savedPosition;
     private float savedSize;
     private Vector3 phaseStartPosition;
@@ -183,6 +184,7 @@ public sealed class CameraPerformanceManager : MonoBehaviour
         }
         shots.Clear();
         shots.AddRange(requestedShots);
+        returnHorizontally = shots.TrueForAll(shot => shot.horizontalOnly);
         shotIndex = 0;
         activeReturnDuration = Mathf.Max(0f, returnDuration);
         BeginPhase(Phase.Moving);
@@ -229,7 +231,7 @@ public sealed class CameraPerformanceManager : MonoBehaviour
         if (phase == Phase.Returning)
         {
             float progress = Progress(activeReturnDuration);
-            ApplyPose(GetPlayerReturnPosition(), savedSize, Ease(progress));
+            ApplyPose(GetReturnPosition(), savedSize, Ease(progress));
             if (progress >= 1f) Finish(true, true, true);
             return;
         }
@@ -303,13 +305,20 @@ public sealed class CameraPerformanceManager : MonoBehaviour
             playerTarget.position.y + playerReturnOffset.y, savedPosition.z);
     }
 
+    private Vector3 GetReturnPosition()
+    {
+        Vector3 position = GetPlayerReturnPosition();
+        if (returnHorizontally) position.y = savedPosition.y;
+        return position;
+    }
+
     private void Finish(bool completed, bool restoreCamera, bool notify)
     {
         phase = Phase.Idle;
         StatusText = completed ? "演出结束，已返回玩家" : "演出已中断";
         if (restoreCamera && controlledCamera != null)
         {
-            controlledCamera.transform.position = GetPlayerReturnPosition();
+            controlledCamera.transform.position = GetReturnPosition();
             controlledCamera.orthographicSize = savedSize;
         }
         foreach (var pair in savedFollowStates)

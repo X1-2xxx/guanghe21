@@ -541,13 +541,12 @@
         {
           "id": "s005",
           "kind": 2,
-          "showChoicesWithBubble": true,
           "speaker": "堂吉诃德",
           "text": "等等。\n汝在说谁？",
           "next": "s006",
           "alternate": "",
           "argument": "",
-          "seconds": 5,
+          "seconds": 2.5,
           "choices": []
         },
         {
@@ -584,13 +583,12 @@
         {
           "id": "s008",
           "kind": 2,
-          "showChoicesWithBubble": true,
           "speaker": "堂吉诃德",
           "text": "什么铁盔？还有吾手上什么时候多了根这个？",
           "next": "s009",
           "alternate": "",
           "argument": "",
-          "seconds": 6,
+          "seconds": 3.1,
           "choices": []
         },
         {
@@ -627,13 +625,12 @@
         {
           "id": "s011",
           "kind": 2,
-          "showChoicesWithBubble": true,
           "speaker": "堂吉诃德",
           "text": "喂，喂——听得到吗？\n等等，这枪怎么松不开？",
           "next": "s012",
           "alternate": "",
           "argument": "",
-          "seconds": 6,
+          "seconds": 3,
           "choices": []
         },
         {
@@ -786,7 +783,7 @@
           "id": "s001",
           "kind": 0,
           "speaker": "堂吉诃德",
-          "text": "……真的回来了。\n不过，汝刚才一直在念什么呢？听起来像是什么故事的开头，堂吉诃德又是谁……诶，等等，我是堂吉诃德吗？",
+          "text": "……真的回来了。\n不过，汝刚才一直在念什么呢？\n\n听起来像是什么故事的开头，堂吉诃德又是谁……\n诶，等等，我是堂吉诃德吗？",
           "next": "s002",
           "alternate": "",
           "argument": "",
@@ -1300,48 +1297,6 @@
           "expression": 3,
           "speaker": "堂吉诃德",
           "text": "这座桥怎么断了？这也是Bug吗？而且缺口比村口那个坑宽多了啊。\n旁边有两块木板，不过只靠两块木板可搭不成牢靠的桥。",
-          "next": "s002",
-          "alternate": "",
-          "argument": "",
-          "seconds": 3,
-          "choices": []
-        },
-        {
-          "id": "s002",
-          "kind": 3,
-          "speaker": "桑丘",
-          "text": "",
-          "next": "",
-          "alternate": "",
-          "argument": "",
-          "seconds": 3,
-          "choices": [
-            {
-              "text": "看来要继续用到刚才的硬纸板了。",
-              "next": "s003"
-            },
-            {
-              "text": "填坑之后是造桥吗......",
-              "next": "s004"
-            }
-          ]
-        },
-        {
-          "id": "s003",
-          "kind": 0,
-          "speaker": "堂吉诃德",
-          "text": "拿硬纸板拼木板桥……希望它能撑住吾的重量。",
-          "next": "s005",
-          "alternate": "",
-          "argument": "",
-          "seconds": 3,
-          "choices": []
-        },
-        {
-          "id": "s004",
-          "kind": 0,
-          "speaker": "堂吉诃德",
-          "text": "要过去另一边的话，也只能这样了。",
           "next": "s005",
           "alternate": "",
           "argument": "",
@@ -1603,10 +1558,29 @@
           "expression": 7,
           "speaker": "堂吉诃德",
           "text": "拿到了！吾终于能跳了！",
-          "next": "s002",
+          "next": "",
           "alternate": "",
           "argument": "",
           "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "inn.approach",
+      "title": "第三幕 3.1：抵达旅馆前平台",
+      "entry": "entrance_camera",
+      "once": true,
+      "steps": [
+        {
+          "id": "entrance_camera",
+          "kind": 12,
+          "speaker": "",
+          "text": "",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 0,
           "choices": []
         },
         {
@@ -1617,6 +1591,7 @@
           "next": "s003",
           "alternate": "",
           "argument": "",
+          "autoAdvance": true,
           "seconds": 3,
           "choices": []
         },
