@@ -87,6 +87,7 @@ namespace LevelKit
         public WallStopReason LastWallStopReason { get; private set; }
         public UnityEvent<WallStopReason> OnWallStopped => onWallStopped;
         internal int WalkDirection => walkDirection;
+        internal float StepHeight => stepHeight;
         private int conversationInputFrame = -1;
         internal bool ConversationBlocksInput => IsInConversation || conversationInputFrame == Time.frameCount;
         internal void UnlockJump() => jumpEnabled = true;
@@ -184,7 +185,7 @@ namespace LevelKit
 
             if (GamePresentation.PresentationEvents.ResetOnly) return;
             bool space = keyboard != null && keyboard.spaceKey.wasPressedThisFrame;
-            if (space && GamePresentation.PresentationEvents.BlocksRun) return;
+            if (space && !IsActing && GamePresentation.PresentationEvents.BlocksRun) return;
             if (IsActing && (space || (left && overPlayer)))
             {
                 StopWalking();

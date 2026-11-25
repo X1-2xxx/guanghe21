@@ -44,6 +44,7 @@ namespace GamePresentation
         private int shownCharacters;
         private Rigidbody2D body;
         private CapsuleCollider2D capsule;
+        private BlockManipulation manipulation;
         private AudioManager audioRouter;
         private bool actorHeld;
         private float lastFall, stationarySeconds;
@@ -74,6 +75,9 @@ namespace GamePresentation
             { Debug.LogError("剧情场景绑定缺少玩家或相机，请在 Inspector 中拖入场景引用。", binding); return; }
             RestoreActorArt(); RestorePit(); Director.Clear(); Scene = binding;
             body = Scene.player.GetComponent<Rigidbody2D>(); capsule = Scene.player.GetComponent<CapsuleCollider2D>();
+            manipulation = null;
+            foreach (var controls in FindObjectsByType<BlockManipulation>(FindObjectsSortMode.None))
+                if (controls.gameObject.scene == Scene.gameObject.scene) { manipulation = controls; break; }
             audioRouter = FindAnyObjectByType<AudioManager>();
             began = forcedRun = pitHeld = villageSunk = openingReset = jumpAcquired = wallBroken = actorHeld = false;
             counts.Clear(); cooldowns.Clear(); turns.Clear(); tapeCount = quickStops = 0;
@@ -338,24 +342,32 @@ namespace GamePresentation
                 CatchOpeningFall(Scene.player);
             if (!Director.Active && Director.HasCompleted("village.reunion") && !Director.HasScheduled("village.depart") && Scene.villageStone)
             {
+                // Tape can be attached before the stone finishes settling or before its final adjustment.
+                // Recheck the actual connection and surface every frame, not just on the click that attached it.
+                InspectVillageGlue(null, false);
                 var collider = Scene.villageStone.GetComponent<Collider2D>();
-                if (!villageSunk && Scene.villagePit.Contains(Scene.villageStone.position) && collider.bounds.max.y < Scene.villageGroundY - 0.1f)
+                if (!Director.HasScheduled("village.depart") && !villageSunk && Scene.villagePit.Contains(Scene.villageStone.position) && collider.bounds.max.y < Scene.villageGroundY - 0.1f)
                 { villageSunk = true; Director.Enqueue("village.sunk"); }
                 if (Time.time >= nudgeAt)
                 { nudgeAt = Time.time + 15f; PlayBark(villageSunk ? "stone_attach_hint" : "stone_drag_hint"); }
             }
         }
-        private void InspectVillageGlue(Component subject)
+        private void InspectVillageGlue(Component subject, bool showFailureHint = true)
         {
             if (!Scene.villageStone || Director.HasScheduled("village.depart") || !Director.HasCompleted("village.reunion")) return;
             var stone = Scene.villageStone;
             if (subject && subject.transform != stone.transform) return;
-            var bounds = stone.GetComponent<Collider2D>().bounds;
-            bool level = Mathf.Abs(bounds.max.y - Scene.villageGroundY) <= 0.12f &&
-                Mathf.Abs(Mathf.DeltaAngle(stone.rotation, 0f)) <= 12f &&
-                stone.position.x >= Scene.villagePit.xMin - 0.5f && stone.position.x <= Scene.villagePit.xMax + 0.5f;
+            var surface = stone.GetComponent<Collider2D>();
+            if (!surface || !surface.enabled || !manipulation) return;
+            var bounds = surface.bounds;
+            float heightTolerance = Mathf.Clamp(Scene.player.StepHeight * .75f, .12f, .3f);
+            float flatAngle = Mathf.Round(stone.rotation / 90f) * 90f;
+            bool level = manipulation.HasWorldTapeConnection(stone) &&
+                Mathf.Abs(bounds.max.y - Scene.villageGroundY) <= heightTolerance &&
+                Mathf.Abs(Mathf.DeltaAngle(stone.rotation, flatAngle)) <= 12f &&
+                bounds.min.x <= Scene.villagePit.xMin + .18f && bounds.max.x >= Scene.villagePit.xMax - .18f;
             if (level) { if (!villageSunk) Director.Enqueue("village.clever"); Director.Enqueue("village.depart"); }
-            else PlayBark("stone_wrong");
+            else if (showFailureHint) PlayBark("stone_wrong");
         }
         public bool CatchOpeningFall(Component actor)
         {

@@ -61,6 +61,17 @@ namespace LevelKit
 
         private bool IsReady => steadyTime >= SteadySeconds;
 
+        public bool IsLinkedToStaticGround(Rigidbody2D body)
+        {
+            if (!body) return false;
+            group.Clear();
+            group.Add(body);
+            ExpandGroup();
+            foreach (var link in links)
+                if (link.IsValid && link.IsPlatform && group.Contains(link.BodyA)) return true;
+            return false;
+        }
+
         public bool IsLinkedToBalancePlatform(Rigidbody2D body)
         {
             group.Clear();
