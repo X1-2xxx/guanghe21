@@ -24,10 +24,12 @@ namespace GamePresentation
         [InspectorName("全局教学：奔跑时不可编辑"), SerializeField] public bool flag_taught_run_lock;
         public StoryDirector Director { get; private set; }
         public PresentationSceneBinding Scene { get; private set; }
-        public bool CanPresent => Scene && Scene.player && GameStateManager.Current == GameState.Playing && Time.timeScale > 0f;
+        public bool CanPresent => Scene && Scene.player && GameStateManager.Current == GameState.Playing && Time.timeScale > 0f &&
+            !PlayerOpeningSequence.BlocksGameplayInput(Scene.player);
         public bool HeadVisible => headRemaining > 0f;
         public string VisibleHeadText { get; private set; }
         public bool V4Mode => Scene && Scene.enableMainline;
+        public bool UsesCollectionQuest => V4Mode && Scene.preserveCollectionQuest && Scene.legacyInnQuest is InnQuest;
         public bool BlocksRun => V4Mode && Director.HasCompleted("village.reunion") && !Director.HasCompleted("village.depart");
 
         private readonly Dictionary<string, int> counts = new Dictionary<string, int>();
@@ -42,6 +44,7 @@ namespace GamePresentation
         private int shownCharacters;
         private Rigidbody2D body;
         private CapsuleCollider2D capsule;
+        private BlockManipulation manipulation;
         private AudioManager audioRouter;
         private bool actorHeld;
         private float lastFall, stationarySeconds;
@@ -72,6 +75,9 @@ namespace GamePresentation
             { Debug.LogError("剧情场景绑定缺少玩家或相机，请在 Inspector 中拖入场景引用。", binding); return; }
             RestoreActorArt(); RestorePit(); Director.Clear(); Scene = binding;
             body = Scene.player.GetComponent<Rigidbody2D>(); capsule = Scene.player.GetComponent<CapsuleCollider2D>();
+            manipulation = null;
+            foreach (var controls in FindObjectsByType<BlockManipulation>(FindObjectsSortMode.None))
+                if (controls.gameObject.scene == Scene.gameObject.scene) { manipulation = controls; break; }
             audioRouter = FindAnyObjectByType<AudioManager>();
             began = forcedRun = pitHeld = villageSunk = openingReset = jumpAcquired = wallBroken = actorHeld = false;
             counts.Clear(); cooldowns.Clear(); turns.Clear(); tapeCount = quickStops = 0;
@@ -84,7 +90,7 @@ namespace GamePresentation
             cameraPerformance.PerformanceEnded += OnCameraEnded;
             cameraPerformance.Configure(Scene.levelCamera, Scene.player.transform, cameraAnchor);
             cameraAnchor.Capture(Scene.levelCamera, Scene.player.transform);
-            if (V4Mode)
+            if (V4Mode && !UsesCollectionQuest)
             {
                 // V4 是独立演出模式；不删除队友旧收集任务，关掉此开关即可恢复旧任务。
                 if (Scene.legacyInnQuest) Scene.legacyInnQuest.enabled = false;
@@ -330,7 +336,8 @@ namespace GamePresentation
                 case "inn.approach": Director.Enqueue("inn.approach"); break;
                 case "inn.enter":
                     Director.Enqueue("inn.approach");
-                    Director.Enqueue("inn.intro");
+                    if (UsesCollectionQuest) ((InnQuest)Scene.legacyInnQuest).TryTalk(Scene.player);
+                    else Director.Enqueue("inn.intro");
                     break;
                 case "jump.lower": if (!jumpAcquired) Director.Enqueue("jump.discover"); break;
                 case "inn.exit": if (wallBroken && Scene.player.BreakEnabled) Director.Enqueue("inn.ending"); break;
@@ -343,24 +350,32 @@ namespace GamePresentation
                 CatchOpeningFall(Scene.player);
             if (!Director.Active && Director.HasCompleted("village.reunion") && !Director.HasScheduled("village.depart") && Scene.villageStone)
             {
+                // Tape can be attached before the stone finishes settling or before its final adjustment.
+                // Recheck the actual connection and surface every frame, not just on the click that attached it.
+                InspectVillageGlue(null, false);
                 var collider = Scene.villageStone.GetComponent<Collider2D>();
-                if (!villageSunk && Scene.villagePit.Contains(Scene.villageStone.position) && collider.bounds.max.y < Scene.villageGroundY - 0.1f)
+                if (!Director.HasScheduled("village.depart") && !villageSunk && Scene.villagePit.Contains(Scene.villageStone.position) && collider.bounds.max.y < Scene.villageGroundY - 0.1f)
                 { villageSunk = true; Director.Enqueue("village.sunk"); }
                 if (Time.time >= nudgeAt)
                 { nudgeAt = Time.time + 15f; PlayBark(villageSunk ? "stone_attach_hint" : "stone_drag_hint"); }
             }
         }
-        private void InspectVillageGlue(Component subject)
+        private void InspectVillageGlue(Component subject, bool showFailureHint = true)
         {
             if (!Scene.villageStone || Director.HasScheduled("village.depart") || !Director.HasCompleted("village.reunion")) return;
             var stone = Scene.villageStone;
             if (subject && subject.transform != stone.transform) return;
-            var bounds = stone.GetComponent<Collider2D>().bounds;
-            bool level = Mathf.Abs(bounds.max.y - Scene.villageGroundY) <= 0.12f &&
-                Mathf.Abs(Mathf.DeltaAngle(stone.rotation, 0f)) <= 12f &&
-                stone.position.x >= Scene.villagePit.xMin - 0.5f && stone.position.x <= Scene.villagePit.xMax + 0.5f;
+            var surface = stone.GetComponent<Collider2D>();
+            if (!surface || !surface.enabled || !manipulation) return;
+            var bounds = surface.bounds;
+            float heightTolerance = Mathf.Clamp(Scene.player.StepHeight * .75f, .12f, .3f);
+            float flatAngle = Mathf.Round(stone.rotation / 90f) * 90f;
+            bool level = manipulation.HasWorldTapeConnection(stone) &&
+                Mathf.Abs(bounds.max.y - Scene.villageGroundY) <= heightTolerance &&
+                Mathf.Abs(Mathf.DeltaAngle(stone.rotation, flatAngle)) <= 12f &&
+                bounds.min.x <= Scene.villagePit.xMin + .18f && bounds.max.x >= Scene.villagePit.xMax - .18f;
             if (level) { if (!villageSunk) Director.Enqueue("village.clever"); Director.Enqueue("village.depart"); }
-            else PlayBark("stone_wrong");
+            else if (showFailureHint) PlayBark("stone_wrong");
         }
         public bool CatchOpeningFall(Component actor)
         {
@@ -432,7 +447,8 @@ namespace GamePresentation
                 "forest.intro" => "试着转动那些歪掉的树，给吾搭出台阶吧！",
                 "jump.discover" => "用石头和木板搭个向上的缓坡，让吾去拿跳跃键！",
                 "inn.intro" when !flag_taught_midstop => "跑动时再按空格或点吾，就能让吾半路停下！",
-                "inn.shoes" => "往左走到老板头顶跳回一楼，去撞破右边的裂墙！", _ => null };
+                "inn.quest_done" => "老板把奖励抛下来了，去拿起驽骍难得吧！",
+                "inn.shoes" => "穿上驽骍难得，去撞破右边的裂墙！", _ => null };
             if (hint != null) ShowHead(hint, 7f, 40);
             currentHint = hint; nextHint = Time.time + 18f; lastInput = Time.unscaledTime;
         }

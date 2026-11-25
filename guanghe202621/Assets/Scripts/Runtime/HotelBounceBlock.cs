@@ -14,6 +14,11 @@ namespace LevelKit
         [SerializeField, Range(0f, 1f)] private float bounceRetention = 1f;
         [SerializeField, Range(0f, 1f)] private float tangentRetention = 1f;
         [SerializeField, Min(0.1f)] private float minimumImpactSpeed = 0.1f;
+        [Header("Consecutive Bed Bounces")]
+        [Tooltip("Each consecutive bed impact applies this factor again to the rebound coefficient. Landing on regular ground or respawning resets the chain.")]
+        [SerializeField, Range(0f, 1f)] private float consecutiveBounceDecay = 0.8f;
+        [Tooltip("Stop bouncing when the decayed rebound speed falls below this value.")]
+        [SerializeField, Min(0.1f)] private float stopBounceSpeed = 1f;
         [Header("Pillow Animation")]
         [Tooltip("The artwork child to squash. Uses the Visual child when unassigned.")]
         [SerializeField] private Transform pillowVisual;
@@ -161,7 +166,9 @@ namespace LevelKit
                 Vector2 relative = collision.relativeVelocity
                     + Physics2D.gravity * ((visitor.gravityScale - body.gravityScale) * Time.fixedDeltaTime);
                 float normalSpeed = Mathf.Abs(Vector2.Dot(relative, normal));
-                if (normalSpeed < minimumImpactSpeed)
+                float retention = Mathf.Clamp01(bounceRetention) * Mathf.Pow(Mathf.Clamp01(consecutiveBounceDecay), player.ConsecutiveBedBounces);
+                float reboundSpeed = normalSpeed * retention;
+                if (normalSpeed < minimumImpactSpeed || reboundSpeed < stopBounceSpeed)
                 {
                     player.StopOnBed();
                     return;
@@ -174,7 +181,7 @@ namespace LevelKit
                 Vector2 radius = contact.point - surfaceCenter;
                 Vector2 pointVelocity = surfaceVelocity + new Vector2(-radius.y, radius.x) * surfaceSpin;
                 Vector2 rebound = pointVelocity + tangent * tangentRetention
-                    + normal * (normalSpeed * bounceRetention);
+                    + normal * reboundSpeed;
                 player.BounceFromBed(rebound);
                 return;
             }

@@ -60,6 +60,10 @@ namespace LevelKit
         }
 
         internal bool TryCross(Vector2 from, Vector2 to, bool previous, out bool right, out float progress)
+            => TryCrossBody(from, to, previous, Vector2.zero, Vector2.zero, out right, out progress);
+
+        internal bool TryCrossBody(Vector2 from, Vector2 to, bool previous,
+            Vector2 bodyCenterOffset, Vector2 bodyExtents, out bool right, out float progress)
         {
             progress = 0f;
             right = previous;
@@ -71,8 +75,10 @@ namespace LevelKit
             Vector2 gate = transform.position;
             float edge = AxisValue(gate) + (right ? crossingMargin : -crossingMargin);
             progress = Mathf.Clamp01((edge - fromAxis) / (toAxis - fromAxis));
-            float perpendicular = Mathf.Lerp(CrossAxisValue(from), CrossAxisValue(to), progress);
-            return Mathf.Abs(perpendicular - CrossAxisValue(gate)) <= DetectionSpan * 0.5f;
+            float perpendicular = Mathf.Lerp(CrossAxisValue(from), CrossAxisValue(to), progress)
+                + CrossAxisValue(bodyCenterOffset);
+            float perpendicularExtent = Mathf.Max(0f, CrossAxisValue(bodyExtents));
+            return Mathf.Abs(perpendicular - CrossAxisValue(gate)) <= DetectionSpan * 0.5f + perpendicularExtent;
         }
 
         private void OnDrawGizmosSelected()

@@ -83,10 +83,12 @@ namespace LevelKit
         public bool IsJumping => traversal != null && traversal.IsJumping;
         public bool IsRespawning => reaction == Reaction.Respawn;
         public bool IsWallStopping => reaction == Reaction.WallStop;
+        internal int ConsecutiveBedBounces => traversal != null ? traversal.ConsecutiveBedBounces : 0;
         public WallStopReason LastWallStopReason { get; private set; }
         public UnityEvent<WallStopReason> OnWallStopped => onWallStopped;
         internal int WalkDirection => walkDirection;
         internal bool IsGameplayCameraMoving => movingCamera != null;
+        internal float StepHeight => stepHeight;
         private int conversationInputFrame = -1;
         internal bool ConversationBlocksInput => IsInConversation || conversationInputFrame == Time.frameCount;
         internal void UnlockJump() => jumpEnabled = true;
@@ -184,7 +186,7 @@ namespace LevelKit
 
             if (GamePresentation.PresentationEvents.ResetOnly) return;
             bool space = keyboard != null && keyboard.spaceKey.wasPressedThisFrame;
-            if (space && GamePresentation.PresentationEvents.BlocksRun) return;
+            if (space && !IsActing && GamePresentation.PresentationEvents.BlocksRun) return;
             if (IsActing && (space || (left && overPlayer)))
             {
                 StopWalking();
@@ -242,6 +244,7 @@ namespace LevelKit
         {
             if (spineVisual) spineVisual.OnRebuild -= OnSpineRebuild;
             if (body) StopWalking();
+            traversal?.ResetBedBounceChain();
             HideDialogue();
             movingCamera = null;
             cameraPositionHistory.Clear();
@@ -336,11 +339,20 @@ namespace LevelKit
             CameraTarget lastTarget = null;
             bool lastRight = false;
             float lastProgress = -1f;
+            Vector2 bodyCenterOffset = Vector2.zero;
+            Vector2 bodyExtents = Vector2.zero;
+            if (hitbox)
+            {
+                var bounds = hitbox.bounds;
+                bodyCenterOffset = (Vector2)(bounds.center - transform.position);
+                bodyExtents = bounds.extents;
+            }
             foreach (var target in CameraTarget.InScene)
             {
                 if (!target || target.gameObject.scene != gameObject.scene || !target.HasTwoPositions) continue;
                 if (!cameraSides.TryGetValue(target, out bool previous)) previous = target.IsPosition2Side(from);
-                bool crossed = target.TryCross(from, to, previous, out bool right, out float progress);
+                bool crossed = target.TryCrossBody(from, to, previous, bodyCenterOffset, bodyExtents,
+                    out bool right, out float progress);
                 cameraSides[target] = right;
                 if (!crossed || progress <= lastProgress) continue;
                 lastTarget = target;
@@ -454,6 +466,7 @@ namespace LevelKit
         {
             if (reaction == Reaction.Respawn) return;
             StopWalking();
+            traversal?.ResetBedBounceChain();
             HideDialogue();
             lastPlayerClick = double.NegativeInfinity;
             body.position = returnPosition;
@@ -472,6 +485,26 @@ namespace LevelKit
 
         internal void Die() => ReturnToCheckpoint();
 
+        internal void SetOpeningWalking(int direction, bool moving)
+        {
+            facing = direction < 0 ? -1 : 1;
+            ApplyFacing();
+            if (moving)
+            {
+                SetActing(true);
+                SetWalkingAnimation(true);
+            }
+            else StopWalking();
+        }
+
+        internal void FinishOpeningAt(Vector2 position)
+        {
+            StopWalking();
+            body.position = position;
+            body.linearVelocity = Vector2.zero;
+            lastPosition = position;
+            ResetCameraHistory(position);
+        }
         // 仅供主线演出调用；沿用原来的行走和碰撞，不改写寻路、速度或角色能力。
         public void RunForPresentation(int direction)
         {

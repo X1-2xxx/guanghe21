@@ -33,6 +33,8 @@ namespace GamePresentation
         [InspectorName("马头跑鞋拾取物")] public GameObject shoes;
         [InspectorName("V4 跑鞋摆放点")] public Transform shoesPoint;
 
+        [InspectorName("保留三物品收集与老板抛奖励任务")] public bool preserveCollectionQuest = true;
+
         private void Start()
         {
             var runtime = PresentationRuntime.Instance;

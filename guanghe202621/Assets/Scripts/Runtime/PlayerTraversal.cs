@@ -25,6 +25,8 @@ namespace LevelKit
         private bool risingFromLaunch;
         private bool bedBounceInProgress;
         private bool launchedJumpInProgress;
+        public int ConsecutiveBedBounces { get; private set; }
+        public void ResetBedBounceChain() => ConsecutiveBedBounces = 0;
 
         public bool IsJumping => (plan != null && plan.IsJump) || launchedJumpInProgress;
 
@@ -129,6 +131,7 @@ namespace LevelKit
         public void BounceFromBed(Vector2 velocity)
         {
             Cancel();
+            if (ConsecutiveBedBounces < int.MaxValue) ConsecutiveBedBounces++;
             bedBounceInProgress = true;
             risingFromLaunch = velocity.y > 0f;
             launchedJumpInProgress = velocity.y > 0f;
@@ -149,6 +152,14 @@ namespace LevelKit
         public void UpdateAirborneState()
         {
             if (risingFromLaunch && body.linearVelocityY <= 0f) risingFromLaunch = false;
+            if (ConsecutiveBedBounces > 0 && !risingFromLaunch && FindSupport(body.position, GroundProbe, out var ground))
+            {
+                var bounce = ground.collider.GetComponentInParent<HotelBounceBlock>();
+                Vector2 supportVelocity = ground.rigidbody ? ground.rigidbody.GetPointVelocity(ground.point) : Vector2.zero;
+                if ((!bounce || bounce.Kind != HotelBounceBlock.BlockKind.Bed) &&
+                    Mathf.Abs(Vector2.Dot(body.linearVelocity - supportVelocity, ground.normal)) <= .3f)
+                    ResetBedBounceChain();
+            }
             if (launchedJumpInProgress && !risingFromLaunch && FindSupport(body.position, GroundProbe, out _))
                 launchedJumpInProgress = false;
         }

@@ -15,6 +15,7 @@ namespace LevelKit
         internal BlockBoundary Boundary { get; private set; }
 
         public Rigidbody2D Body => body ? body : body = GetComponent<Rigidbody2D>();
+        public bool CanBeGrabbed => !TryGetComponent<HotelBounceBlock>(out var bounce) || bounce.Kind != HotelBounceBlock.BlockKind.Bed;
 
         private void Awake()
         {

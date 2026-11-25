@@ -239,7 +239,8 @@ public static class PresentationV4Setup
             SignalZone(root.transform,"剧情触发区_进入树林","forest.enter",new Vector2(10,-1.5f),new Vector2(.4f,3));
             SignalZone(root.transform,"剧情触发区_进入跳跃小关","jump.enter",new Vector2(36.5f,-1.5f),new Vector2(.4f,3));
             SignalZone(root.transform,"剧情触发区_发现跳跃键","jump.lower",new Vector2(40,-1.5f),new Vector2(1,3));
-            SignalZone(root.transform,"剧情触发区_旅馆前平台","inn.approach",new Vector2(62.2f,7.35f),new Vector2(1.1f,2.5f));
+            float innApproachX = binding.entranceCamera ? binding.entranceCamera.transform.position.x + 1.575f : 64f;
+            SignalZone(root.transform,"剧情触发区_旅馆前平台","inn.approach",new Vector2(innApproachX,7.35f),new Vector2(1.1f,2.5f));
             SignalZone(root.transform,"剧情触发区_破墙后结束","inn.exit",new Vector2(93,7),new Vector2(1,4));
             foreach(var name in new[]{"左侧木板","右侧木板","树木1","树木2","树木3"})
             {
