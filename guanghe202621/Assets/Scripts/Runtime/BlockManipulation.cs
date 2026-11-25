@@ -76,7 +76,7 @@ namespace LevelKit
             if (actionWarning && actionWarning.activeSelf && (!locked || Time.unscaledTime >= warningUntil))
                 HideWarning();
             if (locked && (held || joint)) Release();
-            if (held && IsSupportingPlayer(held)) Release();
+            if (held && (!held.GetComponent<ManipulableBlock>().CanBeGrabbed || IsSupportingPlayer(held))) Release();
 
             var mouse = Mouse.current;
             var view = levelCamera ? levelCamera : Camera.main;
@@ -219,7 +219,7 @@ namespace LevelKit
             foreach (var hit in hits)
             {
                 var block = GetBlock(hit);
-                if (!block || !block.isActiveAndEnabled) continue;
+                if (!block || !block.CanBeGrabbed || !block.isActiveAndEnabled) continue;
                 var body = block.Body;
                 if (body && body.simulated && body.bodyType == RigidbodyType2D.Dynamic) return true;
             }
@@ -245,7 +245,7 @@ namespace LevelKit
         private bool TryGrab(ManipulableBlock block, Vector2 point)
         {
             var body = block.Body;
-            if (ControlsLocked || !block.isActiveAndEnabled || !body || !body.simulated || body.bodyType != RigidbodyType2D.Dynamic)
+            if (ControlsLocked || !block.CanBeGrabbed || !block.isActiveAndEnabled || !body || !body.simulated || body.bodyType != RigidbodyType2D.Dynamic)
                 return false;
             if (IsSupportingPlayer(body)) return false;
             if (body.TryGetComponent<HingedBlock>(out var pivot) && !pivot.isActiveAndEnabled) return false;

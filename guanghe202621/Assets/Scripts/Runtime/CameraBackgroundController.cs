@@ -8,11 +8,11 @@ namespace LevelKit
     public sealed class CameraBackgroundController : MonoBehaviour
     {
         [SerializeField] private PlayerActionController player;
-        [Tooltip("Camera child sprites. Leave empty to use all child Sprite Renderers.")]
+        [Tooltip("Camera background roots. Nested sprites belong to their parent background. Leave empty to find roots automatically.")]
         [SerializeField] private SpriteRenderer[] backgrounds;
         [SerializeField] private SpriteRenderer defaultBackground;
         [SerializeField, Min(0f)] private float fadeSeconds = 0.7f;
-        [Tooltip("Backgrounds use consecutive orders in the default background's Sorting Layer.")]
+        [Tooltip("Background roots are spaced by 10 sorting orders, leaving room for child scenery.")]
         [SerializeField] private int firstSortingOrder = -200;
 
         private readonly List<BackgroundZone> zones = new List<BackgroundZone>();
@@ -38,6 +38,11 @@ namespace LevelKit
             {
                 if (!candidate || candidate.transform == transform ||
                     !candidate.transform.IsChildOf(transform) || valid.Contains(candidate)) continue;
+                bool nested = false;
+                foreach (var parent in candidates)
+                    if (parent && parent != candidate && parent.transform.IsChildOf(transform) &&
+                        candidate.transform.IsChildOf(parent.transform)) { nested = true; break; }
+                if (nested) continue;
                 valid.Add(candidate);
             }
             layers = valid.ToArray();
@@ -50,7 +55,7 @@ namespace LevelKit
             {
                 colors[i] = layers[i].color;
                 layers[i].sortingLayerID = sortingLayer;
-                layers[i].sortingOrder = firstSortingOrder + i;
+                layers[i].sortingOrder = firstSortingOrder + i * 10;
                 layers[i].gameObject.SetActive(true);
             }
         }

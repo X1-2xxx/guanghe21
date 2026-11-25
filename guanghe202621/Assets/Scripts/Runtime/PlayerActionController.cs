@@ -83,6 +83,7 @@ namespace LevelKit
         public bool IsJumping => traversal != null && traversal.IsJumping;
         public bool IsRespawning => reaction == Reaction.Respawn;
         public bool IsWallStopping => reaction == Reaction.WallStop;
+        internal int ConsecutiveBedBounces => traversal != null ? traversal.ConsecutiveBedBounces : 0;
         public WallStopReason LastWallStopReason { get; private set; }
         public UnityEvent<WallStopReason> OnWallStopped => onWallStopped;
         internal int WalkDirection => walkDirection;
@@ -234,6 +235,7 @@ namespace LevelKit
         {
             if (spineVisual) spineVisual.OnRebuild -= OnSpineRebuild;
             if (body) StopWalking();
+            traversal?.ResetBedBounceChain();
             HideDialogue();
             movingCamera = null;
             cameraPositionHistory.Clear();
@@ -322,11 +324,20 @@ namespace LevelKit
             CameraTarget lastTarget = null;
             bool lastRight = false;
             float lastProgress = -1f;
+            Vector2 bodyCenterOffset = Vector2.zero;
+            Vector2 bodyExtents = Vector2.zero;
+            if (hitbox)
+            {
+                var bounds = hitbox.bounds;
+                bodyCenterOffset = (Vector2)(bounds.center - transform.position);
+                bodyExtents = bounds.extents;
+            }
             foreach (var target in CameraTarget.InScene)
             {
                 if (!target || target.gameObject.scene != gameObject.scene || !target.HasTwoPositions) continue;
                 if (!cameraSides.TryGetValue(target, out bool previous)) previous = target.IsPosition2Side(from);
-                bool crossed = target.TryCross(from, to, previous, out bool right, out float progress);
+                bool crossed = target.TryCrossBody(from, to, previous, bodyCenterOffset, bodyExtents,
+                    out bool right, out float progress);
                 cameraSides[target] = right;
                 if (!crossed || progress <= lastProgress) continue;
                 lastTarget = target;
@@ -440,6 +451,7 @@ namespace LevelKit
         {
             if (reaction == Reaction.Respawn) return;
             StopWalking();
+            traversal?.ResetBedBounceChain();
             HideDialogue();
             lastPlayerClick = double.NegativeInfinity;
             body.position = returnPosition;
@@ -457,6 +469,27 @@ namespace LevelKit
         }
 
         internal void Die() => ReturnToCheckpoint();
+
+        internal void SetOpeningWalking(int direction, bool moving)
+        {
+            facing = direction < 0 ? -1 : 1;
+            ApplyFacing();
+            if (moving)
+            {
+                SetActing(true);
+                SetWalkingAnimation(true);
+            }
+            else StopWalking();
+        }
+
+        internal void FinishOpeningAt(Vector2 position)
+        {
+            StopWalking();
+            body.position = position;
+            body.linearVelocity = Vector2.zero;
+            lastPosition = position;
+            ResetCameraHistory(position);
+        }
 
         internal bool BeginConversation()
         {

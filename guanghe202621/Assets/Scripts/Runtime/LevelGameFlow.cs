@@ -105,7 +105,7 @@ namespace LevelKit
         public static bool BlocksGameplayInput(Component source)
         {
             var owner = Find(source);
-            return owner && (owner.reloading || GameStateManager.Current != GameState.Playing ||
+            return PlayerOpeningSequence.BlocksGameplayInput(source) || owner && (owner.reloading || GameStateManager.Current != GameState.Playing ||
                 Time.timeScale <= 0f || Time.frameCount <= owner.blockThroughFrame ||
                 (owner.flow && (owner.flow.HasOpenGameplayModal || owner.flow.LastUiInteractionFrame == Time.frameCount)));
         }
