@@ -22,6 +22,7 @@ public static class StoryReferenceLayout
     public static void ApplyView(StoryPanelView view)
     {
         var frame = view.dialogueText.transform.parent.GetComponent<Image>();
+        view.dialogueFrame = frame.gameObject;
         frame.name="BottomFrame_纸张对话框";
         Area(frame.rectTransform,new Vector2(.10f,.015f),new Vector2(.97f,.42f));
         frame.sprite=Sprite("uisc/IMG_1126.png");frame.color=Color.white;frame.type=Image.Type.Simple;frame.preserveAspect=false;
@@ -55,7 +56,42 @@ public static class StoryReferenceLayout
             text.resizeTextForBestFit=true;text.resizeTextMinSize=22;text.resizeTextMaxSize=30;
         }
         view.choiceAPrefix="A. ";view.choiceBPrefix="B. ";
+        ApplyNarrationLayout(view);
         UIFontUtility.ApplyToHierarchy(view.gameObject);
+    }
+
+    private static void ApplyNarrationLayout(StoryPanelView view)
+    {
+        var text = view.narratorText;
+        var frame = text.transform.parent.GetComponent<Image>();
+        frame.name = "NarrationFrame";
+        Area(frame.rectTransform, new Vector2(.23f, .34f), new Vector2(.77f, .66f));
+        // IMG_1124 还切出了一小片边角，旁白使用完整的纸框。
+        frame.sprite = AssetDatabase.LoadAllAssetsAtPath(Folder + "UI/uisc/IMG_1124.png")
+            .OfType<Sprite>().First(sprite => sprite.name == "IMG_1124_0");
+        frame.color = Color.white;
+
+        Area(text.rectTransform, new Vector2(.11f, .17f), new Vector2(.935f, .84f));
+        text.color = Ink;
+        text.alignment = TextAnchor.MiddleCenter;
+        text.fontSize = 42;
+        text.resizeTextForBestFit = false;
+
+        var button = view.narratorContinueButton;
+        var buttonImage = button.GetComponent<Image>();
+        Area(buttonImage.rectTransform, new Vector2(.355f, -.255f), new Vector2(.645f, -.045f));
+        buttonImage.sprite = Sprite("uisc/IMG_1184.png");
+        buttonImage.preserveAspect = true;
+        buttonImage.color = new Color(1f, .96f, .88f);
+        var colors = button.colors;
+        colors.highlightedColor = colors.selectedColor = new Color(1f, .94f, .80f);
+        colors.pressedColor = new Color(.91f, .79f, .62f);
+        button.colors = colors;
+
+        var label = button.GetComponentInChildren<Text>();
+        Area(label.rectTransform, new Vector2(.12f, .14f), new Vector2(.85f, .82f));
+        label.color = Ink;
+        label.fontSize = 34;
     }
 
     private static void ApplyDialogueTextLayout(StoryPanelView view, Image frame)

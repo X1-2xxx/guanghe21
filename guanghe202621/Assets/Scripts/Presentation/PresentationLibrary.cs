@@ -34,6 +34,7 @@ namespace GamePresentation
         [InspectorName("下一节点")] public string next;
         [InspectorName("条件成立时节点")] public string alternate;
         [InspectorName("镜头目标 / 等待信号 / 指令")] public string argument;
+        [InspectorName("等待期间显示头顶小气泡")] public bool showHeadWhileWaiting;
         [InspectorName("阅读或停留秒数")] public float seconds = 3f;
         [InspectorName("选项")] public List<StoryChoice> choices = new List<StoryChoice>();
     }

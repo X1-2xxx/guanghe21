@@ -270,9 +270,7 @@
         "卡住了，过不去！",
         "前头顶住了，得调一下。"
       ],
-      "repeat": [
-        "卡住了！"
-      ],
+      "repeat": [],
       "brief": [
         "……"
       ],
@@ -313,9 +311,7 @@
         "这枕头里到底塞了什么啊……"
       ],
       "repeat": [],
-      "brief": [
-        "哇——！"
-      ],
+      "brief": [],
       "duration": 3.8,
       "cooldown": 12,
       "priority": 10,
@@ -441,9 +437,7 @@
       "lines": [
         "又掉下来了！快按 R 键把吾拉回去，再把石头粘平一点！"
       ],
-      "repeat": [
-        "按 R 重置，再粘平一点吧！"
-      ],
+      "repeat": [],
       "brief": [
         "再来！"
       ],
@@ -457,9 +451,7 @@
       "lines": [
         "卡住了过不去啊！按 R 键重置，空手右键拆开重粘一下吧！"
       ],
-      "repeat": [
-        "按 R 重置，拆开重粘吧！"
-      ],
+      "repeat": [],
       "brief": [
         "……"
       ],
@@ -685,6 +677,7 @@
           "next": "s016",
           "alternate": "",
           "argument": "village.fell",
+          "showHeadWhileWaiting": true,
           "seconds": 60,
           "choices": []
         },
@@ -760,6 +753,7 @@
           "next": "s022",
           "alternate": "",
           "argument": "village.reset",
+          "showHeadWhileWaiting": true,
           "seconds": 3600,
           "choices": []
         },

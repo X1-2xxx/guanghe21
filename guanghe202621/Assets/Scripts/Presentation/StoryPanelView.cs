@@ -10,6 +10,7 @@ namespace GamePresentation
         public CanvasGroup group;
         public CanvasGroup blackGroup;
         public GameObject blackPanel, dialoguePanel, choicesPanel, narratorPanel;
+        [InspectorName("底部对白大框")] public GameObject dialogueFrame;
         public Text blackText, speakerText, dialogueText, narratorText;
         public Image portrait, endingImage;
         public Button continueButton, blackContinueButton, narratorContinueButton;
@@ -63,9 +64,11 @@ namespace GamePresentation
             bool choices = step.kind == StoryStepKind.Choice;
             // 选项放到右侧后，底部保留角色上一句台词，避免对话框突然变空。
             bool retain = choices && string.IsNullOrWhiteSpace(step.text) && !string.IsNullOrEmpty(lastLine);
+            bool showDialogue = !choices || retain || !string.IsNullOrWhiteSpace(step.text);
+            if (dialogueFrame) dialogueFrame.SetActive(showDialogue);
             speakerText.text = retain ? lastSpeaker : step.speaker;
             dialogueText.text = retain ? lastLine : step.text;
-            Sprite image = retain ? lastPortrait : actorPortrait;
+            Sprite image = !showDialogue ? null : (retain ? lastPortrait : actorPortrait);
             portrait.sprite = image; portrait.gameObject.SetActive(image != null);
             if (!choices) RememberDialogue(step.text, step.speaker, image);
             choicesPanel.SetActive(choices); continueButton.gameObject.SetActive(!choices);

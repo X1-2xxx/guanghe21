@@ -6547,7 +6547,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelKit.PlayerActionController
   levelCamera: {fileID: 209933207}
-  dialogueBox: {fileID: 415483309}
+  dialogueBox: {fileID: 0}
   initialCampfire: {fileID: 2043787774}
   moveSpeed: 2.5
   dialogueSeconds: 1.2
@@ -6627,132 +6627,6 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 4
---- !u!1 &415483309
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 415483310}
-  - component: {fileID: 415483311}
-  - component: {fileID: 415483312}
-  m_Layer: 0
-  m_Name: DialogueBox
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!4 &415483310
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 415483309}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.750002, y: 2.5354853, z: 0}
-  m_LocalScale: {x: 0.57395136, y: 0.7174392, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 404335227}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!212 &415483311
-SpriteRenderer:
-  serializedVersion: 3
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 415483309}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 4ba6795b806008a4fb72fb35dc85f6f6, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 100
-  m_MaskInteraction: 0
-  m_Sprite: {fileID: 328670185853246858, guid: 67c03836ea03c9145bc745c49cd65b20, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 14, y: 4}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
-  m_SpriteSortPoint: 0
-  m_BlendShapeWeights: []
---- !u!114 &415483312
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 415483309}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b91b5d08665f4431b57ef9ea8d902e67, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LevelKit.PlayerSpeechBubble
-  rightSprite: {fileID: 328670185853246858, guid: 67c03836ea03c9145bc745c49cd65b20, type: 3}
-  leftSprite: {fileID: 7678264250540620089, guid: d8fd95a180020d44b91aac63124ff158, type: 3}
-  aboveSprite: {fileID: 4089708861143975502, guid: ef8d8a15bc2c0444bb5e2b58f1ee1bcb, type: 3}
-  sortingOrder: 100
-  bubbleWidth: 2.6
-  horizontalGap: 0.12
-  aboveGap: 0.12
-  sideHeadOverlap: 0.18
-  nearbyAdjustment: 0.22
-  obstructionLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  clearance: 0.06
-  screenPaddingPixels: 24
-  avoidArtworkWithoutSolidCollider: 1
-  recheckSeconds: 0.1
-  switchImprovement: 0.08
-  minimumHoldSeconds: 0.16
-  owner: {fileID: 404335228}
-  speakerCollider: {fileID: 404335229}
-  levelCamera: {fileID: 209933207}
 --- !u!1001 &416242807
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7741,7 +7615,7 @@ MonoBehaviour:
   grabForce: 1800
   grabFrequency: 5
   rotationStep: 10
-  tapeSprite: {fileID: 8939052417712070678, guid: d22c0308397c4a6419fe4289f11f92f8, type: 3}
+  tapeSprite: {fileID: -6982075240922645967, guid: 5564725744717cc47bf68b320c5c3b6b, type: 3}
   tapeWidth: 0.5
   tapeStiffness: 400
   tapeDamping: 32
@@ -16608,9 +16482,6 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5275139040555170204, guid: 2fad0405c53f4aa42ae5d4be66e21dbf, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1485307171}
-    - targetCorrespondingSourceObject: {fileID: 5275139040555170204, guid: 2fad0405c53f4aa42ae5d4be66e21dbf, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 415483310}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 1099943835744269888, guid: 2fad0405c53f4aa42ae5d4be66e21dbf, type: 3}
       insertIndex: -1

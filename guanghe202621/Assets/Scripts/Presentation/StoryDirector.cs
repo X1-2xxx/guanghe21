@@ -86,7 +86,11 @@ namespace GamePresentation
                 if (step.kind == StoryStepKind.Command) { host.Command(step.argument); id = step.next; continue; }
                 if (step.kind == StoryStepKind.WaitSignal)
                 {
-                    if (!string.IsNullOrEmpty(step.text)) host.ShowHead(step.text, step.seconds, 2000, true);
+                    if (step.showHeadWhileWaiting)
+                    {
+                        host.storyView.ResetDialogueMemory();
+                        host.ShowHead(step.text, step.seconds, 2000, true);
+                    }
                     if (received.Contains(step.argument)) deferredNext = true;
                     return;
                 }
@@ -94,7 +98,7 @@ namespace GamePresentation
                 if (step.kind == StoryStepKind.Camera) { host.PlayCamera(step.argument, step.seconds); return; }
                 if (step.kind == StoryStepKind.HeadBubble)
                 {
-                    host.storyView.RememberDialogue(step.text, step.speaker, host.library.heroPortrait);
+                    host.storyView.ResetDialogueMemory();
                     host.ShowHead(step.text, step.seconds, 2000, true); return;
                 }
                 if (step.kind == StoryStepKind.End) { host.storyView.ShowEnding(host.library.endingSprite); host.HoldActor(true); return; }

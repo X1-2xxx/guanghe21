@@ -17,6 +17,7 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
     [SerializeField, Min(32f)] private float maxWidth = 340f;
     [SerializeField, Min(16f)] private float minHeight = 64f;
     [SerializeField] private Vector2 padding = new Vector2(32f, 24f);
+    [SerializeField, Min(0f), InspectorName("正文上移（为气泡尾巴留空）")] private float contentLift;
 
     public RectTransform Rect => bubbleRect;
     public bool IsConfigured => worldCanvas != null && bubbleRect != null && contentText != null;
@@ -71,8 +72,10 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
         var textRect = contentText.rectTransform;
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(horizontalPadding, verticalPadding) * 0.5f;
-        textRect.offsetMax = -textRect.offsetMin;
+        var halfPadding = new Vector2(horizontalPadding, verticalPadding) * 0.5f;
+        var lift = Vector2.up * Mathf.Min(contentLift, halfPadding.y);
+        textRect.offsetMin = halfPadding + lift;
+        textRect.offsetMax = -halfPadding + lift;
         float height = Mathf.Max(minHeight, contentText.preferredHeight + verticalPadding);
         bubbleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
     }

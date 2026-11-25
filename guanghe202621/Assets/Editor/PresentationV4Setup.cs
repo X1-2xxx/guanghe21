@@ -36,8 +36,18 @@ public static class PresentationV4Setup
             instance.name = "HeadBubble";
             instance.GetComponent<Canvas>().sortingOrder = 2000;
             foreach (var graphic in instance.GetComponentsInChildren<Graphic>(true)) graphic.raycastTarget = false;
+            instance.transform.Find("Tail").gameObject.SetActive(false);
+            var paper = instance.transform.Find("Background").GetComponent<Image>();
+            paper.sprite = AssetDatabase.LoadAllAssetsAtPath(Folder + "UI/uisc/IMG_1197.png")
+                .OfType<Sprite>().First(sprite => sprite.name == "IMG_1197_0");
+            paper.type = UnityEngine.UI.Image.Type.Sliced;
+            paper.pixelsPerUnitMultiplier = 1.65f;
+            paper.rectTransform.offsetMin = paper.rectTransform.offsetMax = Vector2.zero;
             var serialized = new SerializedObject(instance.GetComponent<BubbleDialogView>());
+            serialized.FindProperty("minWidth").floatValue = 128;
             serialized.FindProperty("maxWidth").floatValue = 440;
+            serialized.FindProperty("padding").vector2Value = new Vector2(52f, 42f);
+            serialized.FindProperty("contentLift").floatValue = 6f;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             head = PrefabUtility.SaveAsPrefabAsset(instance, Folder + "HeadBubble.prefab").GetComponent<BubbleDialogView>();
             Object.DestroyImmediate(instance);

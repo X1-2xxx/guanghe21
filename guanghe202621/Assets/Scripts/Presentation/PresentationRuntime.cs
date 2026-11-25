@@ -202,7 +202,7 @@ namespace GamePresentation
         }
         public void ShowHead(string text, float seconds = 3f, int priority = 10, bool story = false)
         {
-            if (!Scene || !Scene.player || string.IsNullOrEmpty(text)) return;
+            if (!Scene || !Scene.player || string.IsNullOrWhiteSpace(text)) return;
             VisibleHeadText = text; headRemaining = Mathf.Max(0.1f, seconds); headElapsed = 0f;
             headPriority = priority; headIsStory = story; shownFrame = Time.frameCount; shownCharacters = -1;
             headView.Initialize(Scene.levelCamera, text);
