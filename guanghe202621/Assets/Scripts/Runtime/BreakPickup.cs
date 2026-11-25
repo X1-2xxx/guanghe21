@@ -21,6 +21,7 @@ namespace LevelKit
 
             collected = true;
             player.UnlockBreak();
+            GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.ShoesAcquired, player, this);
             gameObject.SetActive(false);
             Destroy(gameObject);
         }

@@ -201,6 +201,17 @@ public sealed class CameraPerformanceManager : MonoBehaviour
         playerReturnOffset = offset;
     }
 
+    /// <summary>场景演出适配器绑定真实相机；只暂停返回位置提供器，不关闭玩家控制器。</summary>
+    public void Configure(Camera camera, Transform target, MonoBehaviour returnProvider)
+    {
+        StopPerformance();
+        controlledCamera = camera;
+        playerTarget = target;
+        var bindings = new List<MonoBehaviour>(followBehaviours ?? Array.Empty<MonoBehaviour>());
+        if (returnProvider && !bindings.Contains(returnProvider)) bindings.Add(returnProvider);
+        followBehaviours = bindings.ToArray();
+    }
+
     private void LateUpdate()
     {
         if (!IsPerforming) return;

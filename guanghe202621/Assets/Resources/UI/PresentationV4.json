@@ -1,0 +1,2049 @@
+{
+  "barks": [
+    {
+      "id": "teach_midstop_space",
+      "lines": [
+        "诶？再按一下空格就能让吾半路停下吗！这下好办多了！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 6.5,
+      "cooldown": 0,
+      "priority": 1000,
+      "once": true
+    },
+    {
+      "id": "teach_midstop_click",
+      "lines": [
+        "诶？点一下吾也能让吾半路停下吗！这下好办多了！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 6.5,
+      "cooldown": 0,
+      "priority": 1000,
+      "once": true
+    },
+    {
+      "id": "teach_underfoot",
+      "lines": [
+        "喂喂，吾正踩在这上面呢！站着人的东西汝可拽不动啊！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 6.5,
+      "cooldown": 0,
+      "priority": 1000,
+      "once": true
+    },
+    {
+      "id": "teach_runlock",
+      "lines": [
+        "吾跑起来的时候汝动不了东西啊！粘稳了再按空格！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 6.5,
+      "cooldown": 0,
+      "priority": 1000,
+      "once": true
+    },
+    {
+      "id": "inn_midstop_success",
+      "lines": [
+        "真的停住了！快把后面的物块挪过来接着铺吧，桑丘！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 6.5,
+      "cooldown": 0,
+      "priority": 1000,
+      "once": true
+    },
+    {
+      "id": "stop_early",
+      "lines": [
+        "刚迈开步子怎么又停了？",
+        "诶，前头漏贴硬纸板了吗？",
+        "刹车太急了啊，桑丘！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "stop_repeated",
+      "lines": [
+        "汝究竟让不让吾走啊！",
+        "别逗吾玩了，到底出发不出发？"
+      ],
+      "repeat": [],
+      "brief": [
+        "……"
+      ],
+      "duration": 3.8,
+      "cooldown": 10,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "stop_normal",
+      "lines": [
+        "停住了！",
+        "下面交由汝了，桑丘！",
+        "接好了再按空格叫吾。"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "underfoot",
+      "lines": [
+        "吾还踩在上面呢，桑丘！",
+        "先把吾挪开再拽脚底下的东西啊！"
+      ],
+      "repeat": [],
+      "brief": [
+        "……"
+      ],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "turns",
+      "lines": [
+        "究竟往哪边走啊？",
+        "先想好方向再指路！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "pit",
+      "lines": [
+        "滑了——！",
+        "板翻了啊喂——！",
+        "胶水没粘牢——！"
+      ],
+      "repeat": [
+        "怎么又掉这个坑里了！",
+        "又是这儿！咱俩跟这个坑有仇吗？"
+      ],
+      "brief": [
+        "再来！",
+        "按 R 吧，吾准备好了。",
+        "这次肯定能过。"
+      ],
+      "duration": 2.5,
+      "cooldown": 1.2,
+      "priority": 30,
+      "once": false
+    },
+    {
+      "id": "fall",
+      "lines": [
+        "滑了——！",
+        "板翻了啊喂——！",
+        "胶水没粘牢——！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 1.6,
+      "cooldown": 10,
+      "priority": 20,
+      "once": false
+    },
+    {
+      "id": "stuck",
+      "lines": [
+        "上不去了，按 R 键把吾拉回去吧！",
+        "卡在坑底了啊，桑丘，快重置！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 4.5,
+      "cooldown": 15,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "reset",
+      "lines": [
+        "还好帽子没掉。",
+        "重来重来！",
+        "这不算什么，再来一次！"
+      ],
+      "repeat": [],
+      "brief": [
+        "再来！"
+      ],
+      "duration": 2,
+      "cooldown": 3,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "bridge_shook",
+      "lines": [
+        "吓死吾了……差点滑下去。",
+        "晃成这样竟然没塌？！",
+        "还好吾下盘稳！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "crooked_bridge",
+      "lines": [
+        "这也能算桥吗？！……算了能过就行。",
+        "木板拼成这样竟然也撑住了。"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "rebuild",
+      "lines": [
+        "诶？刚搭完又要拆？",
+        "汝自己也看出来不行了吧。",
+        "（监工中......）"
+      ],
+      "repeat": [],
+      "brief": [
+        "（监工中......）"
+      ],
+      "duration": 3.8,
+      "cooldown": 12,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "many_tapes",
+      "lines": [
+        "硬纸板不要钱吗……",
+        "粘得这么严实，应该稳了吧？"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3.8,
+      "cooldown": 20,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "collapse",
+      "lines": [
+        "幸好吾刚才没踩上去！",
+        "……桑丘，汝手滑了吧？"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "blocked",
+      "lines": [
+        "卡住了，过不去！",
+        "前头顶住了，得调一下。"
+      ],
+      "repeat": [
+        "卡住了！"
+      ],
+      "brief": [
+        "……"
+      ],
+      "duration": 3.8,
+      "cooldown": 6,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "tree_near_miss",
+      "lines": [
+        "轻点转，差点扫着吾了！",
+        "慢点慢点，树枝晃眼睛！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "first_jump",
+      "lines": [
+        "能跳就是方便啊！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 40,
+      "once": true
+    },
+    {
+      "id": "bounce",
+      "lines": [
+        "弹太高了——！",
+        "这枕头里到底塞了什么啊……"
+      ],
+      "repeat": [],
+      "brief": [
+        "哇——！"
+      ],
+      "duration": 3.8,
+      "cooldown": 12,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "wall_no_shoes",
+      "lines": [
+        "撞不开！看着全是缝，结果硬得要命，还是先上阁楼找马吧！"
+      ],
+      "repeat": [
+        "真撞不开，别再让吾拿头撞了！",
+        "头都要撞晕了，先上楼看看吧！"
+      ],
+      "brief": [
+        "……"
+      ],
+      "duration": 3.8,
+      "cooldown": 6,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "first_shoe_run",
+      "lines": [
+        "好快！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 2,
+      "cooldown": 8,
+      "priority": 40,
+      "once": true
+    },
+    {
+      "id": "wall_break",
+      "lines": [
+        "破！",
+        "这就通了！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 2,
+      "cooldown": 8,
+      "priority": 50,
+      "once": false
+    },
+    {
+      "id": "idle",
+      "lines": [
+        "桑丘？汝还在吗？",
+        "这枪举久了手好酸啊......"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 3.8,
+      "cooldown": 20,
+      "priority": 10,
+      "once": false
+    },
+    {
+      "id": "inn_bed_first",
+      "lines": [
+        "哇——这床和枕头怎么这么弹？！\n桑丘，别把吾弹天花板上去了！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 5.5,
+      "cooldown": 8,
+      "priority": 40,
+      "once": true
+    },
+    {
+      "id": "stone_drag_hint",
+      "lines": [
+        "试着把石头拖到坑里！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 4,
+      "cooldown": 15,
+      "priority": 25,
+      "once": false
+    },
+    {
+      "id": "stone_attach_hint",
+      "lines": [
+        "扶着石头靠紧坑边，点右键就能用硬纸板粘住了！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 5,
+      "cooldown": 15,
+      "priority": 25,
+      "once": false
+    },
+    {
+      "id": "stone_early",
+      "lines": [
+        "哇，桑丘，你找到了什么？看上去像是能把东西粘住的硬纸板！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 5,
+      "cooldown": 8,
+      "priority": 25,
+      "once": true
+    },
+    {
+      "id": "stone_wrong",
+      "lines": [
+        "歪了歪了！提示说右键点击连接处能拆开，重新粘平吧！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 5,
+      "cooldown": 12,
+      "priority": 25,
+      "once": false
+    },
+    {
+      "id": "village_fall",
+      "lines": [
+        "又掉下来了！快按 R 键把吾拉回去，再把石头粘平一点！"
+      ],
+      "repeat": [
+        "按 R 重置，再粘平一点吧！"
+      ],
+      "brief": [
+        "再来！"
+      ],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 30,
+      "once": false
+    },
+    {
+      "id": "village_blocked",
+      "lines": [
+        "卡住了过不去啊！按 R 键重置，空手右键拆开重粘一下吧！"
+      ],
+      "repeat": [
+        "按 R 重置，拆开重粘吧！"
+      ],
+      "brief": [
+        "……"
+      ],
+      "duration": 3.8,
+      "cooldown": 8,
+      "priority": 30,
+      "once": false
+    },
+    {
+      "id": "bridge_complete",
+      "lines": [
+        "好耶！......咳咳，我是说，多亏了你！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 4,
+      "cooldown": 8,
+      "priority": 30,
+      "once": true
+    },
+    {
+      "id": "forest_complete",
+      "lines": [
+        "居然真把树当梯子用了，走吧！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 4,
+      "cooldown": 8,
+      "priority": 30,
+      "once": true
+    }
+  ],
+  "episodes": [
+    {
+      "id": "village.opening",
+      "title": "第一幕 1.1–1.2：被打断的开场与重置教学",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 8,
+          "speaker": "堂吉诃德",
+          "text": "很久以前，荒原边上有座安静的小镇。",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 10,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s003",
+          "alternate": "",
+          "argument": "",
+          "seconds": 1.2,
+          "choices": []
+        },
+        {
+          "id": "s003",
+          "kind": 4,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s004",
+          "alternate": "",
+          "argument": "village_ground",
+          "seconds": 1,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 1,
+          "speaker": "旁白",
+          "text": "这一天，身披重甲、头戴铁盔的骑士堂吉诃德听说，杜尔西内娅公主被巨人掳走了。",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 2,
+          "speaker": "堂吉诃德",
+          "text": "等等。\n汝在说谁？",
+          "next": "s006",
+          "alternate": "",
+          "argument": "",
+          "seconds": 5,
+          "choices": []
+        },
+        {
+          "id": "s006",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "骑士堂吉诃德握紧了手中的长枪，决定立刻启程。",
+              "next": "s007"
+            },
+            {
+              "text": "骑士堂吉诃德望向远方的地平线，心中毫无畏惧。",
+              "next": "s007"
+            }
+          ]
+        },
+        {
+          "id": "s007",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s008",
+          "alternate": "",
+          "argument": "noop",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s008",
+          "kind": 2,
+          "speaker": "堂吉诃德",
+          "text": "什么铁盔？还有吾手上什么时候多了根这个？",
+          "next": "s009",
+          "alternate": "",
+          "argument": "",
+          "seconds": 6,
+          "choices": []
+        },
+        {
+          "id": "s009",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "堂吉诃德呼唤来了他忠诚的仆人桑丘，准备一同启程。",
+              "next": "s010"
+            },
+            {
+              "text": "于是，堂吉诃德整理好盔甲，准备与随从桑丘一同离开村庄。",
+              "next": "s010"
+            }
+          ]
+        },
+        {
+          "id": "s010",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s011",
+          "alternate": "",
+          "argument": "noop",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s011",
+          "kind": 2,
+          "speaker": "堂吉诃德",
+          "text": "喂，喂——听得到吗？\n等等，这枪怎么松不开？",
+          "next": "s012",
+          "alternate": "",
+          "argument": "",
+          "seconds": 6,
+          "choices": []
+        },
+        {
+          "id": "s012",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "“走吧，桑丘！”堂吉诃德大喊一声，朝村口发起了冲锋。",
+              "next": "s013"
+            }
+          ]
+        },
+        {
+          "id": "s013",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s014",
+          "alternate": "",
+          "argument": "noop",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s014",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s015",
+          "alternate": "",
+          "argument": "opening.run",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s015",
+          "kind": 5,
+          "speaker": "堂吉诃德",
+          "text": "吾没说那句话……等等，腿怎么自己动起来了——\n前面有个坑啊喂！汝看不见的吗！！",
+          "next": "s016",
+          "alternate": "",
+          "argument": "village.fell",
+          "seconds": 60,
+          "choices": []
+        },
+        {
+          "id": "s016",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "好痛……而且这坑也太深了吧，吾辈爬不上去啊！\n喂，从刚才起一直在天上念叨的家伙，听得到我说话吗？",
+          "next": "s017",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s017",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "听得到，虽然准确来说是看得到。上面好像多了个按 R 重置的按钮。",
+              "next": "s018"
+            },
+            {
+              "text": "哇，有立绘了。不过为什么你穿着T恤衫？",
+              "next": "s019"
+            }
+          ]
+        },
+        {
+          "id": "s018",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "总算有回应了！重置？你是说能把吾辈弄回上面去？\n那还等什么，快按下 R 键试试！吾可不想一辈子蹲在这个坑底！",
+          "next": "s020",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s019",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "现在是说这个的时候吗？？看，上面出现了一行字！先按R键把吾辈放出去！",
+          "next": "s020",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s020",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s021",
+          "alternate": "",
+          "argument": "opening.reset_only",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s021",
+          "kind": 5,
+          "speaker": "堂吉诃德",
+          "text": "快按 R 键（或双击）把吾重置回上面吧！",
+          "next": "s022",
+          "alternate": "",
+          "argument": "village.reset",
+          "seconds": 3600,
+          "choices": []
+        },
+        {
+          "id": "s022",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "opening.reset_done",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "village.reunion",
+      "title": "第一幕 1.3：正式认识桑丘",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "……真的回来了。\n不过，汝刚才一直在念什么呢？听起来像是什么故事的开头，堂吉诃德又是谁……诶，等等，我是堂吉诃德吗？",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "看起来是这样。",
+              "next": "s003"
+            },
+            {
+              "text": "所以你为什么穿着T恤衫？头上的头盔有点怪。",
+              "next": "s004"
+            }
+          ]
+        },
+        {
+          "id": "s003",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "什么情况……不过，既然吾是堂吉诃德，汝方才念到的“桑丘”人呢？这村子里连个人影都没有。",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "因为吾本来就穿着T恤衫。（无语）还有，这是鸭舌帽，不是头盔。不过，既然吾是堂吉诃德，汝方才念到的“桑丘”人呢？这村子里连个人影都没有。",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "我也不知道。现在好像就只有你和我。",
+              "next": "s006"
+            },
+            {
+              "text": "可能出Bug了。在故事里，堂吉诃德和桑丘总是在一起的。",
+              "next": "s007"
+            }
+          ]
+        },
+        {
+          "id": "s006",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "唔姆……这里一个人也没有，右边还有个坑。这个故事绝对有问题吧！",
+          "next": "s008",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s007",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "Bug？那那边那个坑是不是也是Bug？刚才吾可是直接栽到里面了。",
+          "next": "s008",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s008",
+          "kind": 4,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s009",
+          "alternate": "",
+          "argument": "village_pit",
+          "seconds": 1,
+          "choices": []
+        },
+        {
+          "id": "s009",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "看起来这个故事有很多Bug。",
+              "next": "s010"
+            },
+            {
+              "text": "看起来是这样，哪有主角走不出村子的。",
+              "next": "s010"
+            }
+          ]
+        },
+        {
+          "id": "s010",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s011",
+          "alternate": "",
+          "argument": "noop",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s011",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "唔姆……汝有名字吗？吾虽然可以肯定，“堂吉诃德”与吾辈并不相称。但现在被困于此，也只好暂且背着这个骑士之名。",
+          "next": "s012",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s012",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "我没有看到打字输入栏。",
+              "next": "s013"
+            },
+            {
+              "text": "我好像只是个讲故事的人，旁白一般没有名字吧。",
+              "next": "s013"
+            }
+          ]
+        },
+        {
+          "id": "s013",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s014",
+          "alternate": "",
+          "argument": "noop",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s014",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "无妨。汝既然听得见吾说话，故事中吾又刚好缺个搭档——那今后吾便唤汝桑丘了。",
+          "next": "s015",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s015",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "我要抗议。",
+              "next": "s016"
+            },
+            {
+              "text": "好吧，还算合理。",
+              "next": "s017"
+            }
+          ]
+        },
+        {
+          "id": "s016",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "抗议无效。",
+          "next": "s018",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s017",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "嗯嗯，很好。",
+          "next": "s018",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s018",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "听汝刚才念的台词，这好像是个经典的骑士拯救公主的故事？一直在这里也不是办法，先按剧本往村外走吧，说不定走到头就明白了。\n只是，刚才那个坑是个问题。你也看到了，吾辈跨不过去。汝现在除了重置，还能做点别的吗？",
+          "next": "s019",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s019",
+          "kind": 4,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s020",
+          "alternate": "",
+          "argument": "village_stone",
+          "seconds": 1,
+          "choices": []
+        },
+        {
+          "id": "s020",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "嘿！那里好像有东西！\n一块石头。我够不到对面去，但也许汝可以帮吾把它移过来？",
+          "next": "s021",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s021",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "hint.stone",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "village.sunk",
+      "title": "第一幕 1.4 A：石头沉底与硬纸板教学",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "诶？石头直接掉下去了！\n看来坑太深了，这样垫在底下还是差一截，吾辈依旧过不去啊……",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "我刚才操作时一直看到有个提示图标。",
+              "next": "s003"
+            },
+            {
+              "text": "上面的UI栏好像多了块硬纸板，鼠标移上去有介绍。",
+              "next": "s003"
+            }
+          ]
+        },
+        {
+          "id": "s003",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s004",
+          "alternate": "",
+          "argument": "noop",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "新的提示？硬纸板？我看看......介绍里说，可以点击右键用胶水和硬纸板把物品连起来固定住。\n用胶水和硬纸板把石头粘在半空？！这靠谱吗……（无语）",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "总之试试看吧！把石头提起来贴紧坑边，再拿硬纸板粘在和地面齐平的位置，吾不就能踩过去了吗？",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "village.clever",
+      "title": "第一幕 1.4 C：玩家提前把石头粘平",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "诶？！汝居然自己发现了上面的硬纸板，直接把石头粘在坑口填平了？！\n好厉害啊桑丘！这样就可以过去了！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "village.depart",
+      "title": "第一幕 1.4 汇流：空格出发",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 11,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "success",
+          "alternate": "s002",
+          "argument": "village.clever",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "……不过吾怎么动不了啊？\n之前汝念完台词后，吾的身体突然不受控制自己动起来了。难道说，需要汝那边进行操作，吾才能行动吗？",
+          "next": "s003",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s003",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "这上面的UI写着space，刚才你跑的时候它动了。",
+              "next": "s004"
+            },
+            {
+              "text": "难道需要按下空格切换操作角色，你才能动起来？",
+              "next": "s004"
+            }
+          ]
+        },
+        {
+          "id": "s004",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s005",
+          "alternate": "",
+          "argument": "noop",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "那就试试！按下空格键！让吾动起来！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "success",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "成功了！这样就可以过去了！",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "village.crossed",
+      "title": "第一幕 1.4：抵达对面火堆",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "我们做到了！干得好，桑丘！\n不过吾到这个火堆处就自动停下了……",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "难道这是游戏的存档点？刚才按 R 重置回到的地方也有一个火堆。",
+              "next": "s003"
+            },
+            {
+              "text": "我有点明白了，这个故事需要我们两个人一起完成。",
+              "next": "s003"
+            }
+          ]
+        },
+        {
+          "id": "s003",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s004",
+          "alternate": "",
+          "argument": "noop",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "原来如此，怪不得刚才一按重置就会回到火堆旁。\n既然这样，之后的行程就要拜托汝了。\n走吧，桑丘！虽然不知道杜尔西内娅公主在哪儿，但往前走肯定没问题！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "bridge.intro",
+      "title": "第二幕 2.1：断桥与木板旋转拼接",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "这座桥怎么断了？这也是Bug吗？而且缺口比村口那个坑宽多了啊。\n旁边有两块木板，不过只靠两块木板可搭不成牢靠的桥。",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "看来要继续用到刚才的硬纸板了。",
+              "next": "s003"
+            },
+            {
+              "text": "填坑之后是造桥吗......",
+              "next": "s004"
+            }
+          ]
+        },
+        {
+          "id": "s003",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "拿硬纸板拼木板桥……希望它能撑住吾的重量。",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "要过去另一边的话，也只能这样了。",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "那就拜托了，桑丘。转好角度、粘稳桥梁后，再按空格叫吾过去！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "forest.intro",
+      "title": "第二幕 2.2：歪树与固定转轴（可在关卡绑定中关闭本段）",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "……桑丘，这片树林怎么长成这样了？\n树全都是歪的，树根那儿好像还钉着什么东西。",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "估计又是这个故事的Bug吧。",
+              "next": "s003"
+            },
+            {
+              "text": "等等，我好像能抓着这些树转来转去。",
+              "next": "s004"
+            }
+          ]
+        },
+        {
+          "id": "s003",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "这个故事的Bug也太多了吧！（无语）不过，树根那儿看着像是能转动的样子？",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "诶，树还能这么转的吗？！",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "既然能转动，把歪掉的树放倒，是不是就能当台阶走了？\n虽然有点对不起这些树，但吾辈现在也没别的路了。拜托汝了，桑丘！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "jump.intro",
+      "title": "第二幕 2.3：发现不能跳跃",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "等等，上面这么高，吾怎么跳不起来啊？\n桑丘，汝那边有能让吾跳起来的按键吗？",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "我按了半天W和上方向键，无事发生，好像只有空格键、R键和Esc键能用。",
+              "next": "s003"
+            },
+            {
+              "text": "这不是横版过关游戏吗，怎么连跳跃键都没有？",
+              "next": "s004"
+            }
+          ]
+        },
+        {
+          "id": "s003",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "怎么会没有跳跃键啊！（无语）",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "就是说啊！哪有跳不起来的主角！（无语）",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 4,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s006",
+          "alternate": "",
+          "argument": "lower_platform",
+          "seconds": 1,
+          "choices": []
+        },
+        {
+          "id": "s006",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "既然上面去不了，汝看下面。调整那块跷跷石板，吾是不是就能往下走了？",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "jump.discover",
+      "title": "第二幕 2.3：发现下层的跳跃键",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 4,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s002",
+          "alternate": "",
+          "argument": "jump_key",
+          "seconds": 1,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "诶，等等！右边高台上那个发光的东西是什么？\n看起来像是一个......空格键？！莫非那就是吾辈丢掉的跳跃键？！",
+          "next": "s003",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s003",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "为什么按键会掉在场景里，这游戏的Bug越来越离谱了。",
+              "next": "s004"
+            },
+            {
+              "text": "总之先用石头和木板搭个缓坡，送你上去把它捡回来吧。",
+              "next": "s004"
+            }
+          ]
+        },
+        {
+          "id": "s004",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s005",
+          "alternate": "",
+          "argument": "noop",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "拜托汝了，桑丘！吾可不想一辈子当个不会跳的骑士！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "jump.acquired",
+      "title": "第二幕 2.3：拿到跳跃键",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "拿到了！吾终于能跳了！",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 1,
+          "speaker": "旁白",
+          "text": "离开树林后，骑士决定前往前方的旅馆歇脚，顺便寻一匹称心的好马。",
+          "next": "s003",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s003",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "诶？天上的字幕又出来了——去旅馆找一匹好马！\n听起来不错啊，能骑马就不用老靠吾自己跑了！",
+          "next": "s004",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "既然剧本这么写，那就去看看吧。",
+              "next": "s005"
+            },
+            {
+              "text": "希望那匹马别也出什么奇怪的Bug。",
+              "next": "s006"
+            }
+          ]
+        },
+        {
+          "id": "s005",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "嗯嗯，走吧！",
+          "next": "s007",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s006",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "别说不吉利的话啊！马能出什么Bug，顶多腿长一点吧……",
+          "next": "s007",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s007",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "前面就是旅馆了，出发吧，桑丘！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "inn.intro",
+      "title": "第三幕 3.1：老板、裂墙与半路叫停分支",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "打扰了！请问这里有能骑的好马吗？",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 0,
+          "speaker": "旅馆老板",
+          "text": "马？有是有……\n不过今早不知怎么回事，屋里乱得一塌糊涂，楼梯也断了，那匹“好马”好像被塞到三楼阁楼去了。\n我这把老骨头可爬不上去。这位骑士大人想要的话，自己想办法上阁楼找吧。",
+          "next": "s003",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s003",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "阁楼？怎么会把马放到三楼去啊……（无语）",
+          "next": "s004",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 4,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s005",
+          "alternate": "",
+          "argument": "inn_wall,inn_stairs",
+          "seconds": 1,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "右边出口也被一堵裂墙封死了。看来不管怎样都得先上楼。",
+          "next": "s006",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s006",
+          "kind": 7,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s007",
+          "alternate": "s008",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s007",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "通往二楼的楼梯断了，手头只有这些木板、木箱和酒桶。\n看着材料好像不够一口气铺到二楼啊，桑丘。",
+          "next": "s009",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s008",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "通往二楼的楼梯断了，材料看着不太够一口气铺到顶啊。\n老规矩，半路按空格叫停吾，把后面走过的物块拆下来接着铺吧，桑丘！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s009",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "如果你在半路能停下来，我就可以把后面走过的木板拆下来，继续往前铺。",
+              "next": "s010"
+            },
+            {
+              "text": "我看UI提示，你跑起来的时候再按空格或者点你本人，好像就能让你停下。",
+              "next": "s010"
+            }
+          ]
+        },
+        {
+          "id": "s010",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "s011",
+          "alternate": "",
+          "argument": "noop",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s011",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "居然还能半路急刹车吗！\n那就试试看！吾先跑上去，汝看准时机叫停吾！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "inn.shoes",
+      "title": "第三幕 3.3：阁楼揭晓马头跑鞋",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "……\n桑丘，帮吾看看，这是什么东西。",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "一双长着马头的运动鞋。",
+              "next": "s003"
+            },
+            {
+              "text": "道具名写着“驽辛难得”，是你的马哦。",
+              "next": "s004"
+            }
+          ]
+        },
+        {
+          "id": "s003",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "这就是老板和剧本里说的“好马”？！这也太敷衍了吧！（无语）",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "别光听名字啊！这分明就是一双鞋！（无语）",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "算了，真来一匹活马，汝粘的桥估计也撑不住。穿上试试吧……\n诶？这鞋穿起来好轻，而且脚下好像攒着一股冲劲！",
+          "next": "s006",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s006",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "桑丘！穿上它的话，一楼那堵裂墙说不定能直接撞破！\n......不过吾的外观为何没有变化？",
+          "next": "s007",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s007",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "可能是制作组工期不够了吧。",
+              "next": "s008"
+            },
+            {
+              "text": "这样的话，我们是不是可以通过那堵裂墙了？往左走好像能回到一楼的样子。",
+              "next": "s009"
+            }
+          ]
+        },
+        {
+          "id": "s008",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "好现实的原因......",
+          "next": "s010",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s009",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "好主意！",
+          "next": "s010",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s010",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "走吧，桑丘，让我们去把那堵墙撞开！",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "id": "inn.ending",
+      "title": "第三幕 3.4：破墙与原型收尾",
+      "entry": "s001",
+      "once": true,
+      "steps": [
+        {
+          "id": "s001",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "做到了！真的撞开了！\n这双马头鞋，比吾想的还管用嘛！",
+          "next": "s002",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s002",
+          "kind": 3,
+          "speaker": "桑丘",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": [
+            {
+              "text": "干得漂亮，骑士。",
+              "next": "s003"
+            },
+            {
+              "text": "接下来终于能正式去找公主了吧，主角。",
+              "next": "s004"
+            }
+          ]
+        },
+        {
+          "id": "s003",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "哼哼，这也是多亏了吾辈的实力——当然，也有桑丘汝的一份功劳。",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s004",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "没错！能跳，能跑，还能破墙，吾现在已经完全是合格的骑士了！",
+          "next": "s005",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s005",
+          "kind": 0,
+          "speaker": "堂吉诃德",
+          "text": "走吧，桑丘！不管前面还有多少离谱的Bug，只要咱俩一起，肯定都能过去！",
+          "next": "s006",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s006",
+          "kind": 9,
+          "speaker": "堂吉诃德",
+          "text": "",
+          "next": "",
+          "alternate": "",
+          "argument": "",
+          "seconds": 3,
+          "choices": []
+        }
+      ]
+    }
+  ]
+}

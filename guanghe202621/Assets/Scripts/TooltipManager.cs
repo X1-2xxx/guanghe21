@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-/// <summary>管理同一个屏幕 Canvas 中的悬浮提示，不依赖菜单、暂停或物品业务脚本。</summary>
+/// <summary>共享的屏幕悬浮提示层，可服务于不同屏幕 Canvas，不依赖菜单或物品业务。</summary>
 [DisallowMultipleComponent]
 [RequireComponent(typeof(RectTransform), typeof(CanvasGroup), typeof(Canvas))]
 public sealed class TooltipManager : MonoBehaviour
@@ -102,10 +102,11 @@ public sealed class TooltipManager : MonoBehaviour
     {
         if (IsSuppressed || !isActiveAndEnabled || source == null || pointer == null || canvasRect == null) return;
         Canvas sourceCanvas = source.GetComponentInParent<Canvas>();
-        if (sourceCanvas == null || sourceCanvas.rootCanvas != rootCanvas) return;
+        if (sourceCanvas == null || sourceCanvas.rootCanvas.renderMode == RenderMode.WorldSpace) return;
         currentTrigger = source;
         pointerPosition = pointer.position;
-        eventCamera = pointer.enterEventCamera;
+        // 鼠标是屏幕坐标；转换到提示层时使用提示层自己的相机，支持独立 HUD Canvas。
+        eventCamera = rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : rootCanvas.worldCamera;
         transform.SetAsLastSibling();
         UpdateDrawOrder(sourceCanvas);
         RefreshContent();
@@ -118,7 +119,10 @@ public sealed class TooltipManager : MonoBehaviour
     private void UpdateDrawOrder(Canvas sourceCanvas)
     {
         if (tooltipCanvas == null || rootCanvas == null) return;
-        int menuOrder = Mathf.Max(rootCanvas.sortingOrder, sourceCanvas != null ? sourceCanvas.sortingOrder : rootCanvas.sortingOrder);
+        var sourceRoot = sourceCanvas != null ? sourceCanvas.rootCanvas : rootCanvas;
+        int menuOrder = Mathf.Max(rootCanvas.sortingOrder, Mathf.Max(sourceRoot.sortingOrder, sourceCanvas != null ? sourceCanvas.sortingOrder : rootCanvas.sortingOrder));
+        tooltipCanvas.sortingLayerID = SortingLayer.GetLayerValueFromID(sourceRoot.sortingLayerID) > SortingLayer.GetLayerValueFromID(rootCanvas.sortingLayerID)
+            ? sourceRoot.sortingLayerID : rootCanvas.sortingLayerID;
         // 不能依靠同层的兄弟顺序：嵌套 Canvas 的实际绘制顺序可能把提示压在书本下。
         tooltipCanvas.sortingOrder = Mathf.Clamp(Mathf.Max(sortingOrder, menuOrder + 1), short.MinValue, short.MaxValue);
     }

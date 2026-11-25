@@ -29,6 +29,7 @@ namespace LevelKit
             timeLeft = flashSeconds;
             restingColor = visual.color;
             visual.color = new Color(1f, 1f, 1f, restingColor.a);
+            GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.WallBroken, attacker, this);
             return true;
         }
 

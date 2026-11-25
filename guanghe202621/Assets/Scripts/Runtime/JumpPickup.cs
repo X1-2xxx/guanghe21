@@ -16,6 +16,7 @@ namespace LevelKit
                 !player.isActiveAndEnabled || !isActiveAndEnabled) return;
 
             player.UnlockJump();
+            GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.JumpAcquired, player, this);
             gameObject.SetActive(false);
             Destroy(gameObject);
         }

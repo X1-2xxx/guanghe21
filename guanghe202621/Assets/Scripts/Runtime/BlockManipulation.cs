@@ -36,7 +36,7 @@ namespace LevelKit
         private float targetRotation;
         private float warningUntil;
 
-        private bool ControlsLocked => LevelGameFlow.BlocksGameplayInput(this) ||
+        private bool ControlsLocked => LevelGameFlow.BlocksGameplayInput(this) || GamePresentation.PresentationEvents.BlocksInput || GamePresentation.PresentationEvents.ResetOnly ||
             (playerAction && (playerAction.IsActing || playerAction.IsInConversation));
 
         private void Awake()
@@ -103,7 +103,12 @@ namespace LevelKit
             if (locked)
             {
                 if ((rightClick && glue.HasTapeAt(cursor)) ||
-                    ((leftClick || rightClick || rotated) && IsOverBlock(cursor))) ShowWarning();
+                    ((leftClick || rightClick || rotated) && IsOverBlock(cursor)))
+                {
+                    ShowWarning();
+                    if (playerAction && playerAction.IsActing && !playerAction.IsRespawning && !playerAction.IsWallStopping)
+                        GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.RunningEditDenied, playerAction);
+                }
                 return;
             }
 
@@ -247,10 +252,15 @@ namespace LevelKit
             var body = block.Body;
             if (ControlsLocked || !block.isActiveAndEnabled || !body || !body.simulated || body.bodyType != RigidbodyType2D.Dynamic)
                 return false;
-            if (IsSupportingPlayer(body)) return false;
+            if (IsSupportingPlayer(body))
+            {
+                GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.UnderfootDenied, playerAction, body);
+                return false;
+            }
             if (body.TryGetComponent<HingedBlock>(out var pivot) && !pivot.isActiveAndEnabled) return false;
             Release();
             held = body;
+            GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.BlockGrabbed, playerAction, body);
             heldCursor = point;
             heldPivot = pivot;
             BeginPlacement();

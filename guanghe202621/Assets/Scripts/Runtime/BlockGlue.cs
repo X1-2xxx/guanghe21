@@ -204,6 +204,7 @@ namespace LevelKit
             body.WakeUp();
             if (!fixedPlatform) connected.WakeUp();
             ClearCandidate();
+            GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.TapeConnected, owner, body);
             return true;
         }
 
@@ -211,7 +212,9 @@ namespace LevelKit
         {
             int nearest = FindNearestLink(cursor);
             if (nearest < 0) return;
+            var source = links[nearest].Source;
             RemoveLink(nearest);
+            GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.TapeRemoved, owner, source);
         }
 
         public bool HasTapeAt(Vector2 cursor) => FindNearestLink(cursor) >= 0;
