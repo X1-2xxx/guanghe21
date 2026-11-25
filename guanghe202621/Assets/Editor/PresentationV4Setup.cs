@@ -229,7 +229,7 @@ public static class PresentationV4Setup
             var stone=binding.villageStone.transform;
             binding.targets=new[] {
                 Target("village_ground",new Vector2(-17.65f,-1.4f),horizontalOnly:true),
-                Target("village_pit",new Vector2(-15,-3),horizontalOnly:true),
+                Target("village_pit",new Vector2(-15,-1.4f),orthographicSize:3.8f),
                 new PresentationSceneBinding.Target{key="village_stone",value=stone,horizontalOnly=true},
                 Target("lower_platform",new Vector2(41.41f,-2.64f)), Target("jump_key",new Vector2(46,-1.5f)),
                 new PresentationSceneBinding.Target{key="inn_wall",value=wall.transform}, Target("inn_stairs",new Vector2(81.47f,9.26f)) };
@@ -256,8 +256,8 @@ public static class PresentationV4Setup
         }
         catch(Exception e){Debug.LogException(e);File.WriteAllText("presentation-build-result.txt",e.ToString());EditorApplication.Exit(1);}
     }
-    private static PresentationSceneBinding.Target Target(string key, Vector2 position, bool horizontalOnly = false) =>
-        new PresentationSceneBinding.Target{key=key,value=RectMarker(key,null,position),horizontalOnly=horizontalOnly};
+    private static PresentationSceneBinding.Target Target(string key, Vector2 position, bool horizontalOnly = false, float orthographicSize = 0f) =>
+        new PresentationSceneBinding.Target{key=key,value=RectMarker(key,null,position),horizontalOnly=horizontalOnly,orthographicSize=orthographicSize};
     private static Transform RectMarker(string name, Transform parent, Vector2 position)
     {var marker=new GameObject(name).transform;marker.SetParent(parent);marker.position=position;return marker;}
     private static void SignalZone(Transform parent,string name,string signal,Vector2 position,Vector2 size)

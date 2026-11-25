@@ -55,10 +55,11 @@ public static class StoryReferenceLayout
         foreach(var text in new[]{view.choiceAText,view.choiceBText})
         {
             Area(text.rectTransform,new Vector2(.075f,.15f),new Vector2(.91f,.83f));
-            text.color=Ink;text.fontSize=30;text.alignment=TextAnchor.MiddleLeft;
+            text.color=Ink;text.fontSize=30;text.alignment=TextAnchor.MiddleLeft;text.lineSpacing=1.14f;
             text.resizeTextForBestFit=true;text.resizeTextMinSize=22;text.resizeTextMaxSize=30;
         }
         view.choiceAPrefix="A. ";view.choiceBPrefix="B. ";
+        view.blackText.lineSpacing=1.15f;
         ApplyNarrationLayout(view);
         UIFontUtility.ApplyToHierarchy(view.gameObject);
     }
@@ -78,6 +79,7 @@ public static class StoryReferenceLayout
         text.color = Ink;
         text.alignment = TextAnchor.MiddleCenter;
         text.fontSize = 42;
+        text.lineSpacing = 1.18f;
         text.resizeTextForBestFit = false;
 
         var button = view.narratorContinueButton;
@@ -120,12 +122,12 @@ public static class StoryReferenceLayout
         speaker.color = Ink;
 
         var body = view.dialogueText;
-        Area(body.rectTransform, new Vector2(.095f, .145f), new Vector2(.82f, .505f));
+        Area(body.rectTransform, new Vector2(.105f, .105f), new Vector2(.81f, .475f));
         body.alignment = TextAnchor.UpperLeft;
         body.fontSize = 40;
-        body.resizeTextForBestFit = true;
-        body.resizeTextMinSize = 33;
-        body.resizeTextMaxSize = 40;
+        body.resizeTextForBestFit = false;
+        body.lineSpacing = 1.24f;
+        if (!body.GetComponent<StoryDialogueLetterSpacing>()) body.gameObject.AddComponent<StoryDialogueLetterSpacing>();
         body.color = Ink;
     }
 

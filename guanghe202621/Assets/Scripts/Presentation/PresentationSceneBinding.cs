@@ -12,6 +12,8 @@ namespace GamePresentation
             [InspectorName("目标标识")] public string key;
             [InspectorName("场景物体")] public Transform value;
             [InspectorName("仅水平移动")] public bool horizontalOnly;
+            [Min(0f), InspectorName("演出正交尺寸"), Tooltip("0 沿用当前尺寸。数值越小，画面越近。")]
+            public float orthographicSize;
         }
         [InspectorName("启用 V4 主线（关闭后只保留教学和小台词）")] public bool enableMainline = true;
         [InspectorName("包含树林歪树教学")] public bool includeForest = true;

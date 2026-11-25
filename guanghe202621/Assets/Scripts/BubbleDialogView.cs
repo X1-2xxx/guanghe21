@@ -1,4 +1,5 @@
 using System.Globalization;
+using GamePresentation;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -47,18 +48,16 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
             DialogueFontUtility.ApplyFallback(speakerText);
             speakerText.text = speaker ?? string.Empty;
         }
-        fullText = text;
-        characterStarts = StringInfo.ParseCombiningCharacters(fullText);
-        revealedCount = -1;
         contentText.supportRichText = false;
-        contentText.horizontalOverflow = HorizontalWrapMode.Wrap;
+        contentText.horizontalOverflow = HorizontalWrapMode.Overflow;
         contentText.verticalOverflow = VerticalWrapMode.Overflow;
-        contentText.text = fullText;
+        contentText.text = text ?? string.Empty;
 
         if (screenBottom)
         {
             // 宽度、锚点和边距由美术在预置体中编辑，长台词只增大对话框高度。
             Canvas.ForceUpdateCanvases();
+            WrapText(text);
             float panelHeight = Mathf.Max(minHeight, contentText.preferredHeight + Mathf.Max(0f, padding.y));
             bubbleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, panelHeight);
             return;
@@ -76,8 +75,17 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
         var lift = Vector2.up * Mathf.Min(contentLift, halfPadding.y);
         textRect.offsetMin = halfPadding + lift;
         textRect.offsetMax = -halfPadding + lift;
+        WrapText(text);
         float height = Mathf.Max(minHeight, contentText.preferredHeight + verticalPadding);
         bubbleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+    }
+
+    private void WrapText(string text)
+    {
+        fullText = new StoryTextLayout(contentText, contentText.fontSize).Wrap(text);
+        characterStarts = StringInfo.ParseCombiningCharacters(fullText);
+        revealedCount = -1;
+        contentText.text = fullText;
     }
 
     public void Reveal(int count)

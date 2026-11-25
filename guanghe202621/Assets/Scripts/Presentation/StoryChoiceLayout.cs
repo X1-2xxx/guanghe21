@@ -7,6 +7,8 @@ namespace GamePresentation
     internal sealed class StoryChoiceLayout
     {
         private const float MinimumGap = 12f;
+        private const float TextHeightMargin = 4f;
+        private const float ExpandedTopInset = 24f;
         private readonly RectTransform panel;
         private readonly Row first, second;
         private Vector2 lastSize;
@@ -24,7 +26,14 @@ namespace GamePresentation
             if (panel.gameObject.activeInHierarchy && panel.rect.size != lastSize) Apply();
         }
 
-        public void Apply()
+        public void Apply(string firstText, string secondText)
+        {
+            first.Content = firstText;
+            second.Content = secondText;
+            Apply();
+        }
+
+        private void Apply()
         {
             lastSize = panel.rect.size;
             if (!first.Button.gameObject.activeSelf || lastSize.x <= 0f || lastSize.y <= 0f) return;
@@ -58,6 +67,7 @@ namespace GamePresentation
 
         private sealed class Row
         {
+            public string Content { get; set; }
             public RectTransform Button { get; }
             public float Bottom { get; private set; }
             public float Top { get; private set; }
@@ -99,19 +109,21 @@ namespace GamePresentation
                 SetOffsets(labelRect, labelOffsetMin, labelOffsetMax);
                 label.fontSize = originalFontSize;
                 label.resizeTextForBestFit = bestFit;
-                label.horizontalOverflow = HorizontalWrapMode.Wrap;
+                label.horizontalOverflow = HorizontalWrapMode.Overflow;
             }
 
             public void Measure()
             {
                 bottomPadding = Mathf.Max(0f, OriginalHeight * labelAnchorMin + labelOffsetMin);
-                topPadding = Mathf.Max(0f, OriginalHeight * (1f - labelAnchorMax) - labelOffsetMax);
-                FitsOriginal = TextHeight(FontSize) <= label.rectTransform.rect.height;
+                // 长文首行留出纸框花边与手写字体的上沿。
+                topPadding = Mathf.Max(0f, OriginalHeight * (1f - labelAnchorMax) - labelOffsetMax) + ExpandedTopInset;
+                FitsOriginal = TextHeight(FontSize, out string formatted) + TextHeightMargin + ExpandedTopInset <= label.rectTransform.rect.height;
+                if (FitsOriginal) label.text = formatted;
             }
 
             public float RequiredHeight(int fontLimit) => FitsOriginal
                 ? OriginalHeight
-                : Mathf.Max(OriginalHeight, Mathf.Ceil(TextHeight(Mathf.Min(FontSize, fontLimit)) + bottomPadding + topPadding));
+                : Mathf.Max(OriginalHeight, Mathf.Ceil(TextHeight(Mathf.Min(FontSize, fontLimit), out _) + TextHeightMargin + bottomPadding + topPadding));
 
             public void Place(RectTransform panel, float bottom, float top, int fontLimit)
             {
@@ -126,18 +138,14 @@ namespace GamePresentation
                 SetOffsets(labelRect, bottomPadding, -topPadding);
                 label.resizeTextForBestFit = false;
                 label.fontSize = Mathf.Min(FontSize, fontLimit);
+                label.text = new StoryTextLayout(label, label.fontSize).Wrap(Content);
             }
 
-            private float TextHeight(int size)
+            private float TextHeight(int size, out string formatted)
             {
-                if (!label.font || string.IsNullOrEmpty(label.text)) return 0f;
-                Vector2 extents = new Vector2(label.GetPixelAdjustedRect().width, 0f);
-                var settings = label.GetGenerationSettings(extents);
-                settings.resizeTextForBestFit = false;
-                settings.verticalOverflow = VerticalWrapMode.Overflow;
-                if (label.font.dynamic) settings.fontSize = size;
-                else settings.scaleFactor = label.font.fontSize / (float)size;
-                return label.cachedTextGeneratorForLayout.GetPreferredHeight(label.text, settings) / settings.scaleFactor;
+                var layout = new StoryTextLayout(label, size);
+                formatted = layout.Wrap(Content);
+                return layout.MeasureHeight(formatted);
             }
 
             private static void SetOffsets(RectTransform rect, float min, float max)

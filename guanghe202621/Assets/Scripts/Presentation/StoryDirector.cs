@@ -13,7 +13,6 @@ namespace GamePresentation
         private readonly HashSet<string> received = new HashSet<string>();
         private StoryEpisode episode;
         private StoryStep step;
-        private StoryChoice narratedChoice;
         private float remaining;
         private bool deferredNext;
         private int enteredFrame;
@@ -46,16 +45,6 @@ namespace GamePresentation
             }
             if (deferredNext) { deferredNext = false; Enter(step.next); return; }
             if (step == null || Time.frameCount <= enteredFrame) return;
-            if (narratedChoice != null)
-            {
-                if (TimedTextFinished(delta))
-                {
-                    string next = narratedChoice.next;
-                    narratedChoice = null;
-                    Enter(next);
-                }
-                return;
-            }
             if (step.autoAdvance && (step.kind == StoryStepKind.BlackTitle || step.kind == StoryStepKind.Narration))
             {
                 if (TimedTextFinished(delta)) Enter(step.next);
@@ -80,21 +69,9 @@ namespace GamePresentation
         }
         public void Choose(int index)
         {
-            if (!Active || step?.kind != StoryStepKind.Choice || narratedChoice != null || Time.frameCount <= enteredFrame || !host.CanPresent) return;
+            if (!Active || step?.kind != StoryStepKind.Choice || Time.frameCount <= enteredFrame || !host.CanPresent) return;
             if (index < 0 || index >= step.choices.Count) return;
-            var choice = step.choices[index];
-            if (!step.narrateChoice)
-            {
-                Enter(choice.next);
-                return;
-            }
-
-            // 开场选的是剧本，先把选中的文字读出来，再显示下一组选项。
-            narratedChoice = choice;
-            enteredFrame = Time.frameCount;
-            host.InterruptBubble();
-            host.storyView.ShowNarration(choice.text, false);
-            remaining = ReadingTime();
+            Enter(step.choices[index].next);
         }
         public void Signal(string id)
         {
@@ -164,7 +141,6 @@ namespace GamePresentation
         {
             string finished = episode.id; completed.Add(finished);
             episode = null; step = null; ResetOnly = false;
-            narratedChoice = null;
             received.Clear();
             host.storyView.Hide(); host.InterruptBubble(); host.HoldActor(false);
             host.EpisodeFinished(finished);
@@ -173,7 +149,6 @@ namespace GamePresentation
         public void Clear()
         {
             episode = null; step = null; ResetOnly = false; deferredNext = false;
-            narratedChoice = null;
             pending.Clear(); completed.Clear(); scheduled.Clear();
             received.Clear();
             host.storyView.Hide(); host.storyView.SetResetHint(false); host.InterruptBubble();

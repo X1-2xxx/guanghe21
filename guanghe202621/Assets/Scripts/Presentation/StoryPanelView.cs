@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -62,11 +60,6 @@ namespace GamePresentation
         }
         public void Show(StoryStep step, Sprite actorPortrait)
         {
-            if (step.kind == StoryStepKind.Narration)
-            {
-                ShowNarration(step.text, !step.autoAdvance);
-                return;
-            }
             Hide(); group.alpha = 1f; group.blocksRaycasts = true;
             if (step.kind == StoryStepKind.BlackTitle)
             {
@@ -74,6 +67,13 @@ namespace GamePresentation
                 blackContinueButton.gameObject.SetActive(!step.autoAdvance);
                 blackPanel.SetActive(true);
                 SetTextPages(blackText, step.text);
+                return;
+            }
+            if (step.kind == StoryStepKind.Narration)
+            {
+                narratorContinueButton.gameObject.SetActive(!step.autoAdvance);
+                narratorPanel.SetActive(true);
+                SetTextPages(narratorText, step.text);
                 return;
             }
             dialoguePanel.SetActive(true);
@@ -85,7 +85,11 @@ namespace GamePresentation
             speakerText.text = retain ? lastSpeaker : step.speaker;
             Sprite image = !showDialogue ? null : (retain ? lastPortrait : actorPortrait);
             portrait.sprite = image; portrait.gameObject.SetActive(image != null);
-            if (choices) dialogueText.text = retain ? lastLine : step.text;
+            if (choices)
+            {
+                dialogueText.horizontalOverflow = HorizontalWrapMode.Overflow;
+                dialogueText.text = retain ? lastLine : LayoutFor(dialogueText).Wrap(step.text);
+            }
             else
             {
                 SetTextPages(dialogueText, step.text);
@@ -96,22 +100,11 @@ namespace GamePresentation
             if (choices)
             {
                 choiceA.gameObject.SetActive(step.choices.Count > 0); choiceB.gameObject.SetActive(step.choices.Count > 1);
-                if (step.choices.Count > 0) choiceAText.text = choiceAPrefix + step.choices[0].text;
-                if (step.choices.Count > 1) choiceBText.text = choiceBPrefix + step.choices[1].text;
                 choiceLayout ??= new StoryChoiceLayout((RectTransform)choicesPanel.transform, choiceAText, choiceBText,
                     (RectTransform)choiceA.transform, (RectTransform)choiceB.transform);
-                choiceLayout.Apply();
+                choiceLayout.Apply(step.choices.Count > 0 ? choiceAPrefix + step.choices[0].text : string.Empty,
+                    step.choices.Count > 1 ? choiceBPrefix + step.choices[1].text : string.Empty);
             }
-        }
-
-        public void ShowNarration(string text, bool showContinue)
-        {
-            Hide();
-            group.alpha = 1f;
-            group.blocksRaycasts = showContinue;
-            narratorContinueButton.gameObject.SetActive(showContinue);
-            narratorPanel.SetActive(true);
-            SetTextPages(narratorText, text);
         }
 
         public bool TryAdvanceTextPage()
@@ -125,45 +118,17 @@ namespace GamePresentation
         private void SetTextPages(Text target, string text)
         {
             pagedText = target;
-            textPages = BuildPages(text);
+            target.horizontalOverflow = HorizontalWrapMode.Overflow;
+            textPages = LayoutFor(target).Paginate(text, target.rectTransform.rect.height, target == dialogueText ? 3 : 4);
             pageIndex = 0;
             target.text = textPages.Count > 0 ? textPages[0] : string.Empty;
         }
 
-        private static List<string> BuildPages(string text)
+        private static StoryTextLayout LayoutFor(Text label)
         {
-            const int pageLength = 64;
-            const string sentenceEnds = "。！？!?…」』”\n";
-            const string clauseEnds = "，、；：,. ;：\t";
-            var pages = new List<string>();
-            // 空行指定一页；超长时优先在句号或分句处拆开，保留短对白原样。
-            foreach (string rawParagraph in Regex.Split(text ?? string.Empty, @"\r?\n[ \t]*\r?\n"))
-            {
-                string paragraph = rawParagraph.Trim();
-                int[] characters = StringInfo.ParseCombiningCharacters(paragraph);
-                for (int start = 0; start < characters.Length;)
-                {
-                    int end = Math.Min(start + pageLength, characters.Length);
-                    if (end < characters.Length)
-                    {
-                        int clauseEnd = -1;
-                        for (int i = end; i > start + pageLength / 2; i--)
-                        {
-                            char previous = paragraph[characters[i - 1]];
-                            if (sentenceEnds.IndexOf(previous) >= 0) { end = i; clauseEnd = -1; break; }
-                            if (clauseEnd < 0 && clauseEnds.IndexOf(previous) >= 0) clauseEnd = i;
-                        }
-                        if (clauseEnd > 0) end = clauseEnd;
-                        // 收尾引号、连续省略号与标点留在当前页。
-                        while (end < characters.Length && "。！？!?…」』”）".IndexOf(paragraph[characters[end]]) >= 0) end++;
-                    }
-                    int endOffset = end == characters.Length ? paragraph.Length : characters[end];
-                    string page = paragraph.Substring(characters[start], endOffset - characters[start]).Trim();
-                    if (page.Length > 0) pages.Add(page);
-                    start = end;
-                }
-            }
-            return pages;
+            var spacing = label.GetComponent<StoryDialogueLetterSpacing>();
+            int fontSize = label.resizeTextForBestFit ? label.resizeTextMaxSize : label.fontSize;
+            return new StoryTextLayout(label, fontSize, spacing ? spacing.Spacing : 0f);
         }
         public void SetPaused(bool paused) { group.alpha = paused ? 0f : 1f; group.blocksRaycasts = !paused && (blackPanel.activeSelf || dialoguePanel.activeSelf || narratorPanel.activeSelf); }
         public void SetResetHint(bool visible) => resetHint.gameObject.SetActive(visible);

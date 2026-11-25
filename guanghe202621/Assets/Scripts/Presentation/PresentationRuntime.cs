@@ -402,6 +402,7 @@ namespace GamePresentation
                 {
                     target = target.value,
                     horizontalOnly = target.horizontalOnly,
+                    orthographicSize = target.orthographicSize,
                     moveDuration = 0.8f,
                     holdDuration = Mathf.Max(0f, hold)
                 });

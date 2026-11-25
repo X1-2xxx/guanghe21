@@ -7,7 +7,7 @@ namespace GamePresentation
     public enum StoryStepKind
     {
         [InspectorName("底部立绘对白")] Dialogue,
-        [InspectorName("屏幕上方旁白")] Narration,
+        [InspectorName("居中旁白")] Narration,
         [InspectorName("主线头顶气泡")] HeadBubble,
         [InspectorName("玩家选项")] Choice,
         [InspectorName("镜头聚焦并返回")] Camera,
@@ -70,7 +70,6 @@ namespace GamePresentation
         [InspectorName("等待期间显示头顶小气泡")] public bool showHeadWhileWaiting;
         [InspectorName("报幕自动消失")] public bool autoAdvance;
         [InspectorName("气泡与下一个选项组同时显示")] public bool showChoicesWithBubble;
-        [InspectorName("选择后先自动播放这句旁白")] public bool narrateChoice;
         [InspectorName("阅读或停留秒数")] public float seconds = 3f;
         [InspectorName("选项")] public List<StoryChoice> choices = new List<StoryChoice>();
     }
