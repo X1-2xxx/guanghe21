@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 170e80757a6e351429013536927d2766, type: 3}
   m_Name: PresentationLibrary
   m_EditorClassIdentifier: Assembly-CSharp::GamePresentation.PresentationLibrary
-  heroPortrait: {fileID: 21300000, guid: 31a7af353a9c4fd4e8118f72edcbb341, type: 3}
+  heroPortrait: {fileID: -1212423158572413520, guid: c716605d3c74011449e4188af2041367, type: 3}
   innkeeperPortrait: {fileID: 0}
   deniedClip: {fileID: 0}
   pitImpactClip: {fileID: 0}

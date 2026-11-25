@@ -34,9 +34,9 @@
 | `Resources/UI/GameplayItemTray.prefab` | 游玩时右上方三个道具的图片、名称和悬浮区 |
 | `Resources/UI/PresentationRuntime.prefab` | 引用上面三个预制体和台词配置；打字机开关默认关闭 |
 
-角色立绘和结束图在 `PresentationLibrary.asset` 上拖入 Sprite。现已从项目主角渲染出透明临时立绘；老板立绘和结束图可等美术完成后替换，留空时名字、对白和“未完待续”仍能显示。头顶气泡已有占位背景。全部使用 UI 文件夹中的项目字体。原 `MainMenu`、`PausePanel`、`HudPanel` 的美术修改方法保持不变。
+主角对白已使用 `Resources/UI/UI/主角立绘.png`。在 `PresentationLibrary.asset` 的「堂吉诃德立绘」字段替换游戏中使用的 Sprite，在 `StoryPanel.prefab` 的 `Portrait_替换透明立绘PNG` 调整位置、大小和预览图。老板立绘和结束图也在 `PresentationLibrary.asset` 中设置，留空时仍显示名字、对白和「未完待续」。
 
-参考图里的正式大人物立绘未在项目资产中找到，目前放大使用已有角色临时图。底部纸张已使用 `UI/uisc/IMG_1126.png`，A/B 花纹框使用 `IMG_1180.png`、`IMG_1183.png`，不会把整张参考截图当背景。显示大立绘时只隐藏场景角色的 Renderer，结束后恢复，碰撞、刚体与动画组件继续保留；该外观开关可在 `PresentationRuntime` 上取消。
+底部纸张使用 `UI/uisc/IMG_1126.png`，A/B 花纹框使用 `IMG_1180.png`、`IMG_1183.png`。`PresentationRuntime` 上的「显示大立绘时隐藏场景角色外观」控制对白期间的角色显示。
 
 在 **停止运行** 时编辑 Project 中的预制体并保存。若在场景实例上调整，按需要用 Overrides → Apply 写回该预制体。运行中的临时实例调整在停止后不会保存。
 
