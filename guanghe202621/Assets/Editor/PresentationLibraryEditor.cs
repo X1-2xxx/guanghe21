@@ -9,13 +9,19 @@ using UnityEngine;
 public sealed class PresentationLibraryEditor : Editor
 {
     private int chapter, node;
-    private bool showBarks;
+    private bool showBarks, showExpressions;
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
         EditorGUILayout.HelpBox("对白与选项在这里修改；气泡/对话框的布局和图片在预制体里修改。运行进度不会写回本资产。", MessageType.Info);
-        foreach (string key in new[]{"heroPortrait","innkeeperPortrait","endingSprite","deniedClip","pitImpactClip"})
+        foreach (string key in new[]{"heroPortrait","heroSpeechlessPortrait","innkeeperPortrait","endingSprite","deniedClip","pitImpactClip"})
             EditorGUILayout.PropertyField(serializedObject.FindProperty(key));
+        showExpressions = EditorGUILayout.Foldout(showExpressions, "堂吉诃德其他表情差分", true);
+        if (showExpressions)
+        {
+            EditorGUILayout.HelpBox("在下方的对白节点选择「立绘表情」。更换同尺寸的差分图片可保持立绘位置。", MessageType.None);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("heroExpressions"), true);
+        }
         var library=(PresentationLibrary)target;
         if(library.episodes.Count>0)
         {

@@ -20,6 +20,7 @@ public sealed class CameraPerformanceManager : MonoBehaviour
         [InspectorName("聚焦目标")] public Transform target;
         [InspectorName("世界坐标")] public Vector2 position;
         [InspectorName("聚焦偏移")] public Vector2 offset;
+        [InspectorName("仅水平移动")] public bool horizontalOnly;
         [Min(0f), Tooltip("正交尺寸越小，画面越近。0 表示保持上一镜头的尺寸。")]
         [InspectorName("变焦尺寸")] public float orthographicSize;
         [Min(0f), InspectorName("移动时长")] public float moveDuration = 0.8f;
@@ -149,6 +150,7 @@ public sealed class CameraPerformanceManager : MonoBehaviour
             requestedShots.Add(new Shot
             {
                 target = shot.target, position = shot.position, offset = shot.offset,
+                horizontalOnly = shot.horizontalOnly,
                 orthographicSize = shot.orthographicSize,
                 moveDuration = Mathf.Max(0f, shot.moveDuration),
                 holdDuration = Mathf.Max(0f, shot.holdDuration)
@@ -235,7 +237,8 @@ public sealed class CameraPerformanceManager : MonoBehaviour
         Shot shot = shots[shotIndex];
         if (shot.target != null) lastFocus = shot.target.position;
         Vector2 focus = lastFocus + shot.offset;
-        var targetPosition = new Vector3(focus.x, focus.y, savedPosition.z);
+        // 水平镜头保留本段开始高度，目标在不同高度时也不会带动相机上下移动。
+        var targetPosition = new Vector3(focus.x, shot.horizontalOnly ? phaseStartPosition.y : focus.y, savedPosition.z);
         float targetSize = shot.orthographicSize > 0f ? shot.orthographicSize : phaseStartSize;
         if (phase == Phase.Moving)
         {

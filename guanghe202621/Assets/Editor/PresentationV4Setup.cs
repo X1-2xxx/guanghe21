@@ -25,6 +25,9 @@ public static class PresentationV4Setup
         {
             library = ScriptableObject.CreateInstance<PresentationLibrary>();
             JsonUtility.FromJsonOverwrite(File.ReadAllText(Folder + "PresentationV4.json"), library);
+            library.heroPortrait = StoryReferenceLayout.HeroPortrait();
+            library.heroSpeechlessPortrait = StoryReferenceLayout.HeroPortrait(StoryExpression.Speechless);
+            AddDefaultHeroExpressions(library);
             AssetDatabase.CreateAsset(library, Folder + "PresentationLibrary.asset");
         }
         var story = AssetDatabase.LoadAssetAtPath<StoryPanelView>(Folder + "StoryPanel.prefab");
@@ -80,6 +83,39 @@ public static class PresentationV4Setup
         }
         AssetDatabase.SaveAssets(); AssetDatabase.Refresh();
     }
+
+    private static void AddDefaultHeroExpressions(PresentationLibrary library)
+    {
+        var presets = new (StoryExpression expression, string artName)[]
+        {
+            (StoryExpression.Angry, "生气_怒气图标"),
+            (StoryExpression.Puzzled, "疑惑"),
+            (StoryExpression.PuzzledQuestionMark, "疑惑_问号"),
+            (StoryExpression.ShockedTalking, "震惊_说话"),
+            (StoryExpression.ShockedMouth, "震惊_震惊嘴"),
+            (StoryExpression.Excited, "兴奋_兴奋嘴_兴奋特效"),
+            (StoryExpression.Disgusted, "嫌弃"),
+            (StoryExpression.NeutralClosedMouth, "通常_闭嘴"),
+            (StoryExpression.NeutralShockedMouth, "通常_震惊嘴"),
+            (StoryExpression.NeutralPainedMouth, "通常_难受嘴"),
+            (StoryExpression.NeutralSpeechlessMouth, "通常_无语嘴"),
+            (StoryExpression.NeutralExcitedMouth, "通常_兴奋嘴"),
+            (StoryExpression.ClosedEyesPained, "紧闭眼_难受嘴"),
+            (StoryExpression.ClosedEyesExcitedEffect, "紧闭眼_兴奋嘴_兴奋特效"),
+            (StoryExpression.ClosedEyesExcited, "紧闭眼_兴奋嘴"),
+            (StoryExpression.ClosedEyesShocked, "紧闭眼_震惊嘴"),
+            (StoryExpression.SpeechlessClosedMouthEllipsis, "无语_闭嘴_省略号"),
+            (StoryExpression.SpeechlessMouthEllipsis, "无语_无语嘴_省略号"),
+            (StoryExpression.SpeechlessMouth, "无语_无语嘴")
+        };
+        foreach (var (expression, artName) in presets)
+        {
+            var portrait = AssetDatabase.LoadAllAssetsAtPath(Folder + "UI/bqcf/主角_" + artName + ".png")
+                .OfType<Sprite>().FirstOrDefault();
+            if (portrait) library.heroExpressions.Add(new StoryPortraitVariant { expression = expression, portrait = portrait });
+        }
+    }
+
     private static StoryPanelView BuildStoryPanel()
     {
         var root = CanvasRoot("StoryPanel", 1150);
@@ -192,8 +228,9 @@ public static class PresentationV4Setup
             var wall=Object.FindAnyObjectByType<BreakableBlock>();
             var stone=binding.villageStone.transform;
             binding.targets=new[] {
-                Target("village_ground",new Vector2(-18,-.5f)), Target("village_pit",new Vector2(-15,-3)),
-                new PresentationSceneBinding.Target{key="village_stone",value=stone},
+                Target("village_ground",new Vector2(-17.65f,-1.4f),horizontalOnly:true),
+                Target("village_pit",new Vector2(-15,-3),horizontalOnly:true),
+                new PresentationSceneBinding.Target{key="village_stone",value=stone,horizontalOnly=true},
                 Target("lower_platform",new Vector2(41.41f,-2.64f)), Target("jump_key",new Vector2(46,-1.5f)),
                 new PresentationSceneBinding.Target{key="inn_wall",value=wall.transform}, Target("inn_stairs",new Vector2(81.47f,9.26f)) };
             foreach (var target in binding.targets) if(target.value!=stone && target.value!=wall.transform) target.value.SetParent(root.transform,true);
@@ -219,7 +256,8 @@ public static class PresentationV4Setup
         }
         catch(Exception e){Debug.LogException(e);File.WriteAllText("presentation-build-result.txt",e.ToString());EditorApplication.Exit(1);}
     }
-    private static PresentationSceneBinding.Target Target(string key, Vector2 position) => new PresentationSceneBinding.Target{key=key,value=RectMarker(key,null,position)};
+    private static PresentationSceneBinding.Target Target(string key, Vector2 position, bool horizontalOnly = false) =>
+        new PresentationSceneBinding.Target{key=key,value=RectMarker(key,null,position),horizontalOnly=horizontalOnly};
     private static Transform RectMarker(string name, Transform parent, Vector2 position)
     {var marker=new GameObject(name).transform;marker.SetParent(parent);marker.position=position;return marker;}
     private static void SignalZone(Transform parent,string name,string signal,Vector2 position,Vector2 size)

@@ -11,6 +11,7 @@ namespace GamePresentation
         {
             [InspectorName("目标标识")] public string key;
             [InspectorName("场景物体")] public Transform value;
+            [InspectorName("仅水平移动")] public bool horizontalOnly;
         }
         [InspectorName("启用 V4 主线（关闭后只保留教学和小台词）")] public bool enableMainline = true;
         [InspectorName("包含树林歪树教学")] public bool includeForest = true;
@@ -36,10 +37,12 @@ namespace GamePresentation
             if (runtime) runtime.Attach(this);
             else Debug.LogError("请给剧情场景绑定器拖入 PresentationRuntime 预制体。", this);
         }
-        public Transform FindTarget(string key)
+        public Transform FindTarget(string key) => FindCameraTarget(key)?.value;
+
+        public Target FindCameraTarget(string key)
         {
             if (targets != null) foreach (var target in targets)
-                if (target.key == key) return target.value;
+                if (target != null && target.key == key) return target;
             return null;
         }
         private void OnDestroy()

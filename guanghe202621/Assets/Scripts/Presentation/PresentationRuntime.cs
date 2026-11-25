@@ -394,12 +394,17 @@ namespace GamePresentation
         {
             if (!Scene || !Scene.levelCamera) return;
             cameraAnchor.Capture(Scene.levelCamera, Scene.player.transform);
-            if (keys == "village_ground") Scene.levelCamera.transform.position += Vector3.up * 3f;
             var shots = new List<CameraPerformanceManager.Shot>();
             foreach (string key in keys.Split(','))
             {
-                var target = Scene.FindTarget(key.Trim());
-                if (target) shots.Add(new CameraPerformanceManager.Shot { target = target, moveDuration = 0.8f, holdDuration = Mathf.Max(0f, hold) });
+                var target = Scene.FindCameraTarget(key.Trim());
+                if (target?.value) shots.Add(new CameraPerformanceManager.Shot
+                {
+                    target = target.value,
+                    horizontalOnly = target.horizontalOnly,
+                    moveDuration = 0.8f,
+                    holdDuration = Mathf.Max(0f, hold)
+                });
                 else Debug.LogWarning("请在剧情场景绑定器填写镜头目标：" + key, Scene);
             }
             if (shots.Count > 0) cameraPerformance.PlaySequence(shots);

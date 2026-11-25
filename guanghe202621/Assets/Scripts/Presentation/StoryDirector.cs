@@ -13,6 +13,7 @@ namespace GamePresentation
         private readonly HashSet<string> received = new HashSet<string>();
         private StoryEpisode episode;
         private StoryStep step;
+        private StoryChoice narratedChoice;
         private float remaining;
         private bool deferredNext;
         private int enteredFrame;
@@ -45,6 +46,21 @@ namespace GamePresentation
             }
             if (deferredNext) { deferredNext = false; Enter(step.next); return; }
             if (step == null || Time.frameCount <= enteredFrame) return;
+            if (narratedChoice != null)
+            {
+                if (TimedTextFinished(delta))
+                {
+                    string next = narratedChoice.next;
+                    narratedChoice = null;
+                    Enter(next);
+                }
+                return;
+            }
+            if (step.autoAdvance && (step.kind == StoryStepKind.BlackTitle || step.kind == StoryStepKind.Narration))
+            {
+                if (TimedTextFinished(delta)) Enter(step.next);
+                return;
+            }
             if (step.kind == StoryStepKind.HeadBubble)
             {
                 remaining -= delta;
@@ -56,15 +72,29 @@ namespace GamePresentation
         }
         public void Advance()
         {
-            if (!Active || step == null || Time.frameCount <= enteredFrame || !host.CanPresent) return;
-            if (step.kind == StoryStepKind.Dialogue || step.kind == StoryStepKind.Narration || step.kind == StoryStepKind.BlackTitle)
-                deferredNext = true;
+            if (!Active || step == null || deferredNext || Time.frameCount <= enteredFrame || !host.CanPresent) return;
+            if (step.kind != StoryStepKind.Dialogue && step.kind != StoryStepKind.Narration && step.kind != StoryStepKind.BlackTitle) return;
+            if (step.autoAdvance && step.kind != StoryStepKind.Dialogue) return;
+            if (host.storyView.TryAdvanceTextPage()) enteredFrame = Time.frameCount;
+            else deferredNext = true;
         }
         public void Choose(int index)
         {
-            if (!Active || step?.kind != StoryStepKind.Choice || Time.frameCount <= enteredFrame || !host.CanPresent) return;
+            if (!Active || step?.kind != StoryStepKind.Choice || narratedChoice != null || Time.frameCount <= enteredFrame || !host.CanPresent) return;
             if (index < 0 || index >= step.choices.Count) return;
-            Enter(step.choices[index].next);
+            var choice = step.choices[index];
+            if (!step.narrateChoice)
+            {
+                Enter(choice.next);
+                return;
+            }
+
+            // 开场选的是剧本，先把选中的文字读出来，再显示下一组选项。
+            narratedChoice = choice;
+            enteredFrame = Time.frameCount;
+            host.InterruptBubble();
+            host.storyView.ShowNarration(choice.text, false);
+            remaining = ReadingTime();
         }
         public void Signal(string id)
         {
@@ -73,6 +103,7 @@ namespace GamePresentation
         }
         private void Enter(string id)
         {
+            bool carryBubble = false;
             // 即时命令和条件节点允许连续执行；上限同时防止策划误配死循环。
             for (int guard = 0; guard < 64; guard++)
             {
@@ -80,7 +111,8 @@ namespace GamePresentation
                 step = episode.steps.Find(s => s.id == id);
                 if (step == null) { Debug.LogError("剧情节点不存在：" + episode.id + "/" + id, host); Finish(); return; }
                 enteredFrame = Time.frameCount; remaining = Mathf.Max(0.1f, step.seconds);
-                host.storyView.Hide(); host.InterruptBubble();
+                host.storyView.Hide();
+                if (!carryBubble) host.InterruptBubble();
                 if (step.kind == StoryStepKind.BranchMidStop) { id = host.flag_taught_midstop ? step.alternate : step.next; continue; }
                 if (step.kind == StoryStepKind.BranchEpisodeComplete) { id = HasCompleted(step.argument) ? step.alternate : step.next; continue; }
                 if (step.kind == StoryStepKind.Command) { host.Command(step.argument); id = step.next; continue; }
@@ -99,19 +131,40 @@ namespace GamePresentation
                 if (step.kind == StoryStepKind.HeadBubble)
                 {
                     host.storyView.ResetDialogueMemory();
-                    host.ShowHead(step.text, step.seconds, 2000, true); return;
+                    host.ShowHead(step.text, step.seconds, 2000, true);
+                    if (step.showChoicesWithBubble && episode.steps.Exists(candidate => candidate.id == step.next && candidate.kind == StoryStepKind.Choice))
+                    {
+                        carryBubble = true;
+                        id = step.next;
+                        continue;
+                    }
+                    return;
                 }
                 if (step.kind == StoryStepKind.End) { host.storyView.ShowEnding(host.library.endingSprite); host.HoldActor(true); return; }
                 host.HoldActor(true);
-                host.storyView.Show(step, step.speaker == "旅馆老板" ? host.library.innkeeperPortrait : host.library.heroPortrait);
+                host.storyView.Show(step, host.library.ResolvePortrait(step));
+                if (step.autoAdvance) remaining = ReadingTime();
                 return;
             }
             Debug.LogError("剧情即时节点形成循环，请检查下一节点。", host); Finish();
         }
+
+        private float ReadingTime() => Mathf.Max(step.seconds, 0.65f + host.storyView.CurrentPageLength / 14f);
+
+        private bool TimedTextFinished(float delta)
+        {
+            remaining -= delta;
+            if (remaining > 0f) return false;
+            if (!host.storyView.TryAdvanceTextPage()) return true;
+            remaining = ReadingTime();
+            return false;
+        }
+
         private void Finish()
         {
             string finished = episode.id; completed.Add(finished);
             episode = null; step = null; ResetOnly = false;
+            narratedChoice = null;
             received.Clear();
             host.storyView.Hide(); host.InterruptBubble(); host.HoldActor(false);
             host.EpisodeFinished(finished);
@@ -120,6 +173,7 @@ namespace GamePresentation
         public void Clear()
         {
             episode = null; step = null; ResetOnly = false; deferredNext = false;
+            narratedChoice = null;
             pending.Clear(); completed.Clear(); scheduled.Clear();
             received.Clear();
             host.storyView.Hide(); host.storyView.SetResetHint(false); host.InterruptBubble();

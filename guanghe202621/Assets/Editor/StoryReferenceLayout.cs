@@ -14,6 +14,8 @@ public static class StoryReferenceLayout
     private const string Folder = "Assets/Resources/UI/";
     private static readonly Color Ink = new Color(.24f,.12f,.09f,1);
     private static Sprite Sprite(string relative) => AssetDatabase.LoadAllAssetsAtPath(Folder + "UI/" + relative).OfType<Sprite>().FirstOrDefault();
+    internal static Sprite HeroPortrait(StoryExpression expression = StoryExpression.Default) =>
+        Sprite(expression == StoryExpression.Speechless ? "bqcf/主角_无语_说话.png" : "bqcf/主角_通常_说话.png");
     private static void Area(RectTransform rect, Vector2 min, Vector2 max)
     { rect.anchorMin=min;rect.anchorMax=max;rect.offsetMin=rect.offsetMax=Vector2.zero;rect.localScale=Vector3.one; }
     private static void Corner(RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size)
@@ -30,7 +32,8 @@ public static class StoryReferenceLayout
 
         view.portrait.transform.SetParent(view.dialoguePanel.transform,false);
         view.portrait.transform.SetAsFirstSibling();
-        Area(view.portrait.rectTransform,new Vector2(.025f,.09f),new Vector2(.37f,.93f));
+        Area(view.portrait.rectTransform,new Vector2(.065f,.19f),new Vector2(.45f,.81f));
+        view.portrait.sprite=HeroPortrait();
         view.portrait.preserveAspect=true;view.portrait.raycastTarget=false;
         ApplyDialogueTextLayout(view, frame);
 

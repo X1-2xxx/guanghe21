@@ -20,6 +20,37 @@ namespace GamePresentation
         [InspectorName("是否已完成指定剧情")] BranchEpisodeComplete
     }
 
+    public enum StoryExpression
+    {
+        [InspectorName("默认·说话")] Default = 0,
+        [InspectorName("无语·说话")] Speechless = 1,
+        [InspectorName("生气·怒气图标")] Angry = 2,
+        [InspectorName("疑惑")] Puzzled = 3,
+        [InspectorName("疑惑·问号")] PuzzledQuestionMark = 4,
+        [InspectorName("震惊·说话")] ShockedTalking = 5,
+        [InspectorName("震惊·震惊嘴")] ShockedMouth = 6,
+        [InspectorName("兴奋·兴奋特效")] Excited = 7,
+        [InspectorName("嫌弃")] Disgusted = 8,
+        [InspectorName("通常·闭嘴")] NeutralClosedMouth = 9,
+        [InspectorName("通常·震惊嘴")] NeutralShockedMouth = 10,
+        [InspectorName("通常·难受嘴")] NeutralPainedMouth = 11,
+        [InspectorName("通常·无语嘴")] NeutralSpeechlessMouth = 12,
+        [InspectorName("通常·兴奋嘴")] NeutralExcitedMouth = 13,
+        [InspectorName("紧闭眼·难受嘴")] ClosedEyesPained = 14,
+        [InspectorName("紧闭眼·兴奋特效")] ClosedEyesExcitedEffect = 15,
+        [InspectorName("紧闭眼·兴奋嘴")] ClosedEyesExcited = 16,
+        [InspectorName("紧闭眼·震惊嘴")] ClosedEyesShocked = 17,
+        [InspectorName("无语·闭嘴·省略号")] SpeechlessClosedMouthEllipsis = 18,
+        [InspectorName("无语·无语嘴·省略号")] SpeechlessMouthEllipsis = 19,
+        [InspectorName("无语·无语嘴")] SpeechlessMouth = 20
+    }
+
+    [Serializable] public sealed class StoryPortraitVariant
+    {
+        [InspectorName("表情")] public StoryExpression expression;
+        [InspectorName("立绘 Sprite")] public Sprite portrait;
+    }
+
     [Serializable] public sealed class StoryChoice
     {
         [InspectorName("选项文字"), TextArea(2, 5)] public string text;
@@ -30,11 +61,16 @@ namespace GamePresentation
         [InspectorName("节点标识")] public string id;
         [InspectorName("演出类型")] public StoryStepKind kind;
         [InspectorName("说话人")] public string speaker = "堂吉诃德";
-        [InspectorName("台词"), TextArea(2, 10)] public string text;
+        [InspectorName("立绘表情")] public StoryExpression expression;
+        [InspectorName("台词"), TextArea(2, 10), Tooltip("对白和报幕遇到空行会换页，较长的段落会自动分段。")]
+        public string text;
         [InspectorName("下一节点")] public string next;
         [InspectorName("条件成立时节点")] public string alternate;
         [InspectorName("镜头目标 / 等待信号 / 指令")] public string argument;
         [InspectorName("等待期间显示头顶小气泡")] public bool showHeadWhileWaiting;
+        [InspectorName("报幕自动消失")] public bool autoAdvance;
+        [InspectorName("气泡与下一个选项组同时显示")] public bool showChoicesWithBubble;
+        [InspectorName("选择后先自动播放这句旁白")] public bool narrateChoice;
         [InspectorName("阅读或停留秒数")] public float seconds = 3f;
         [InspectorName("选项")] public List<StoryChoice> choices = new List<StoryChoice>();
     }
@@ -62,7 +98,9 @@ namespace GamePresentation
     [CreateAssetMenu(menuName = "堂吉诃德/剧情与游玩台词配置")]
     public sealed class PresentationLibrary : ScriptableObject
     {
-        [InspectorName("堂吉诃德立绘")] public Sprite heroPortrait;
+        [InspectorName("堂吉诃德半身立绘")] public Sprite heroPortrait;
+        [InspectorName("堂吉诃德无语差分")] public Sprite heroSpeechlessPortrait;
+        [InspectorName("堂吉诃德其他表情差分")] public List<StoryPortraitVariant> heroExpressions = new List<StoryPortraitVariant>();
         [InspectorName("旅馆老板立绘")] public Sprite innkeeperPortrait;
         [InspectorName("未能拖动物块的音效（可留空）")] public AudioClip deniedClip;
         [InspectorName("开场坠坑音效（可留空）")] public AudioClip pitImpactClip;
@@ -71,5 +109,18 @@ namespace GamePresentation
         [InspectorName("三幕主线剧情")] public List<StoryEpisode> episodes = new List<StoryEpisode>();
         public BarkRule FindBark(string id) => barks.Find(b => b.id == id);
         public StoryEpisode FindEpisode(string id) => episodes.Find(e => e.id == id);
+
+        /// <summary>表情随对白节点切换。未提供差分时继续使用角色的默认立绘。</summary>
+        public Sprite ResolvePortrait(StoryStep step)
+        {
+            if (step.speaker == "旅馆老板") return innkeeperPortrait;
+            if (step.expression == StoryExpression.Default) return heroPortrait;
+            if (step.expression == StoryExpression.Speechless) return heroSpeechlessPortrait ? heroSpeechlessPortrait : heroPortrait;
+            foreach (var variant in heroExpressions)
+            {
+                if (variant != null && variant.expression == step.expression && variant.portrait) return variant.portrait;
+            }
+            return heroPortrait;
+        }
     }
 }
