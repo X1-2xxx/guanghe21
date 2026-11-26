@@ -257,11 +257,27 @@ public sealed class GameFlowTemplate : MonoBehaviour
     }
     private void BindButtons()
     {
-        Bind(mainMenu, "StartButton", StartGame);
+        var startMenuController = mainMenu.GetComponent<StartMenuController>();
+        Bind(mainMenu, "StartButton", () =>
+        {
+            if (startMenuController != null)
+                startMenuController.PlayStartThen(StartGame);
+            else
+                StartGame();
+        });
         Bind(mainMenu, "SettingsButton", () => ShowPanel(settingsPanel));
         Bind(mainMenu, "HelpButton", () => ShowPanel(helpPanel));
         Bind(mainMenu, "VersionButton", () => ShowPanel(versionPanel));
-        Bind(mainMenu, "ExitButton", () => Confirm(mainConfirmationPanel, ConfirmationDialog.Kind.ExitGame, ExitGame));
+        Bind(mainMenu, "ExitButton", () =>
+        {
+            Action showExitConfirmation = () =>
+                Confirm(mainConfirmationPanel, ConfirmationDialog.Kind.ExitGame, ExitGame);
+
+            if (startMenuController != null)
+                startMenuController.PlayExitThen(showExitConfirmation);
+            else
+                showExitConfirmation();
+        });
         Bind(pausePanel, "ResumeButton", ResumeGame);
         Bind(pausePanel, "PauseSettingsButton", () => ShowPanel(pauseSettingsPanel));
         Bind(pausePanel, "PauseHelpButton", () => ShowPanel(pauseHelpPanel));
@@ -476,6 +492,9 @@ public sealed class GameFlowTemplate : MonoBehaviour
 
     private void CloseConfirmation()
     {
+        if (mainConfirmationPanel != null && mainConfirmationPanel.activeSelf)
+            mainMenu?.GetComponent<StartMenuController>()?.CancelPress();
+
         ShowPanel(mainConfirmationPanel, false);
         ShowPanel(pauseConfirmationPanel, false);
         ShowPanel(hudConfirmationPanel, false);
