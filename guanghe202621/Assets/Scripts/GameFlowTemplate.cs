@@ -270,13 +270,10 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Bind(mainMenu, "VersionButton", () => ShowPanel(versionPanel));
         Bind(mainMenu, "ExitButton", () =>
         {
-            Action showExitConfirmation = () =>
-                Confirm(mainConfirmationPanel, ConfirmationDialog.Kind.ExitGame, ExitGame);
-
             if (startMenuController != null)
-                startMenuController.PlayExitThen(showExitConfirmation);
+                startMenuController.PlayExitThen(ExitGame);
             else
-                showExitConfirmation();
+                ExitGame();
         });
         Bind(pausePanel, "ResumeButton", ResumeGame);
         Bind(pausePanel, "PauseSettingsButton", () => ShowPanel(pauseSettingsPanel));
