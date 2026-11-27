@@ -57,7 +57,6 @@ MonoBehaviour:
   cameraAnchor: {fileID: 5796296639547508}
   useTypewriter: 0
   charactersPerSecond: 32
-  hideWorldActorWithPortrait: 1
   flag_taught_midstop: 0
   flag_taught_underfoot_lock: 0
   flag_taught_run_lock: 0

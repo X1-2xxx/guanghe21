@@ -230,6 +230,19 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &990100000000000101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 471448709714465603}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49f7da214199dfa4d9247943f1fdfcf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ImageAlphaRaycastFilter
+  threshold: 0.15
 --- !u!1 &585010394499341831
 GameObject:
   m_ObjectHideFlags: 0
@@ -1624,9 +1637,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -7192166337892377293, guid: 686089ca40153bc469d4f7ff27011771, type: 3}
+  m_Sprite: {fileID: -7192166337892377293, guid: e18520a1d7016ce459cb18d3998cef54, type: 3}
   m_Type: 0
-  m_PreserveAspect: 0
+  m_PreserveAspect: 1
   m_FillCenter: 1
   m_FillMethod: 4
   m_FillAmount: 1
@@ -1907,6 +1920,19 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &990100000000000102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7640852671044936896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49f7da214199dfa4d9247943f1fdfcf5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ImageAlphaRaycastFilter
+  threshold: 0.15
 --- !u!1 &7855597524495139985
 GameObject:
   m_ObjectHideFlags: 0
@@ -2217,29 +2243,3 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: "\u786E\u8BA4"
---- !u!114 &990100000000000101
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 471448709714465603}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49f7da214199dfa4d9247943f1fdfcf5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::ImageAlphaRaycastFilter
-  threshold: 0.15
---- !u!114 &990100000000000102
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7640852671044936896}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 49f7da214199dfa4d9247943f1fdfcf5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::ImageAlphaRaycastFilter
-  threshold: 0.15

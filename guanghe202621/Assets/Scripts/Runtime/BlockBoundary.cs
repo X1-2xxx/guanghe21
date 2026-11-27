@@ -8,6 +8,10 @@ namespace LevelKit
     public sealed class BlockBoundary : MonoBehaviour
     {
         [SerializeField, Min(0.1f)] private float radius = 8f;
+        [SerializeField, InspectorName("移动范围中心偏移（世界坐标）"),
+            Tooltip("相对初始位置的世界坐标偏移；仅改变移动范围，不改变越界后的归位位置。")]
+        private Vector2 centerOffset;
+        private Vector3 BoundaryCenter => origin + (Vector3)centerOffset;
         [SerializeField, Min(0f)] private float warningDistance = 0.8f;
         [SerializeField, Min(0.05f)] private float warningSeconds = 0.65f;
         [SerializeField, Min(0.01f)] private float outlineWidth = 0.045f;
@@ -33,7 +37,7 @@ namespace LevelKit
             if (!body || !body.simulated || body.bodyType != RigidbodyType2D.Dynamic) return false;
             if (held && body != held) warningUntil = 0f;
             bool isHeld = body == held;
-            Vector2 center = origin;
+            Vector2 center = BoundaryCenter;
             float radiusSquared = radius * radius;
             float warningRadius = Mathf.Max(0f, radius - warningDistance - (wasNear ? WarningHysteresis : 0f));
             bool isHeldNear = false;
@@ -87,7 +91,7 @@ namespace LevelKit
             }
 
             if (!outline) CreateOutline();
-            for (int i = 0; i < vertices.Length; i++) vertices[i] = CirclePoint(origin, radius, i);
+            for (int i = 0; i < vertices.Length; i++) vertices[i] = CirclePoint(BoundaryCenter, radius, i);
             outline.SetPositions(vertices);
             var color = outlineColor;
             color.a *= Mathf.Clamp01(remaining / Mathf.Min(0.18f, warningSeconds));
@@ -139,7 +143,7 @@ namespace LevelKit
         {
             var old = Gizmos.color;
             Gizmos.color = outlineColor;
-            Vector3 center = Application.isPlaying && TryGetComponent<ManipulableBlock>(out _) ? origin : transform.position;
+            Vector3 center = (Application.isPlaying && TryGetComponent<ManipulableBlock>(out _) ? origin : transform.position) + (Vector3)centerOffset;
             var previous = CirclePoint(center, radius, Segments - 1);
             for (int i = 0; i < Segments; i++)
             {

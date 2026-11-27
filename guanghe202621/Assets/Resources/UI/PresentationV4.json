@@ -543,6 +543,30 @@
       "cooldown": 0,
       "priority": 60,
       "once": true
+    },
+    {
+      "id": "player_inspect",
+      "lines": [
+        "吾在呢，桑丘。汝先看看前面的路，准备好再叫吾动身吧！"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 4,
+      "cooldown": 8,
+      "priority": 5,
+      "once": false
+    },
+    {
+      "id": "bed_rest",
+      "lines": [
+        "总算停下来了……先让吾缓一口气，桑丘。"
+      ],
+      "repeat": [],
+      "brief": [],
+      "duration": 4,
+      "cooldown": 8,
+      "priority": 5,
+      "once": false
     }
   ],
   "episodes": [
@@ -839,9 +863,25 @@
           "expression": 11,
           "innkeeperExpression": 0,
           "text": "好痛……而且这坑也太深了吧，吾辈爬不上去啊！\n喂，从刚才起一直在天上念叨的家伙，听得到我说话吗？",
-          "next": "s017",
+          "next": "s016_reset_hint",
           "alternate": "",
           "argument": "",
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 3,
+          "choices": []
+        },
+        {
+          "id": "s016_reset_hint",
+          "kind": 6,
+          "speaker": "堂吉诃德",
+          "expression": 0,
+          "innkeeperExpression": 0,
+          "text": "",
+          "next": "s017",
+          "alternate": "",
+          "argument": "opening.show_reset_hint",
           "showHeadWhileWaiting": false,
           "autoAdvance": false,
           "hidePreviousDialogue": false,
@@ -1805,8 +1845,8 @@
     },
     {
       "id": "jump.intro",
-      "title": "第二幕 2.3：跷跷板与石块配重",
-      "entry": "entry_camera",
+      "title": "第二幕 2.2：第三棵树前发现无法跳跃",
+      "entry": "s001",
       "once": true,
       "showInnkeeper": false,
       "steps": [
@@ -1816,7 +1856,7 @@
           "speaker": "堂吉诃德",
           "expression": 0,
           "innkeeperExpression": 0,
-          "text": "前面的石板一头翘得这么高，吾可跨不过去。\n桑丘，汝那边有能让吾跳起来的按键吗？",
+          "text": "右边的平台这么高，吾跳不上去啊。\n桑丘，汝那边有能让吾跳起来的按键吗？",
           "next": "s002",
           "alternate": "",
           "argument": "",
@@ -1892,7 +1932,7 @@
           "text": "",
           "next": "s006",
           "alternate": "",
-          "argument": "lower_platform",
+          "argument": "forest_ledge",
           "showHeadWhileWaiting": false,
           "autoAdvance": false,
           "hidePreviousDialogue": false,
@@ -1905,7 +1945,7 @@
           "speaker": "堂吉诃德",
           "expression": 0,
           "innkeeperExpression": 0,
-          "text": "先别急，石板中间有支点，旁边还有一块石头。\n也许能用石块作配重，把翘起的那端压下来？",
+          "text": "看来眼下只能靠这些树搭出台阶了。\n汝把第三棵树转稳，让吾能走上右边的平台吧！",
           "next": "",
           "alternate": "",
           "argument": "",
@@ -1914,7 +1954,16 @@
           "hidePreviousDialogue": false,
           "seconds": 3,
           "choices": []
-        },
+        }
+      ]
+    },
+    {
+      "id": "jump.discover",
+      "title": "第二幕 2.3：发现跳跃键与石块配重",
+      "entry": "entry_camera",
+      "once": true,
+      "showInnkeeper": false,
+      "steps": [
         {
           "id": "entry_camera",
           "kind": 12,
@@ -1925,18 +1974,12 @@
           "next": "s001",
           "alternate": "",
           "argument": "jump_arrival",
-          "seconds": 1.1,
+          "showHeadWhileWaiting": false,
+          "autoAdvance": false,
+          "hidePreviousDialogue": false,
+          "seconds": 1,
           "choices": []
-        }
-      ]
-    },
-    {
-      "id": "jump.discover",
-      "title": "第二幕 2.3：配重压低石板，取得跳跃键",
-      "entry": "s001",
-      "once": true,
-      "showInnkeeper": false,
-      "steps": [
+        },
         {
           "id": "s001",
           "kind": 4,
@@ -2643,7 +2686,7 @@
           "id": "s007",
           "kind": 0,
           "speaker": "堂吉诃德",
-          "expression": 4,
+          "expression": 13,
           "innkeeperExpression": 0,
           "text": "桑丘！穿上它的话，一楼右边那堵裂墙肯定能直接撞破！\n\n……不过吾的外观为何没有变化？",
           "next": "s008",
@@ -2684,7 +2727,7 @@
           "id": "s009",
           "kind": 0,
           "speaker": "堂吉诃德",
-          "expression": 1,
+          "expression": 13,
           "innkeeperExpression": 0,
           "text": "好现实的原因……",
           "next": "s011",
@@ -2700,7 +2743,7 @@
           "id": "s010",
           "kind": 0,
           "speaker": "堂吉诃德",
-          "expression": 7,
+          "expression": 13,
           "innkeeperExpression": 0,
           "text": "没错！",
           "next": "s011",
@@ -2716,7 +2759,7 @@
           "id": "s011",
           "kind": 0,
           "speaker": "堂吉诃德",
-          "expression": 7,
+          "expression": 13,
           "innkeeperExpression": 0,
           "text": "谢啦，帕洛梅克老板！走吧，桑丘，去把那堵墙撞开！",
           "next": "",

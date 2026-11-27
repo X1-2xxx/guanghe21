@@ -64,6 +64,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
     private Scene menuScene;
     private Action confirmAction;
     private bool levelLoaded;
+    private bool restartingGame;
     // Unity 重载脚本时保存 UI 状态，但运行时事件必须重新绑定。
     [SerializeField, HideInInspector] private GameState uiState = GameState.MainMenu;
     [NonSerialized] private bool callbacksBound;
@@ -189,6 +190,8 @@ public sealed class GameFlowTemplate : MonoBehaviour
 
     private void Update()
     {
+        // Ending input is handled by the presentation, including Escape.
+        if (GamePresentation.PresentationRuntime.Instance && GamePresentation.PresentationRuntime.Instance.Director.IsEnding) return;
         if (!PausePressed()) return;
         LastUiInteractionFrame = Time.frameCount;
         if (IsActive(dialoguePanel)) dialoguePanel.SetActive(false);
@@ -407,6 +410,23 @@ public sealed class GameFlowTemplate : MonoBehaviour
         HideOptionalPanels();
         ChangeState(GameState.Playing);
         pausePanel.SetActive(false);
+    }
+
+    /// <summary>Replay from a clean scene, rather than carrying completed puzzles into the main menu.</summary>
+    public void RestartGameToMainMenu()
+    {
+        if (restartingGame || !menuScene.IsValid() || string.IsNullOrEmpty(menuScene.path)) return;
+        restartingGame = true;
+        var presentation = GamePresentation.PresentationRuntime.Instance;
+        if (presentation)
+        {
+            presentation.CancelCurrentStory();
+            presentation.ResetTutorialProgress();
+        }
+        ItemUnlockManager.ResetProgress();
+        ChangeState(GameState.MainMenu);
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(menuScene.path, LoadSceneMode.Single);
     }
 
     public void ReturnToMainMenu()

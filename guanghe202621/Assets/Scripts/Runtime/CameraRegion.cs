@@ -24,33 +24,40 @@ namespace LevelKit
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() => InScene.Clear();
 
-        // Half-open rectangles give shared edges one owner; the current region has a small exit buffer.
-        internal bool Contains(Vector2 worldPoint, float margin = 0f)
+        // Enter only when the player's complete collision bounds fit in the region.
+        // While the body straddles a boundary, keep the previous view.
+        internal bool Contains(Bounds bodyBounds, float margin = 0f)
         {
             if (!center || !isActiveAndEnabled || !Area.enabled) return false;
-            Vector2 local = transform.InverseTransformPoint(worldPoint);
-            local -= Area.offset;
+            Vector2 localCenter = transform.InverseTransformPoint(bodyBounds.center);
+            localCenter -= Area.offset;
+            Vector3 xExtent = transform.InverseTransformVector(Vector3.right * bodyBounds.extents.x);
+            Vector3 yExtent = transform.InverseTransformVector(Vector3.up * bodyBounds.extents.y);
+            Vector2 localExtents = new Vector2(Mathf.Abs(xExtent.x) + Mathf.Abs(yExtent.x),
+                Mathf.Abs(xExtent.y) + Mathf.Abs(yExtent.y));
             Vector2 half = Area.size * .5f;
-            Vector2 padding = new Vector2(margin / Mathf.Max(.0001f, Mathf.Abs(transform.lossyScale.x)),
+            half += new Vector2(margin / Mathf.Max(.0001f, Mathf.Abs(transform.lossyScale.x)),
                 margin / Mathf.Max(.0001f, Mathf.Abs(transform.lossyScale.y)));
-            half += padding;
-            return local.x >= -half.x && local.x < half.x && local.y >= -half.y && local.y < half.y;
+            return Mathf.Abs(localCenter.x) + localExtents.x <= half.x &&
+                Mathf.Abs(localCenter.y) + localExtents.y <= half.y;
         }
 
-        internal static CameraRegion Select(Scene scene, Vector2 point, CameraRegion current = null)
-            => Choose(InScene, scene, point, current);
+        internal static CameraRegion Select(Scene scene, Bounds bodyBounds, CameraRegion current = null)
+            => Choose(InScene, scene, bodyBounds, current);
 
-        internal static CameraRegion Choose(IEnumerable<CameraRegion> regions, Scene scene, Vector2 point, CameraRegion current)
+        internal static CameraRegion Choose(IEnumerable<CameraRegion> regions, Scene scene, Bounds bodyBounds, CameraRegion current)
         {
             CameraRegion best = null;
             foreach (var region in regions)
             {
-                if (!region || region.gameObject.scene != scene || !region.Contains(point)) continue;
+                if (!region || region.gameObject.scene != scene || !region.Contains(bodyBounds)) continue;
                 if (!best || region.priority > best.priority ||
                     (region.priority == best.priority && region.selectionOrder < best.selectionOrder)) best = region;
             }
-            if (current && current.gameObject.scene == scene && current.Contains(point, current.exitMargin) &&
-                (!best || best.priority <= current.priority)) return current;
+            bool validCurrent = current && current.gameObject.scene == scene && current.isActiveAndEnabled &&
+                current.Center && current.Area.enabled;
+            if (validCurrent && (!best || (current.Contains(bodyBounds, current.exitMargin) && best.priority <= current.priority)))
+                return current;
             return best;
         }
 

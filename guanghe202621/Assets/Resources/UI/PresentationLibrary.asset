@@ -475,6 +475,24 @@ MonoBehaviour:
     cooldown: 0
     priority: 60
     once: 1
+  - id: player_inspect
+    lines:
+    - "\u543E\u5728\u5462\uFF0C\u6851\u4E18\u3002\u6C5D\u5148\u770B\u770B\u524D\u9762\u7684\u8DEF\uFF0C\u51C6\u5907\u597D\u518D\u53EB\u543E\u52A8\u8EAB\u5427\uFF01"
+    repeat: []
+    brief: []
+    duration: 4
+    cooldown: 8
+    priority: 5
+    once: 0
+  - id: bed_rest
+    lines:
+    - "\u603B\u7B97\u505C\u4E0B\u6765\u4E86\u2026\u2026\u5148\u8BA9\u543E\u7F13\u4E00\u53E3\u6C14\uFF0C\u6851\u4E18\u3002"
+    repeat: []
+    brief: []
+    duration: 4
+    cooldown: 8
+    priority: 5
+    once: 0
   episodes:
   - id: village.opening
     title: "\u7B2C\u4E00\u5E55 1.1\u20131.2\uFF1A\u88AB\u6253\u65AD\u7684\u5F00\u573A\u4E0E\u91CD\u7F6E\u6559\u5B66"
@@ -722,9 +740,23 @@ MonoBehaviour:
       expression: 11
       innkeeperExpression: 0
       text: "\u597D\u75DB\u2026\u2026\u800C\u4E14\u8FD9\u5751\u4E5F\u592A\u6DF1\u4E86\u5427\uFF0C\u543E\u8F88\u722C\u4E0D\u4E0A\u53BB\u554A\uFF01\n\u5582\uFF0C\u4ECE\u521A\u624D\u8D77\u4E00\u76F4\u5728\u5929\u4E0A\u5FF5\u53E8\u7684\u5BB6\u4F19\uFF0C\u542C\u5F97\u5230\u6211\u8BF4\u8BDD\u5417\uFF1F"
-      next: s017
+      next: s016_reset_hint
       alternate: 
       argument: 
+      showHeadWhileWaiting: 0
+      autoAdvance: 0
+      hidePreviousDialogue: 0
+      seconds: 3
+      choices: []
+    - id: s016_reset_hint
+      kind: 6
+      speaker: "\u5802\u5409\u8BC3\u5FB7"
+      expression: 0
+      innkeeperExpression: 0
+      text: 
+      next: s017
+      alternate: 
+      argument: opening.show_reset_hint
       showHeadWhileWaiting: 0
       autoAdvance: 0
       hidePreviousDialogue: 0
@@ -1513,8 +1545,8 @@ MonoBehaviour:
       seconds: 3
       choices: []
   - id: jump.intro
-    title: "\u7B2C\u4E8C\u5E55 2.3\uFF1A\u8DF7\u8DF7\u677F\u4E0E\u77F3\u5757\u914D\u91CD"
-    entry: entry_camera
+    title: "\u7B2C\u4E8C\u5E55 2.2\uFF1A\u7B2C\u4E09\u68F5\u6811\u524D\u53D1\u73B0\u65E0\u6CD5\u8DF3\u8DC3"
+    entry: s001
     once: 1
     showInnkeeper: 0
     steps:
@@ -1523,7 +1555,7 @@ MonoBehaviour:
       speaker: "\u5802\u5409\u8BC3\u5FB7"
       expression: 0
       innkeeperExpression: 0
-      text: "\u524D\u9762\u7684\u77F3\u677F\u4E00\u5934\u7FD8\u5F97\u8FD9\u4E48\u9AD8\uFF0C\u543E\u53EF\u8DE8\u4E0D\u8FC7\u53BB\u3002\n\u6851\u4E18\uFF0C\u6C5D\u90A3\u8FB9\u6709\u80FD\u8BA9\u543E\u8DF3\u8D77\u6765\u7684\u6309\u952E\u5417\uFF1F"
+      text: "\u53F3\u8FB9\u7684\u5E73\u53F0\u8FD9\u4E48\u9AD8\uFF0C\u543E\u8DF3\u4E0D\u4E0A\u53BB\u554A\u3002\n\u6851\u4E18\uFF0C\u6C5D\u90A3\u8FB9\u6709\u80FD\u8BA9\u543E\u8DF3\u8D77\u6765\u7684\u6309\u952E\u5417\uFF1F"
       next: s002
       alternate: 
       argument: 
@@ -1586,7 +1618,7 @@ MonoBehaviour:
       text: 
       next: s006
       alternate: 
-      argument: lower_platform
+      argument: forest_ledge
       showHeadWhileWaiting: 0
       autoAdvance: 0
       hidePreviousDialogue: 0
@@ -1597,7 +1629,7 @@ MonoBehaviour:
       speaker: "\u5802\u5409\u8BC3\u5FB7"
       expression: 0
       innkeeperExpression: 0
-      text: "\u5148\u522B\u6025\uFF0C\u77F3\u677F\u4E2D\u95F4\u6709\u652F\u70B9\uFF0C\u65C1\u8FB9\u8FD8\u6709\u4E00\u5757\u77F3\u5934\u3002\n\u4E5F\u8BB8\u80FD\u7528\u77F3\u5757\u4F5C\u914D\u91CD\uFF0C\u628A\u7FD8\u8D77\u7684\u90A3\u7AEF\u538B\u4E0B\u6765\uFF1F"
+      text: "\u770B\u6765\u773C\u4E0B\u53EA\u80FD\u9760\u8FD9\u4E9B\u6811\u642D\u51FA\u53F0\u9636\u4E86\u3002\n\u6C5D\u628A\u7B2C\u4E09\u68F5\u6811\u8F6C\u7A33\uFF0C\u8BA9\u543E\u80FD\u8D70\u4E0A\u53F3\u8FB9\u7684\u5E73\u53F0\u5427\uFF01"
       next: 
       alternate: 
       argument: 
@@ -1606,6 +1638,12 @@ MonoBehaviour:
       hidePreviousDialogue: 0
       seconds: 3
       choices: []
+  - id: jump.discover
+    title: "\u7B2C\u4E8C\u5E55 2.3\uFF1A\u53D1\u73B0\u8DF3\u8DC3\u952E\u4E0E\u77F3\u5757\u914D\u91CD"
+    entry: entry_camera
+    once: 1
+    showInnkeeper: 0
+    steps:
     - id: entry_camera
       kind: 12
       speaker: "\u5802\u5409\u8BC3\u5FB7"
@@ -1618,14 +1656,8 @@ MonoBehaviour:
       showHeadWhileWaiting: 0
       autoAdvance: 0
       hidePreviousDialogue: 0
-      seconds: 1.1
+      seconds: 1
       choices: []
-  - id: jump.discover
-    title: "\u7B2C\u4E8C\u5E55 2.3\uFF1A\u914D\u91CD\u538B\u4F4E\u77F3\u677F\uFF0C\u53D6\u5F97\u8DF3\u8DC3\u952E"
-    entry: s001
-    once: 1
-    showInnkeeper: 0
-    steps:
     - id: s001
       kind: 4
       speaker: "\u5802\u5409\u8BC3\u5FB7"
@@ -2219,7 +2251,7 @@ MonoBehaviour:
     - id: s007
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
-      expression: 4
+      expression: 13
       innkeeperExpression: 0
       text: "\u6851\u4E18\uFF01\u7A7F\u4E0A\u5B83\u7684\u8BDD\uFF0C\u4E00\u697C\u53F3\u8FB9\u90A3\u5835\u88C2\u5899\u80AF\u5B9A\u80FD\u76F4\u63A5\u649E\u7834\uFF01\n\n\u2026\u2026\u4E0D\u8FC7\u543E\u7684\u5916\u89C2\u4E3A\u4F55\u6CA1\u6709\u53D8\u5316\uFF1F"
       next: s008
@@ -2251,7 +2283,7 @@ MonoBehaviour:
     - id: s009
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
-      expression: 1
+      expression: 13
       innkeeperExpression: 0
       text: "\u597D\u73B0\u5B9E\u7684\u539F\u56E0\u2026\u2026"
       next: s011
@@ -2265,7 +2297,7 @@ MonoBehaviour:
     - id: s010
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
-      expression: 7
+      expression: 13
       innkeeperExpression: 0
       text: "\u6CA1\u9519\uFF01"
       next: s011
@@ -2279,7 +2311,7 @@ MonoBehaviour:
     - id: s011
       kind: 0
       speaker: "\u5802\u5409\u8BC3\u5FB7"
-      expression: 7
+      expression: 13
       innkeeperExpression: 0
       text: "\u8C22\u5566\uFF0C\u5E15\u6D1B\u6885\u514B\u8001\u677F\uFF01\u8D70\u5427\uFF0C\u6851\u4E18\uFF0C\u53BB\u628A\u90A3\u5835\u5899\u649E\u5F00\uFF01"
       next: 

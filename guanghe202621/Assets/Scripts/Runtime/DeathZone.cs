@@ -6,6 +6,33 @@ namespace LevelKit
     [AddComponentMenu("Level Kit/Death Zone")]
     public sealed class DeathZone : MonoBehaviour
     {
+        [Header("Optional world-boundary safety net")]
+        [SerializeField] private bool guardWorldBounds;
+        [SerializeField] private PlayerActionController boundaryPlayer;
+        [SerializeField] private Rect worldBounds;
+        private Rigidbody2D boundaryBody;
+
+        private void Awake()
+        {
+            if (guardWorldBounds && boundaryPlayer) boundaryBody = boundaryPlayer.GetComponent<Rigidbody2D>();
+        }
+
+        private void LateUpdate()
+        {
+            if (!guardWorldBounds || !boundaryPlayer || !boundaryPlayer.isActiveAndEnabled ||
+                !boundaryBody || !boundaryBody.simulated || boundaryPlayer.IsRespawning ||
+                GameStateManager.Current != GameState.Playing) return;
+            // Position check catches fast bodies even if physics skips a trigger volume in one step.
+            if (!worldBounds.Contains(boundaryBody.position)) Respawn(boundaryPlayer);
+        }
+
+        private void Respawn(PlayerActionController player)
+        {
+            if (!player || !player.isActiveAndEnabled || player.IsRespawning) return;
+            GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.PitDeath, player, this);
+            player.Die();
+        }
+
         private void Reset() => GetComponent<BoxCollider2D>().isTrigger = true;
 
         private void OnTriggerEnter2D(Collider2D other)
@@ -13,8 +40,7 @@ namespace LevelKit
             var body = other.attachedRigidbody;
             if (body && body.TryGetComponent<PlayerActionController>(out var player) && player.isActiveAndEnabled)
             {
-                GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.PitDeath, player, this);
-                player.Die();
+                Respawn(player);
             }
         }
 

@@ -18,7 +18,6 @@ namespace GamePresentation
         [InspectorName("镜头返回位置提供器")] public PresentationCameraAnchor cameraAnchor;
         [InspectorName("游玩小台词使用打字机")] public bool useTypewriter;
         [InspectorName("每秒显示字数"), Min(1)] public float charactersPerSecond = 32f;
-        [InspectorName("显示大立绘时隐藏场景角色外观")] public bool hideWorldActorWithPortrait = true;
         [InspectorName("全局教学：半路叫停"), SerializeField] public bool flag_taught_midstop;
         [InspectorName("全局教学：脚下物块不可拖"), SerializeField] public bool flag_taught_underfoot_lock;
         [InspectorName("全局教学：奔跑时不可编辑"), SerializeField] public bool flag_taught_run_lock;
@@ -51,7 +50,6 @@ namespace GamePresentation
         private readonly HashSet<string> onceBarks = new HashSet<string>();
         private readonly HashSet<string> shownGuidance = new HashSet<string>();
         private readonly HashSet<string> shownVillageNudges = new HashSet<string>();
-        private readonly Dictionary<Renderer, bool> hiddenActorRenderers = new Dictionary<Renderer, bool>();
         private readonly Queue<float> turns = new Queue<float>();
         private readonly Queue<string> pickupBarks = new Queue<string>();
         private float headRemaining, headElapsed, lastInput, runStarted, nudgeAt;
@@ -59,8 +57,8 @@ namespace GamePresentation
         private bool headIsStory, headIsGuidance, began, forcedRun, villageSunk, openingReset, jumpAcquired, wallBroken;
         private bool openingPitFallStarted, openingPitImpactStarted;
         private float openingPitImpactRemaining;
-        private bool pendingBridgeIntroduction, pendingJumpIntroduction;
-        private int bridgeArrivalFrame = -1, jumpArrivalFrame = -1;
+        private bool pendingBridgeIntroduction, pendingJumpIntroduction, pendingJumpDiscovery;
+        private int bridgeArrivalFrame = -1, jumpArrivalFrame = -1, jumpDiscoveryFrame = -1;
         private int shownCharacters;
         private Rigidbody2D body;
         private CapsuleCollider2D capsule;
@@ -86,7 +84,7 @@ namespace GamePresentation
             headView.SetVisible(false); inventoryTray.SetActive(false);
         }
         private void OnEnable() => GameEventCenter.StateChanged += OnStateChanged;
-        private void OnDisable() { GameEventCenter.StateChanged -= OnStateChanged; Director?.Clear(); TooltipManager.SetSuppressed(this, false); RestoreActorArt(); }
+        private void OnDisable() { GameEventCenter.StateChanged -= OnStateChanged; Director?.Clear(); TooltipManager.SetSuppressed(this, false); }
         private void OnDestroy() { if (Instance == this) Instance = null; }
 
         public void Attach(PresentationSceneBinding binding)
@@ -94,14 +92,14 @@ namespace GamePresentation
             if (Scene == binding) return;
             if (!binding || !binding.player || !binding.levelCamera)
             { Debug.LogError("剧情场景绑定缺少玩家或相机，请在 Inspector 中拖入场景引用。", binding); return; }
-            RestoreActorArt(); CancelOpeningRun(); Director.Clear(); Scene = binding;
+            CancelOpeningRun(); Director.Clear(); Scene = binding;
             body = Scene.player.GetComponent<Rigidbody2D>(); capsule = Scene.player.GetComponent<CapsuleCollider2D>();
             manipulation = null;
             foreach (var controls in FindObjectsByType<BlockManipulation>(FindObjectsSortMode.None))
                 if (controls.gameObject.scene == Scene.gameObject.scene) { manipulation = controls; break; }
             audioRouter = FindAnyObjectByType<AudioManager>();
             gameFlow = FindAnyObjectByType<GameFlowTemplate>();
-            began = forcedRun = pendingBridgeIntroduction = pendingJumpIntroduction = villageSunk = openingReset = jumpAcquired = wallBroken = actorHeld = false;
+            began = forcedRun = pendingBridgeIntroduction = pendingJumpIntroduction = pendingJumpDiscovery = villageSunk = openingReset = jumpAcquired = wallBroken = actorHeld = false;
             resetTutorialUnlocked = false;
             ItemUnlockManager.SetUnlocked(GameItemId.Cardboard, !V4Mode || Scene.initialEpisode != "village.opening");
             PrepareInitialBlack();
@@ -131,14 +129,14 @@ namespace GamePresentation
         public void Detach(PresentationSceneBinding binding)
         {
             if (Scene != binding) return;
-            RestoreActorArt(); CancelOpeningRun(); Director.Clear(); Scene = null; body = null; capsule = null;
+            CancelOpeningRun(); Director.Clear(); Scene = null; body = null; capsule = null;
             storyView.ClearEquipmentNotice(); pickupBarks.Clear();
             inventoryTray.SetActive(false);
         }
         private void OnStateChanged(GameState state)
         {
             if (state == GameState.Playing) PrepareInitialBlack();
-            if (state == GameState.MainMenu) { ResetVillageGlueReview(); CancelOpeningRun(); Director.Clear(); storyView.ClearEquipmentNotice(); pickupBarks.Clear(); began = false; pendingBridgeIntroduction = pendingJumpIntroduction = false; resetTutorialUnlocked = false; shownGuidance.Clear(); shownVillageNudges.Clear(); ItemUnlockManager.SetUnlocked(GameItemId.Cardboard, false); }
+            if (state == GameState.MainMenu) { ResetVillageGlueReview(); CancelOpeningRun(); Director.Clear(); storyView.ClearEquipmentNotice(); pickupBarks.Clear(); began = false; pendingBridgeIntroduction = pendingJumpIntroduction = pendingJumpDiscovery = false; resetTutorialUnlocked = false; shownGuidance.Clear(); shownVillageNudges.Clear(); ItemUnlockManager.SetUnlocked(GameItemId.Cardboard, false); }
             if (state != GameState.Playing && !(state == GameState.Paused && headIsStory)) InterruptBubble();
         }
         private void PrepareInitialBlack()
@@ -163,6 +161,12 @@ namespace GamePresentation
             }
             if (V4Mode) TickCheckpointStories();
             Director.Tick(PresentationDelta);
+            if (Director.IsEnding)
+            {
+                if (storyView.EndingReadyForRestart && EndingRestartPressed() && gameFlow)
+                    gameFlow.RestartGameToMainMenu();
+                return;
+            }
             var keyboard = Keyboard.current;
             if (keyboard != null && (!gameFlow || !gameFlow.HasOpenGameplayModal) &&
                 (keyboard.enterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame)) Director.Advance();
@@ -184,7 +188,6 @@ namespace GamePresentation
         }
         private void LateUpdate()
         {
-            UpdateActorArt();
             if (!CanPresent || !Scene.player) return;
             headMinimumRemaining = Mathf.Max(0f, headMinimumRemaining - PresentationDelta);
             if (!Director.Active && !Director.HasPendingEpisodes && !headIsStory && !HeadProtected && pendingBubble != null)
@@ -206,6 +209,19 @@ namespace GamePresentation
                 if (shownCharacters != count) { shownCharacters = count; headView.Reveal(count); }
             }
         }
+        private static bool EndingRestartPressed()
+        {
+            if (Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame) return true;
+            var mouse = Mouse.current;
+            if (mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame ||
+                mouse.middleButton.wasPressedThisFrame || mouse.forwardButton.wasPressedThisFrame || mouse.backButton.wasPressedThisFrame)) return true;
+            var gamepad = Gamepad.current;
+            if (gamepad != null)
+                foreach (var control in gamepad.allControls)
+                    if (control is UnityEngine.InputSystem.Controls.ButtonControl button && button.wasPressedThisFrame) return true;
+            return false;
+        }
+
         private static bool HadInput() => HadInterruptInput() ||
             (Mouse.current != null && (Mouse.current.delta.ReadValue().sqrMagnitude > 0.1f || Mouse.current.scroll.ReadValue().sqrMagnitude > 0f));
         private static bool HadInterruptInput() =>
@@ -226,7 +242,10 @@ namespace GamePresentation
             string[] lines = count >= 3 && rule.brief != null && rule.brief.Length > 0 ? rule.brief :
                 count == 2 && rule.repeat != null && rule.repeat.Length > 0 ? rule.repeat : rule.lines;
             if (lines == null || lines.Length == 0) return false;
-            string text = lines[Random.Range(0, lines.Length)];
+            var available = new List<string>();
+            foreach (var line in lines) if (!string.IsNullOrWhiteSpace(line)) available.Add(line);
+            if (available.Count == 0) return false;
+            string text = available[Random.Range(0, available.Count)];
             float duration = count >= 3 && rule.brief != null && rule.brief.Length > 0 ? Mathf.Min(1.8f, rule.duration) : rule.duration;
             cooldowns[key] = Time.unscaledTime + (count >= 3 ? Mathf.Max(12f, rule.cooldown) : rule.cooldown);
             if (rule.once) onceBarks.Add(id);
@@ -286,22 +305,6 @@ namespace GamePresentation
             if (force) pendingBubble = null;
             headRemaining = headMinimumRemaining = 0f; headPriority = 0; headIsStory = headIsGuidance = false;
             VisibleHeadText = string.Empty; headView.SetVisible(false);
-        }
-
-        // 大立绘只替代世界中的外观，保留碰撞、刚体、动画与角色控制组件。
-        private void UpdateActorArt()
-        {
-            bool hide = hideWorldActorWithPortrait && CanPresent && Director.Active &&
-                storyView.HeroPortraitVisible;
-            if (!hide) { RestoreActorArt(); return; }
-            if (hiddenActorRenderers.Count == 0)
-                foreach (var renderer in Scene.player.GetComponentsInChildren<Renderer>(true)) hiddenActorRenderers[renderer] = renderer.enabled;
-            foreach (var pair in hiddenActorRenderers) if (pair.Key) pair.Key.enabled = false;
-        }
-        private void RestoreActorArt()
-        {
-            foreach (var pair in hiddenActorRenderers) if (pair.Key) pair.Key.enabled = pair.Value;
-            hiddenActorRenderers.Clear();
         }
 
         /// <summary>角色/机关的事实通知。普通小台词不会调用对话锁定和时间控制接口。</summary>
@@ -403,15 +406,19 @@ namespace GamePresentation
                 bridgeArrivalFrame = Time.frameCount;
             }
             if (index == 2) PlayBark("bridge_complete");
-            if (index == 3) { PlayBark("forest_complete"); RequestJumpIntroduction(); }
+            if (index == 3) { PlayBark("forest_complete"); RequestJumpDiscovery(); }
         }
         private void RequestJumpIntroduction()
         {
-            if (jumpAcquired) return;
-            if (Director.HasCompleted("jump.intro")) { Director.Enqueue("jump.discover"); return; }
-            if (pendingJumpIntroduction || Director.HasScheduled("jump.intro")) return;
+            if (jumpAcquired || pendingJumpIntroduction || Director.HasScheduled("jump.intro")) return;
             pendingJumpIntroduction = true;
             jumpArrivalFrame = Time.frameCount;
+        }
+        private void RequestJumpDiscovery()
+        {
+            if (jumpAcquired || pendingJumpDiscovery || Director.HasScheduled("jump.discover")) return;
+            pendingJumpDiscovery = true;
+            jumpDiscoveryFrame = Time.frameCount;
         }
         private void TickCheckpointStories()
         {
@@ -426,6 +433,11 @@ namespace GamePresentation
             {
                 pendingJumpIntroduction = false;
                 Director.Enqueue("jump.intro");
+            }
+            if (pendingJumpDiscovery && Time.frameCount > jumpDiscoveryFrame && !Director.Active && !Director.HasPendingEpisodes)
+            {
+                pendingJumpDiscovery = false;
+                Director.Enqueue("jump.discover");
             }
         }
         public void Signal(string id, Component source = null)
@@ -445,7 +457,7 @@ namespace GamePresentation
                     if (UsesCollectionQuest) ((InnQuest)Scene.legacyInnQuest).TryTalk(Scene.player);
                     else Director.Enqueue("inn.intro");
                     break;
-                case "jump.lower": RequestJumpIntroduction(); break;
+                case "jump.lower": RequestJumpDiscovery(); break;
                 case "inn.exit": if (wallBroken && Scene.player.BreakEnabled) Director.Enqueue("inn.ending"); break;
                 case "elevator.ending": if (source is ElevatorPlatform) Director.Enqueue("game.ending"); break;
                 case "inventory.cardboard": nudgeAt = Mathf.Min(nudgeAt, Time.time + 10f); break;
@@ -572,6 +584,7 @@ namespace GamePresentation
                     if (!PlayerOpeningSequence.BeginFromStory(Scene.player)) Director.Signal("opening.arrived");
                     break;
                 case "opening.run": CancelOpeningRun(); HoldActor(false); forcedRun = true; Scene.player.RunForPresentation(1); break;
+                case "opening.show_reset_hint": storyView.SetResetHint(true); break;
                 case "opening.reset_only": resetTutorialUnlocked = true; HoldActor(false); Director.AllowResetOnly(true); storyView.SetResetHint(true); break;
                 case "opening.reset_done": Director.AllowResetOnly(false); storyView.SetResetHint(false); HoldActor(true); break;
                 case "inventory.unlock_cardboard": UnlockAbilityWithNotice(GameItemId.Cardboard); break;
@@ -609,7 +622,6 @@ namespace GamePresentation
         internal void EpisodeFinished(string id)
         {
             if (id == "village.opening") Director.Enqueue("village.reunion");
-            if (id == "jump.intro" && !jumpAcquired) Director.Enqueue("jump.discover");
             if (id == "village.reunion" || id == "village.sunk") nudgeAt = Time.time + 15f;
             string hint = id switch {
                 "village.reunion" => "随时按空格起跑或叫停，按 R 回到火堆。试着用石块铺路吧！",
@@ -630,6 +642,6 @@ namespace GamePresentation
         public void ResetTutorialProgress()
         { flag_taught_midstop = flag_taught_underfoot_lock = flag_taught_run_lock = false; onceBarks.Clear(); shownGuidance.Clear(); shownVillageNudges.Clear(); counts.Clear(); cooldowns.Clear(); }
         /// <summary>外部切换剧情/编辑器预览取消时，归还输入、重力和相机。</summary>
-        public void CancelCurrentStory() { ResetVillageGlueReview(); CancelOpeningRun(); forcedRun = false; pendingBridgeIntroduction = pendingJumpIntroduction = false; Director.Clear(); }
+        public void CancelCurrentStory() { ResetVillageGlueReview(); CancelOpeningRun(); forcedRun = false; pendingBridgeIntroduction = pendingJumpIntroduction = pendingJumpDiscovery = false; Director.Clear(); }
     }
 }

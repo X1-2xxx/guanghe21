@@ -131,7 +131,10 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
         contentText.text = fullText.Substring(0, end);
     }
 
-    public void SetVisible(bool visible) => worldCanvas.enabled = visible;
+    public void SetVisible(bool visible)
+    {
+        if (worldCanvas) worldCanvas.enabled = visible && contentText && !string.IsNullOrWhiteSpace(contentText.text);
+    }
 }
 
 /// <summary>保留原有调用接口，对话及测试面板统一使用项目 UI 字体。</summary>

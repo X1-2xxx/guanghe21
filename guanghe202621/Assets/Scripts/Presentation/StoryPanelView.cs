@@ -30,6 +30,9 @@ namespace GamePresentation
         [SerializeField, Min(0f)] private float endingTitleFadeSeconds = .8f;
         private bool endingActive;
         private float endingElapsed;
+        // Ignore the key that advanced the preceding scene and wait for the title to finish fading.
+        public bool EndingReadyForRestart => endingActive &&
+            endingElapsed >= Mathf.Max(0f, endingFadeSeconds) + Mathf.Max(0f, endingTitleFadeSeconds) + .25f;
         [InspectorName("双人立绘显示与亮度")] public StoryPortraitStage portraitStage;
         public Button continueButton, blackContinueButton, narratorContinueButton;
         public Button choiceA, choiceB;
@@ -265,7 +268,12 @@ namespace GamePresentation
         }
         public void ClearEquipmentNotice()
         { equipmentRemaining = 0f; if (equipmentNotice) equipmentNotice.SetActive(false); }
-        public void SetResetHint(bool visible) => resetHint.gameObject.SetActive(visible);
+        public void SetResetHint(bool visible)
+        {
+            if (!resetHint) return;
+            resetHint.gameObject.SetActive(visible);
+            if (visible) resetHint.transform.SetAsLastSibling();
+        }
         public void FadeBlack(float alpha)
         { blackPanel.SetActive(true); blackText.text = string.Empty; blackGroup.alpha = alpha; }
         private void TickEnding()

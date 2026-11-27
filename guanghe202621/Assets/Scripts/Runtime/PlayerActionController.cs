@@ -214,6 +214,8 @@ namespace LevelKit
             else if (!IsActing && right && overPlayer)
             {
                 ShowDialogue(now);
+                if (GamePresentation.PresentationRuntime.Instance)
+                    GamePresentation.PresentationRuntime.Instance.PlayBark("player_inspect", this);
             }
         }
 
@@ -340,13 +342,20 @@ namespace LevelKit
             if (!snapCamera) GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.CheckpointReached, this, campfire);
         }
 
-        private Vector2 CameraRegionPoint(Vector2 position)
-            => position + (hitbox ? (Vector2)transform.TransformVector(hitbox.offset) : Vector2.zero);
+        private Bounds CameraRegionBodyBounds(Vector2 position)
+        {
+            var bounds = hitbox ? hitbox.bounds : new Bounds();
+            // Rebuild the center from the requested physics position: after checkpoint recovery,
+            // collider bounds can still describe the previous position until physics synchronizes.
+            Vector2 center = position + (hitbox ? (Vector2)transform.TransformVector(hitbox.offset) : Vector2.zero);
+            bounds.center = new Vector3(center.x, center.y, transform.position.z);
+            return bounds;
+        }
 
         private void UpdateCameraRegion(Vector2 position, bool snap = false, bool force = false)
         {
             if (!force && (GamePresentation.PresentationEvents.CameraOwned || GamePresentation.PresentationEvents.BlocksInput)) return;
-            var region = CameraRegion.Select(gameObject.scene, CameraRegionPoint(position), snap ? null : activeCameraRegion);
+            var region = CameraRegion.Select(gameObject.scene, CameraRegionBodyBounds(position), snap ? null : activeCameraRegion);
             if (!region) return; // Gaps retain the last valid view instead of guessing a side of an old gate.
             activeCameraRegion = region;
             MoveCameraView(region.Center, region.TransitionSeconds, snap);
@@ -494,6 +503,8 @@ namespace LevelKit
             StopWalking();
             body.linearVelocity = Vector2.zero;
             ShowDialogue(Time.unscaledTimeAsDouble);
+            if (GamePresentation.PresentationRuntime.Instance)
+                GamePresentation.PresentationRuntime.Instance.PlayBark("bed_rest", this);
         }
 
         internal void BounceFromBed(Vector2 velocity)
@@ -605,6 +616,14 @@ namespace LevelKit
 
         private void ShowDialogue(double now)
         {
+            // Mainline speech owns both artwork and text. Legacy artwork has no text and must never
+            // become visible when a bark is rejected by a cooldown, a story or its priority.
+            var presentation = GamePresentation.PresentationRuntime.Instance;
+            if (presentation && presentation.Scene && presentation.Scene.player == this)
+            {
+                HideDialogue();
+                return;
+            }
             if (!dialogueBox) return;
             if (!GamePresentation.PresentationRuntime.Instance) GameEventCenter.RequestSfx(GameplaySfx.SpeechBubblePop);
             if (speechBubble) speechBubble.Show();
