@@ -126,6 +126,7 @@ namespace LevelKit
 
         public void UpdateCandidate(Rigidbody2D held, Vector2 cursor, float deltaTime)
         {
+            if (!ItemUnlockManager.IsUnlocked(GameItemId.Cardboard)) { ClearCandidate(); return; }
             group.Clear();
             group.Add(held);
             ExpandGroup();
@@ -185,7 +186,7 @@ namespace LevelKit
 
         public bool ConnectCandidate(bool requireSteady)
         {
-            if (!candidateSource || !candidateTarget || (requireSteady && !IsReady)) return false;
+            if (!ItemUnlockManager.IsUnlocked(GameItemId.Cardboard) || !candidateSource || !candidateTarget || (requireSteady && !IsReady)) return false;
 
             var source = candidateSource;
             var target = candidateTarget;
@@ -221,6 +222,7 @@ namespace LevelKit
 
         public void RemoveNearest(Vector2 cursor)
         {
+            if (!ItemUnlockManager.IsUnlocked(GameItemId.Cardboard)) return;
             int nearest = FindNearestLink(cursor);
             if (nearest < 0) return;
             var source = links[nearest].Source;

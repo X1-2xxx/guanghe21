@@ -12,7 +12,7 @@ namespace LevelKit
         [SerializeField] private SpriteRenderer wood;
         [SerializeField] private Transform flame;
         [SerializeField] private CameraTarget cameraTarget;
-        [SerializeField, Min(0.05f)] private float reachRadius = 0.4f;
+        [SerializeField, Min(0.05f), Tooltip("水平中心对齐时允许的脚部高度误差；不再用身体边缘接触来触发停步。")] private float reachRadius = 0.4f;
         [Header("Flame Animation")]
         [SerializeField, Min(0f)] private float igniteSeconds = 0.25f;
         [SerializeField, Min(0f)] private float extinguishSeconds = 0.2f;
@@ -26,9 +26,27 @@ namespace LevelKit
         private float startScale;
         private float elapsed;
 
+        internal bool IsCurrent => isCurrent;
         internal float ReachRadius => reachRadius;
         internal Vector2 Position => transform.position;
         internal CameraTarget CameraTarget => cameraTarget;
+
+        /// <summary>Pure center-line arrival check; leaves all movement and gravity to the player controller.</summary>
+        public static bool HasReachedCenter(Vector2 fromFeet, Vector2 toFeet, Vector2 marker, float verticalTolerance, out float progress)
+        {
+            const float centerTolerance = .025f;
+            progress = 0f;
+            float dx = toFeet.x - fromFeet.x;
+            bool crossed = (fromFeet.x < marker.x && toFeet.x >= marker.x) || (fromFeet.x > marker.x && toFeet.x <= marker.x);
+            if (crossed && Mathf.Abs(dx) > .000001f) progress = Mathf.Clamp01((marker.x - fromFeet.x) / dx);
+            else
+            {
+                if (Mathf.Abs(toFeet.x - marker.x) > centerTolerance) return false;
+                progress = 1f;
+            }
+            float feetY = Mathf.Lerp(fromFeet.y, toFeet.y, progress);
+            return Mathf.Abs(feetY - marker.y) <= Mathf.Max(.05f, verticalTolerance);
+        }
 
         private void Awake()
         {
@@ -103,7 +121,7 @@ namespace LevelKit
         private void OnDrawGizmosSelected()
         {
             Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, reachRadius);
+            Gizmos.DrawWireCube(transform.position, new Vector3(.05f, reachRadius * 2f, 0f));
         }
     }
 }

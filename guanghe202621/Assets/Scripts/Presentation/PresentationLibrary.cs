@@ -18,7 +18,7 @@ namespace GamePresentation
         [InspectorName("原型结束图")] End,
         [InspectorName("黑幕淡出")] FadeOut,
         [InspectorName("是否已完成指定剧情")] BranchEpisodeComplete,
-        [InspectorName("等待入口镜头就位")] RoomEntranceCamera,
+        [InspectorName("切换关卡镜头并等待")] RoomEntranceCamera,
         [InspectorName("天空字幕（无纸框）")] SkySubtitle
     }
 

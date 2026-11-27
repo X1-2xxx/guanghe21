@@ -21,6 +21,13 @@ public sealed class GameFlowTemplate : MonoBehaviour
     [SerializeField, InspectorName("场景中的暂停面板")] private GameObject pausePanelPrefab;
     [Tooltip("可拖入 Hierarchy 中的 HudPanel，开始游戏后显示的就是这份场景实例。")]
     [SerializeField, InspectorName("场景中的游戏界面")] private GameObject hudPanelPrefab;
+    [SerializeField, InspectorName("开场教学暂时隐藏的右上角 UI")] private GameObject[] openingHudControls;
+    public void SetOpeningHudVisible(bool visible)
+    {
+        if (openingHudControls == null) return;
+        foreach (var item in openingHudControls)
+            if (item && item.activeSelf != visible) item.SetActive(visible);
+    }
     [Header("关卡加载（可选）")]
     [Tooltip("留空时在当前场景开始游戏；填写后加载指定关卡。指定场景需要加入构建场景列表。")]
     [SerializeField, InspectorName("游戏关卡场景名")] private string gameplaySceneName = "";
@@ -257,11 +264,20 @@ public sealed class GameFlowTemplate : MonoBehaviour
     }
     private void BindButtons()
     {
-        Bind(mainMenu, "StartButton", StartGame);
+        var startMenuController = mainMenu.GetComponent<StartMenuController>();
+        Bind(mainMenu, "StartButton", () =>
+        {
+            if (startMenuController != null) startMenuController.PlayStartThen(StartGame);
+            else StartGame();
+        });
         Bind(mainMenu, "SettingsButton", () => ShowPanel(settingsPanel));
         Bind(mainMenu, "HelpButton", () => ShowPanel(helpPanel));
         Bind(mainMenu, "VersionButton", () => ShowPanel(versionPanel));
-        Bind(mainMenu, "ExitButton", () => Confirm(mainConfirmationPanel, ConfirmationDialog.Kind.ExitGame, ExitGame));
+        Bind(mainMenu, "ExitButton", () =>
+        {
+            if (startMenuController != null) startMenuController.PlayExitThen(ExitGame);
+            else ExitGame();
+        });
         Bind(pausePanel, "ResumeButton", ResumeGame);
         Bind(pausePanel, "PauseSettingsButton", () => ShowPanel(pauseSettingsPanel));
         Bind(pausePanel, "PauseHelpButton", () => ShowPanel(pauseHelpPanel));
@@ -269,8 +285,8 @@ public sealed class GameFlowTemplate : MonoBehaviour
         Bind(pausePanel, "ReturnToMenuButton", () => Confirm(pauseConfirmationPanel, ConfirmationDialog.Kind.ReturnToMenu, ReturnToMainMenu));
 
         Bind(hudPanel, "PauseButton", PauseGame);
-        // HUD 快捷重置也先确认，再调用现有的关卡重置接口。
-        Bind(hudPanel, "ResetButton", () => Confirm(hudConfirmationPanel, ConfirmationDialog.Kind.ResetLevel, ResetLevel));
+        // HUD recovery matches R; full level reset remains in the pause menu.
+        Bind(hudPanel, "ResetButton", ReturnPlayerToCheckpoint);
 
         Bind(mainConfirmationPanel, "ConfirmButton", ConfirmAction);
         Bind(mainConfirmationPanel, "CancelButton", CloseConfirmation);
@@ -417,6 +433,17 @@ public sealed class GameFlowTemplate : MonoBehaviour
         audioManager.PlayMenuMusic();
     }
 
+    private void ReturnPlayerToCheckpoint()
+    {
+        var scene = SceneManager.GetActiveScene();
+        foreach (var player in FindObjectsByType<LevelKit.PlayerActionController>(FindObjectsSortMode.None))
+        {
+            if (player.gameObject.scene != scene) continue;
+            player.TryReturnToCheckpoint(fromUi: true);
+            return;
+        }
+    }
+
     public void ResetLevel()
     {
         Action finish = () =>
@@ -476,6 +503,9 @@ public sealed class GameFlowTemplate : MonoBehaviour
 
     private void CloseConfirmation()
     {
+        if (mainConfirmationPanel != null && mainConfirmationPanel.activeSelf)
+            mainMenu?.GetComponent<StartMenuController>()?.CancelPress();
+
         ShowPanel(mainConfirmationPanel, false);
         ShowPanel(pauseConfirmationPanel, false);
         ShowPanel(hudConfirmationPanel, false);
@@ -498,7 +528,7 @@ public sealed class GameFlowTemplate : MonoBehaviour
         UnityEngine.Events.UnityAction listener = () =>
         {
             LastUiInteractionFrame = Time.frameCount;
-            audioManager.PlayUiClick();
+            if (buttonName != "PauseButton" && buttonName != "ResumeButton") audioManager.PlayUiClick();
             action?.Invoke();
         };
         button.onClick.AddListener(listener);

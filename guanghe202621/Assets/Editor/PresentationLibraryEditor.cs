@@ -71,27 +71,4 @@ public sealed class PresentationLibraryEditor : Editor
     }
 }
 
-/// <summary>只在编辑器中逐段验收演出；不会给正式游戏添加演示按钮。</summary>
-public sealed class StoryPreviewWindow : EditorWindow
-{
-    private int episode;
-    [MenuItem("堂吉诃德/剧情/打开剧情预览窗口")]
-    private static void Open()=>GetWindow<StoryPreviewWindow>("剧情预览");
-    private void OnGUI()
-    {
-        EditorGUILayout.HelpBox("打开 Main 场景，运行并点开始游戏。然后可以在这里单独预览某段剧情；停止运行不会改变关卡资产。",MessageType.Info);
-        var library=AssetDatabase.LoadAssetAtPath<PresentationLibrary>("Assets/Resources/UI/PresentationLibrary.asset");
-        if(!library)return;
-        episode=EditorGUILayout.Popup("预览章节",Mathf.Clamp(episode,0,library.episodes.Count-1),library.episodes.ConvertAll(e=>e.title).ToArray());
-        var runtime=PresentationRuntime.Instance;
-        using(new EditorGUI.DisabledScope(!EditorApplication.isPlaying||!runtime||!runtime.CanPresent))
-        {
-            if(GUILayout.Button("播放选中章节")){runtime.Director.Clear();runtime.Director.Enqueue(library.episodes[episode].id);}
-            if(GUILayout.Button("结束预览并恢复操作"))runtime.CancelCurrentStory();
-            if(GUILayout.Button("重置本次运行的全局教学标记"))runtime.ResetTutorialProgress();
-        }
-        if(runtime&&runtime.Director!=null)EditorGUILayout.LabelField("当前节点",(runtime.Director.EpisodeId??"游玩中")+" / "+runtime.Director.StepId);
-        Repaint();
-    }
-}
 #endif

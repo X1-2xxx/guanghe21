@@ -36,6 +36,7 @@ namespace LevelKit
         private float targetRotation;
         private float warningUntil;
 
+        internal bool IsHolding(Rigidbody2D body) => held == body;
         internal bool HasWorldTapeConnection(Rigidbody2D body) => glue != null && glue.IsLinkedToStaticGround(body);
 
         private bool ControlsLocked => LevelGameFlow.BlocksGameplayInput(this) || GamePresentation.PresentationEvents.BlocksInput || GamePresentation.PresentationEvents.ResetOnly ||

@@ -41,6 +41,7 @@ namespace LevelKit
         private static readonly int JumpingParameter = Animator.StringToHash("isJumping");
         private static readonly int RespawnParameter = Animator.StringToHash("respawn");
         private static readonly int WallStopParameter = Animator.StringToHash("wallStop");
+        private static readonly int OpeningFallParameter = Animator.StringToHash("openingFall");
         private const float SpawnLift = 0.02f;
 
         private Rigidbody2D body;
@@ -52,6 +53,7 @@ namespace LevelKit
         private bool hasJumpingParameter;
         private bool hasRespawnParameter;
         private bool hasWallStopParameter;
+        private bool hasOpeningFallParameter;
         private Reaction reaction;
         private float reactionRemaining;
         private float bounceElapsed;
@@ -60,10 +62,8 @@ namespace LevelKit
         private Campfire checkpoint;
         private Vector2 returnPosition;
         private Vector2 lastPosition;
-        private readonly Dictionary<CameraTarget, bool> cameraSides = new Dictionary<CameraTarget, bool>();
-        private readonly List<(double time, Vector2 position)> cameraPositionHistory = new List<(double, Vector2)>();
+        private CameraRegion activeCameraRegion;
         private Transform movingCamera;
-        private CameraTarget activeCameraTarget;
         private Transform activeCameraCenter;
         private Vector3 cameraStart;
         private Vector3 cameraDestination;
@@ -89,6 +89,15 @@ namespace LevelKit
         internal int WalkDirection => walkDirection;
         internal bool IsGameplayCameraMoving => movingCamera != null;
         internal float StepHeight => stepHeight;
+        // Queries only: no actor movement, input, ability changes or physics stepping.
+        public bool CanWalkAcrossForPresentation(Rect span, float groundY)
+        {
+            var probeBody = GetComponent<Rigidbody2D>();
+            var probeCapsule = GetComponent<CapsuleCollider2D>();
+            return new PlayerTraversal(this, probeBody, probeCapsule, maxSlopeAngle).CanTraverseSpan(span, groundY, stepHeight);
+        }
+        internal bool AudioGrounded => traversal != null && traversal.AudioGrounded;
+        internal bool HasLandedForPresentation => traversal != null && traversal.HasSettledSupport;
         private int conversationInputFrame = -1;
         internal bool ConversationBlocksInput => IsInConversation || conversationInputFrame == Time.frameCount;
         internal void UnlockJump() => jumpEnabled = true;
@@ -118,6 +127,7 @@ namespace LevelKit
                     {
                         if (parameter.nameHash == MovingParameter) hasMovingParameter = true;
                         if (parameter.nameHash == JumpingParameter) hasJumpingParameter = true;
+                        if (parameter.nameHash == OpeningFallParameter) hasOpeningFallParameter = true;
                     }
                     else if (parameter.type == AnimatorControllerParameterType.Trigger)
                     {
@@ -129,6 +139,7 @@ namespace LevelKit
             }
 
             traversal = new PlayerTraversal(this, body, hitbox, maxSlopeAngle);
+            if (!GetComponent<PlayerAudioFeedback>()) gameObject.AddComponent<PlayerAudioFeedback>();
             lastPosition = returnPosition = body.position;
             bool flipped = spineVisual ? spineVisual.initialFlipX : visual.flipX;
             facing = flipped == spriteFacesRight ? -1 : 1;
@@ -139,10 +150,12 @@ namespace LevelKit
 
         private void OnEnable()
         {
-            ResetCameraHistory(body.position);
+            activeCameraRegion = null;
             if (spineVisual) spineVisual.OnRebuild += OnSpineRebuild;
             ApplyFacing();
         }
+
+        private void Start() => UpdateCameraRegion(body.position, snap: true, force: true);
 
         private void Update()
         {
@@ -153,10 +166,9 @@ namespace LevelKit
 
             var mouse = Mouse.current;
             var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.rKey.wasPressedThisFrame)
+            if (keyboard != null && keyboard.rKey.wasPressedThisFrame && GamePresentation.PresentationEvents.CheckpointResetAvailable)
             {
-                ReturnToCheckpoint();
-                GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.CheckpointReset, this);
+                TryReturnToCheckpoint();
                 return;
             }
             if (reaction != Reaction.None) return;
@@ -173,20 +185,19 @@ namespace LevelKit
             if (right && overPlayer) rightClickFrame = Time.frameCount;
             if (left && !overPlayer) lastPlayerClick = double.NegativeInfinity;
 
-            if (left && overPlayer)
+            if (left && overPlayer && GamePresentation.PresentationEvents.CheckpointResetAvailable)
             {
                 if (now - lastPlayerClick <= doubleClickSeconds)
                 {
-                    ReturnToCheckpoint();
-                    GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.CheckpointReset, this);
+                    TryReturnToCheckpoint();
                     return;
                 }
                 lastPlayerClick = now;
             }
+            else if (!GamePresentation.PresentationEvents.CheckpointResetAvailable) lastPlayerClick = double.NegativeInfinity;
 
             if (GamePresentation.PresentationEvents.ResetOnly) return;
             bool space = keyboard != null && keyboard.spaceKey.wasPressedThisFrame;
-            if (space && !IsActing && GamePresentation.PresentationEvents.BlocksRun) return;
             if (IsActing && (space || (left && overPlayer)))
             {
                 StopWalking();
@@ -210,14 +221,13 @@ namespace LevelKit
         {
             if (LevelGameFlow.BlocksGameplayInput(this)) return;
             Vector2 position = body.position;
-            RecordCameraPosition(position, Time.fixedTimeAsDouble);
             if (IsInConversation)
             {
                 body.linearVelocityX = 0f;
                 return;
             }
             UpdateCheckpoint(lastPosition, position);
-            UpdateCameraCrossing(lastPosition, position);
+            UpdateCameraRegion(position);
             lastPosition = position;
 
             if (reaction != Reaction.None)
@@ -247,7 +257,7 @@ namespace LevelKit
             traversal?.ResetBedBounceChain();
             HideDialogue();
             movingCamera = null;
-            cameraPositionHistory.Clear();
+            activeCameraRegion = null;
         }
 
         private void LateUpdate()
@@ -299,167 +309,84 @@ namespace LevelKit
 
         private void UpdateCheckpoint(Vector2 from, Vector2 to)
         {
-            Vector2 path = to - from;
-            float lengthSquared = path.sqrMagnitude;
+            if (!hitbox.isActiveAndEnabled || !body.simulated) return;
+            var bounds = hitbox.bounds;
+            Vector2 toFeet = new Vector2(bounds.center.x, bounds.min.y);
+            Vector2 fromFeet = toFeet + from - to;
             Campfire reached = null;
-            float latest = -1f;
-            float nearest = float.PositiveInfinity;
-            bool canTouch = hitbox.isActiveAndEnabled && body.simulated;
+            float latest = -1f, nearest = float.PositiveInfinity;
             foreach (var campfire in Campfire.InScene)
             {
                 if (!campfire || campfire.gameObject.scene != gameObject.scene) continue;
                 Vector2 marker = campfire.Position;
-                float progress = lengthSquared > 0.000001f
-                    ? Mathf.Clamp01(Vector2.Dot(marker - from, path) / lengthSquared) : 0f;
-                float distance = (marker - (from + path * progress)).sqrMagnitude;
-                float radiusSquared = campfire.ReachRadius * campfire.ReachRadius;
-                if (distance > radiusSquared &&
-                    (!canTouch || (marker - hitbox.ClosestPoint(marker)).sqrMagnitude > radiusSquared)) continue;
+                if (!Campfire.HasReachedCenter(fromFeet, toFeet, marker, campfire.ReachRadius, out float progress)) continue;
+                float distance = Mathf.Abs(toFeet.x - marker.x);
                 if (progress < latest || (progress == latest && distance >= nearest)) continue;
-                reached = campfire;
-                latest = progress;
-                nearest = distance;
+                reached = campfire; latest = progress; nearest = distance;
             }
             if (reached && reached != checkpoint) SetCheckpoint(reached);
         }
 
         private void SetCheckpoint(Campfire campfire, bool snapCamera = false)
         {
+            bool ignites = !campfire.IsCurrent;
             if (checkpoint) checkpoint.SetCurrent(false);
             checkpoint = campfire;
             checkpoint.SetCurrent(true);
             returnPosition = campfire.Position + Vector2.up * SpawnLift;
             MoveCameraToCheckpoint(snapCamera);
+            // Only an actual ignition stops active movement. The opening checkpoint remains exempt.
+            if (ignites && !snapCamera && campfire != initialCampfire) StopForPresentation();
             if (!snapCamera) GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.CheckpointReached, this, campfire);
         }
 
-        private void UpdateCameraCrossing(Vector2 from, Vector2 to)
-        {
-            if (from == to) return;
-            CameraTarget lastTarget = null;
-            bool lastRight = false;
-            float lastProgress = -1f;
-            Vector2 bodyCenterOffset = Vector2.zero;
-            Vector2 bodyExtents = Vector2.zero;
-            if (hitbox)
-            {
-                var bounds = hitbox.bounds;
-                bodyCenterOffset = (Vector2)(bounds.center - transform.position);
-                bodyExtents = bounds.extents;
-            }
-            foreach (var target in CameraTarget.InScene)
-            {
-                if (!target || target.gameObject.scene != gameObject.scene || !target.HasTwoPositions) continue;
-                if (!cameraSides.TryGetValue(target, out bool previous)) previous = target.IsPosition2Side(from);
-                bool crossed = target.TryCrossBody(from, to, previous, bodyCenterOffset, bodyExtents,
-                    out bool right, out float progress);
-                cameraSides[target] = right;
-                if (!crossed || progress <= lastProgress) continue;
-                lastTarget = target;
-                lastRight = ResolveCameraArrival(target, right);
-                lastProgress = progress;
-            }
-            if (lastTarget) MoveCamera(lastTarget, lastRight, snap: false);
-        }
+        private Vector2 CameraRegionPoint(Vector2 position)
+            => position + (hitbox ? (Vector2)transform.TransformVector(hitbox.offset) : Vector2.zero);
 
-        private void ResetCameraHistory(Vector2 position)
+        private void UpdateCameraRegion(Vector2 position, bool snap = false, bool force = false)
         {
-            cameraPositionHistory.Clear();
-            RecordCameraPosition(position, Time.fixedTimeAsDouble);
-        }
-
-        private void RecordCameraPosition(Vector2 position, double now)
-        {
-            var sample = (time: now, position: position);
-            int count = cameraPositionHistory.Count;
-            if (count > 0 && cameraPositionHistory[count - 1].time == now)
-                cameraPositionHistory[count - 1] = sample;
-            else
-                cameraPositionHistory.Add(sample);
-
-            double cutoff = now - CameraTarget.MaximumHistorySeconds;
-            int expired = 0;
-            while (expired + 1 < cameraPositionHistory.Count && cameraPositionHistory[expired + 1].time < cutoff)
-                expired++;
-            if (expired > 0) cameraPositionHistory.RemoveRange(0, expired);
-        }
-
-        private Vector2 CameraPositionAgo(float seconds)
-        {
-            if (cameraPositionHistory.Count == 0) return body.position;
-            double time = Time.fixedTimeAsDouble - seconds;
-            var before = cameraPositionHistory[0];
-            if (time <= before.time) return before.position;
-            for (int i = 1; i < cameraPositionHistory.Count; i++)
-            {
-                var after = cameraPositionHistory[i];
-                if (time <= after.time)
-                {
-                    float progress = (float)((time - before.time) / (after.time - before.time));
-                    return Vector2.Lerp(before.position, after.position, progress);
-                }
-                before = after;
-            }
-            return before.position;
-        }
-
-        private bool ResolveCameraArrival(CameraTarget target, bool crossingSide)
-        {
-            if (!target.UsesYHistory) return crossingSide;
-            bool fallback = activeCameraTarget == target && activeCameraCenter
-                ? activeCameraCenter == target.GetCenter(true) : crossingSide;
-            return target.ResolveArrivalSide(CameraPositionAgo(target.YHistorySeconds), fallback);
+            if (!force && (GamePresentation.PresentationEvents.CameraOwned || GamePresentation.PresentationEvents.BlocksInput)) return;
+            var region = CameraRegion.Select(gameObject.scene, CameraRegionPoint(position), snap ? null : activeCameraRegion);
+            if (!region) return; // Gaps retain the last valid view instead of guessing a side of an old gate.
+            activeCameraRegion = region;
+            MoveCameraView(region.Center, region.TransitionSeconds, snap);
         }
 
         private void MoveCameraToCheckpoint(bool snap)
-        {
-            var target = checkpoint ? checkpoint.CameraTarget : null;
-            bool right = target && target.IsPosition2Side(returnPosition);
-            if (snap)
-            {
-                if (target && cameraSides.TryGetValue(target, out bool previous))
-                    right = target.ResolveSide(returnPosition, previous);
-                cameraSides.Clear();
-                if (target && target.HasTwoPositions) cameraSides[target] = right;
-            }
-            if (target && (snap || !target.HasTwoPositions)) MoveCamera(target, right, snap);
-        }
+            => UpdateCameraRegion(snap ? returnPosition : body.position, snap, force: true);
 
-        private void MoveCamera(CameraTarget target, bool right, bool snap)
+        private void MoveCameraView(Transform center, float seconds, bool snap = false)
         {
-            var center = target.GetCenter(right);
-            if (!center) return;
-            if (!snap && activeCameraTarget == target && activeCameraCenter == center) return;
-
             var view = levelCamera ? levelCamera : Camera.main;
-            if (!view) return;
-            activeCameraTarget = target;
+            if (!view || !center || (!snap && activeCameraCenter == center)) return;
             activeCameraCenter = center;
-
-            var current = view.transform.position;
-            var destination = new Vector3(center.position.x, center.position.y, current.z);
-            if (snap || target.TransitionSeconds <= 0f)
-            {
-                movingCamera = null;
-                view.transform.position = destination;
-                return;
-            }
-
-            cameraStart = current;
+            Vector3 destination = new Vector3(center.position.x, center.position.y, view.transform.position.z);
+            if (snap || seconds <= 0f || (view.transform.position - destination).sqrMagnitude < .0001f)
+            { movingCamera = null; view.transform.position = destination; return; }
+            cameraStart = view.transform.position;
             cameraDestination = destination;
             cameraElapsed = 0f;
-            cameraDuration = target.TransitionSeconds;
+            cameraDuration = seconds;
             movingCamera = view.transform;
         }
 
+        internal void EnterNarrativeCamera(Transform center, float moveSeconds = .8f)
+            => MoveCameraView(center, moveSeconds);
+
+        // Existing story references stay compatible; room entry now resolves the player's area.
         internal void EnterRoomCamera(CameraTarget target, bool refreshSide = false)
+            => UpdateCameraRegion(body.position, force: true);
+
+        // Keyboard, double-click and the HUD use one recovery path and the same story gates.
+        public bool TryReturnToCheckpoint(bool fromUi = false)
         {
-            if (!target || (!refreshSide && activeCameraTarget == target)) return;
-            bool crossingSide = cameraSides.TryGetValue(target, out bool previous)
-                ? target.ResolveSide(body.position, previous)
-                : target.IsPosition2Side(body.position);
-            if (target.HasTwoPositions) cameraSides[target] = crossingSide;
-            MoveCamera(target, ResolveCameraArrival(target, crossingSide), snap: false);
+            if (!isActiveAndEnabled || !body || !body.simulated || reaction == Reaction.Respawn ||
+                ConversationBlocksInput || GamePresentation.PresentationEvents.BlocksInput ||
+                !GamePresentation.PresentationEvents.CheckpointResetAvailable ||
+                LevelGameFlow.BlocksGameplayInput(this, ignoreUiInteraction: fromUi)) return false;
+            ReturnToCheckpoint();
+            GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.CheckpointReset, this);
+            return true;
         }
 
         private void ReturnToCheckpoint()
@@ -473,7 +400,7 @@ namespace LevelKit
             body.linearVelocity = Vector2.zero;
             body.angularVelocity = 0f;
             lastPosition = returnPosition;
-            ResetCameraHistory(returnPosition);
+            activeCameraRegion = null;
             MoveCameraToCheckpoint(snap: true);
             if (TriggerAnimation(RespawnParameter, hasRespawnParameter))
             {
@@ -503,15 +430,38 @@ namespace LevelKit
             body.position = position;
             body.linearVelocity = Vector2.zero;
             lastPosition = position;
-            ResetCameraHistory(position);
+            activeCameraRegion = null;
         }
         // 仅供主线演出调用；沿用原来的行走和碰撞，不改写寻路、速度或角色能力。
         public void RunForPresentation(int direction)
         {
-            StopWalking(); EndConversation(); facing = walkDirection = direction >= 0 ? 1 : -1;
+            StopWalking(preserveVerticalVelocity: true); EndConversation(); facing = walkDirection = direction >= 0 ? 1 : -1;
             ApplyFacing(); HideDialogue(); SetActing(true);
         }
-        public void StopForPresentation() { StopWalking(); HideDialogue(); }
+        public void StopForPresentation() { StopWalking(preserveVerticalVelocity: true); HideDialogue(); }
+
+        // Scoped to the opening story: ordinary falls and jumps never set this parameter.
+        internal void BeginOpeningPitFall()
+        {
+            StopForPresentation();
+            SetOpeningFallAnimation(true);
+        }
+
+        internal float PlayOpeningPitLandingImpact()
+        {
+            StopForPresentation();
+            // Reuse only the visible WallStop animation; HitWall would also push the body backwards.
+            return TriggerAnimation(WallStopParameter, hasWallStopParameter) ? AnimationSeconds("WallStop", 1f) : 0f;
+        }
+
+        internal void CancelOpeningPitAnimation() => SetOpeningFallAnimation(false);
+
+        private void SetOpeningFallAnimation(bool falling)
+        {
+            if (!hasOpeningFallParameter || !animator || !animator.isActiveAndEnabled ||
+                !animator.isInitialized || !animator.runtimeAnimatorController) return;
+            if (animator.GetBool(OpeningFallParameter) != falling) animator.SetBool(OpeningFallParameter, falling);
+        }
         public void HideLegacySpeechForPresentation() => HideDialogue();
         // 镜头演出使用原关卡当前相机目标，返回后清理旧插值，避免镜头再次跳走。
         public bool TryGetPresentationCameraPosition(out Vector3 position)
@@ -528,7 +478,7 @@ namespace LevelKit
         {
             if (!isActiveAndEnabled || IsInConversation || reaction != Reaction.None) return false;
             IsInConversation = true;
-            StopWalking();
+            StopWalking(preserveVerticalVelocity: true);
             HideDialogue();
             return true;
         }
@@ -564,12 +514,13 @@ namespace LevelKit
             return true;
         }
 
-        private void StopWalking()
+        private void StopWalking(bool preserveVerticalVelocity = false)
         {
+            SetOpeningFallAnimation(false);
             reaction = Reaction.None;
             reactionRemaining = 0f;
             bounceElapsed = 0f;
-            traversal?.Cancel();
+            traversal?.Cancel(preserveVerticalVelocity);
             body.linearVelocityX = 0f;
             if (animator && animator.isActiveAndEnabled && animator.isInitialized && animator.runtimeAnimatorController)
             {
@@ -655,6 +606,7 @@ namespace LevelKit
         private void ShowDialogue(double now)
         {
             if (!dialogueBox) return;
+            if (!GamePresentation.PresentationRuntime.Instance) GameEventCenter.RequestSfx(GameplaySfx.SpeechBubblePop);
             if (speechBubble) speechBubble.Show();
             else dialogueBox.SetActive(true);
             dialogueDeadline = now + dialogueSeconds;

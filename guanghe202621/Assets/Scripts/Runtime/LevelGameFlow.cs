@@ -73,7 +73,8 @@ namespace LevelKit
 
         private void ApplyTimeScale(GameState state) =>
             Time.timeScale = !reloading && state == GameState.Playing &&
-                (!flow || !flow.HasOpenGameplayModal) ? 1f : 0f;
+                (!flow || !flow.HasOpenGameplayModal) &&
+                !(GamePresentation.PresentationRuntime.Instance != null && GamePresentation.PresentationRuntime.Instance.Director.WorldPaused) ? 1f : 0f;
 
         private void LateUpdate() => ApplyTimeScale(GameStateManager.Current);
 
@@ -102,12 +103,12 @@ namespace LevelKit
             SceneManager.LoadSceneAsync(path, LoadSceneMode.Single);
         }
 
-        public static bool BlocksGameplayInput(Component source)
+        public static bool BlocksGameplayInput(Component source, bool ignoreUiInteraction = false)
         {
             var owner = Find(source);
             return PlayerOpeningSequence.BlocksGameplayInput(source) || owner && (owner.reloading || GameStateManager.Current != GameState.Playing ||
                 Time.timeScale <= 0f || Time.frameCount <= owner.blockThroughFrame ||
-                (owner.flow && (owner.flow.HasOpenGameplayModal || owner.flow.LastUiInteractionFrame == Time.frameCount)));
+                (owner.flow && (owner.flow.HasOpenGameplayModal || (!ignoreUiInteraction && owner.flow.LastUiInteractionFrame == Time.frameCount))));
         }
 
         public static bool PointerOverUi(Component source)

@@ -28,6 +28,19 @@ namespace LevelKit
         public int ConsecutiveBedBounces { get; private set; }
         public void ResetBedBounceChain() => ConsecutiveBedBounces = 0;
 
+        internal bool AudioGrounded => plan != null ? !plan.IsJump : !risingFromLaunch && FindSupport(body.position, GroundProbe, out _);
+
+        // A real, walkable support with settled relative velocity; a scripted movement plan is not a landing.
+        internal bool HasSettledSupport
+        {
+            get
+            {
+                if (plan != null || !FindSupport(body.position, Skin, out var support)) return false;
+                Vector2 surfaceVelocity = support.rigidbody ? support.rigidbody.GetPointVelocity(support.point) : Vector2.zero;
+                return Mathf.Abs(Vector2.Dot(body.linearVelocity - surfaceVelocity, support.normal)) <= .1f;
+            }
+        }
+
         public bool IsJumping => (plan != null && plan.IsJump) || launchedJumpInProgress;
 
         private sealed class MotionPlan
@@ -35,7 +48,7 @@ namespace LevelKit
             public Vector2 Start, Landing;
             public float ClearY, RiseTime, CrossTime, SettleTime, Windup, Arc;
             public float Elapsed;
-            public bool IsJump;
+            public bool IsJump, TakeoffPlayed;
             public float Duration => Windup + RiseTime + CrossTime + SettleTime;
 
             public Vector2 PositionAt(float time)
@@ -64,6 +77,42 @@ namespace LevelKit
             filter.SetLayerMask(Physics2D.GetLayerCollisionMask(body.gameObject.layer));
             solids = filter;
             walkableNormal = Mathf.Cos(maxSlopeAngle * Mathf.Deg2Rad);
+        }
+
+        // Read-only prediction on a separate planner instance. Uses the same capsule casts, slope limits and step planning as walking.
+        internal bool CanTraverseSpan(Rect span, float surfaceY, float stepHeight)
+        {
+            if (!capsule || !capsule.enabled || !body || !body.simulated) return false;
+            var bounds = capsule.bounds;
+            float radius = bounds.extents.x;
+            float centerOffsetX = bounds.center.x - body.position.x;
+            float footOffsetY = bounds.min.y - body.position.y;
+            Vector2 probe = new Vector2(span.xMin - radius - .12f - centerOffsetX, surfaceY - footOffsetY + Skin);
+            float destinationX = span.xMax + radius + .12f - centerOffsetX;
+            if (!FindSupport(probe, stepHeight + GroundProbe, out var initial)) return false;
+            probe.y += Skin - initial.distance;
+            for (int guard = 0; guard < 256 && probe.x < destinationX - .001f; guard++)
+            {
+                if (!FindSupport(probe, GroundProbe, out var support)) return false;
+                float groundY = probe.y - support.distance;
+                float stride = Mathf.Min(.08f, destinationX - probe.x);
+                bool blocked = FindBlockingHit(probe, Vector2.right, stride + Skin, out var obstacle);
+                if (blocked && !IsWalkable(obstacle.normal))
+                {
+                    float advance = obstacle.distance + radius + .12f;
+                    if (!TryPlan(probe, groundY, Vector2.right, advance, stepHeight, false, 2.5f)) return false;
+                    probe = plan.Landing; plan = null;
+                    continue;
+                }
+                Vector2 normal = blocked ? obstacle.normal : support.normal;
+                Vector2 next = probe + Vector2.right * stride;
+                if (IsWalkable(normal) && Mathf.Abs(normal.x) > .02f) next.y -= stride * normal.x / normal.y;
+                if (!FindSupport(next, stepHeight + GroundProbe, out var landing)) return false;
+                float nextY = next.y - landing.distance + Skin;
+                if (nextY - probe.y > stepHeight + HeightTolerance + Skin) return false;
+                next.y = nextY; probe = next;
+            }
+            return probe.x >= destinationX - .001f;
         }
 
         public void Tick(int direction, float speed, float stepHeight, float jumpHeight, float deltaTime)
@@ -118,9 +167,9 @@ namespace LevelKit
             body.linearVelocityX = direction * Mathf.Min(speed, Mathf.Max(0f, obstacle.distance - Skin) / deltaTime);
         }
 
-        public void Cancel()
+        public void Cancel(bool preserveVerticalVelocity = false)
         {
-            if (plan != null) body.linearVelocityY = 0f;
+            if (plan != null && !preserveVerticalVelocity) body.linearVelocityY = 0f;
             plan = null;
             risingFromLaunch = false;
             bedBounceInProgress = false;
@@ -248,6 +297,11 @@ namespace LevelKit
                 return true;
             }
 
+            if (plan.IsJump && !plan.TakeoffPlayed)
+            {
+                plan.TakeoffPlayed = true;
+                GameEventCenter.RequestSfx(GameplaySfx.JumpTakeoff);
+            }
             Vector2 destination = plan.PositionAt(plan.Elapsed);
             Vector2 delta = destination - body.position;
             float distance = delta.magnitude;

@@ -38,6 +38,13 @@ public sealed class ItemSlotUI : MonoBehaviour
 
     private void ApplyState(bool unlocked)
     {
+        if (itemId == GameItemId.Cardboard)
+        {
+            // Restore legacy whole-slot hiding; all three abilities share the question-mark state.
+            var visibility = GetComponent<CanvasGroup>();
+            if (visibility) { visibility.alpha = 1f; visibility.interactable = visibility.blocksRaycasts = true; }
+            if (tooltip != null) tooltip.enabled = true;
+        }
         if (lockedIcon != null) lockedIcon.SetActive(!unlocked);
         if (unlockedIcon != null) unlockedIcon.SetActive(unlocked);
         if (tooltip != null) tooltip.isUnlocked = unlocked;

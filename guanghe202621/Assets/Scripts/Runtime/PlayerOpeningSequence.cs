@@ -12,15 +12,13 @@ namespace LevelKit
         [SerializeField] private PlayerActionController player;
         [SerializeField] private Transform emergePoint;
         [SerializeField] private Transform destination;
-        [SerializeField] private Camera levelCamera;
-        [SerializeField] private Transform openingCameraPosition;
+        [SerializeField, Tooltip("由主线黑幕结束后的 opening.emerge 指令开始出屋。")] private bool waitForStoryCue;
         [Tooltip("Existing Walk clip. Temporarily replaces Run during the opening.")]
         [SerializeField] private AnimationClip walkingClip;
         [SerializeField, Min(0f)] private float fadeSeconds = .65f;
         [SerializeField, Min(.1f)] private float walkingSpeed = 2.5f;
-        [SerializeField, Min(0f)] private float cameraReturnSeconds = 1f;
 
-        private enum Phase { Fade, Walk, CameraReturn }
+        private enum Phase { Fade, Walk }
         private static readonly Dictionary<Scene, PlayerOpeningSequence> scenes = new Dictionary<Scene, PlayerOpeningSequence>();
         private Rigidbody2D body;
         private SpriteRenderer[] sprites;
@@ -30,7 +28,7 @@ namespace LevelKit
         private Animator animator;
         private RuntimeAnimatorController originalController;
         private AnimatorOverrideController openingController;
-        private Vector3 emergence, arrival, cameraRestPosition, cameraOpeningPosition;
+        private Vector3 emergence, arrival;
         private bool prepared, played, bodyWasSimulated, startInvoked;
         private int releaseAfterFrame = -1;
         private float elapsed, walkSeconds;
@@ -63,8 +61,6 @@ namespace LevelKit
                 skeletons[i].Initialize(false);
                 if (skeletons[i].Skeleton != null) skeletonColors[i] = skeletons[i].Skeleton.GetColor();
             }
-            if (!levelCamera) levelCamera = Camera.main;
-            cameraRestPosition = levelCamera ? levelCamera.transform.position : Vector3.zero;
             body.linearVelocity = Vector2.zero;
             body.simulated = false;
             prepared = true;
@@ -91,24 +87,22 @@ namespace LevelKit
             else if (state == GameState.MainMenu && IsRunning) Finish();
         }
 
-        private void Begin()
+        private void Begin(bool fromStory = false)
         {
-            if (!prepared || played) return;
+            if (!prepared || played || (waitForStoryCue && !fromStory)) return;
             played = true;
             IsRunning = true;
-            elapsed = 0f;
+            elapsed = openingStepDistance = 0f;
             phase = Phase.Fade;
             emergence = emergePoint.position;
             arrival = destination.position;
-            cameraRestPosition = levelCamera ? levelCamera.transform.position : Vector3.zero;
-            cameraOpeningPosition = openingCameraPosition ? openingCameraPosition.position : cameraRestPosition;
-            if (levelCamera) levelCamera.transform.position = cameraOpeningPosition;
             SetPosition(emergence);
             player.SetOpeningWalking(arrival.x < emergence.x ? -1 : 1, false);
             SetOpacity(0f);
             walkSeconds = Vector2.Distance(emergence, arrival) / Mathf.Max(.1f, walkingSpeed);
         }
 
+        private float openingStepDistance;
         private void Update() => Tick(Time.deltaTime);
 
         private void Tick(float deltaTime)
@@ -117,7 +111,7 @@ namespace LevelKit
             float remaining = deltaTime;
             while (IsRunning && remaining > 0f)
             {
-                float duration = phase == Phase.Fade ? Mathf.Max(0f, fadeSeconds) : phase == Phase.Walk ? walkSeconds : Mathf.Max(0f, cameraReturnSeconds);
+                float duration = phase == Phase.Fade ? Mathf.Max(0f, fadeSeconds) : walkSeconds;
                 float step = Mathf.Min(remaining, Mathf.Max(0f, duration - elapsed));
                 elapsed += step;
                 remaining -= step;
@@ -125,15 +119,16 @@ namespace LevelKit
                 if (phase == Phase.Fade) SetOpacity(Mathf.SmoothStep(0f, 1f, progress));
                 else if (phase == Phase.Walk)
                 {
-                    SetPosition(Vector3.Lerp(emergence, arrival, progress));
+                    var nextPosition = Vector3.Lerp(emergence, arrival, progress);
+                    openingStepDistance += Vector3.Distance(player.transform.position, nextPosition);
+                    if (openingStepDistance >= .65f)
+                    { openingStepDistance %= .65f; GameEventCenter.RequestSfx(GameplaySfx.Footstep); }
+                    SetPosition(nextPosition);
                     player.SetOpeningWalking(arrival.x < emergence.x ? -1 : 1, true);
                 }
-                else if (levelCamera)
-                    levelCamera.transform.position = Vector3.Lerp(cameraOpeningPosition, cameraRestPosition, Mathf.SmoothStep(0f, 1f, progress));
                 if (progress < 1f) break;
                 elapsed = 0f;
                 if (phase == Phase.Fade) { phase = Phase.Walk; BeginWalkingAnimation(); }
-                else if (phase == Phase.Walk) { phase = Phase.CameraReturn; player.SetOpeningWalking(arrival.x < emergence.x ? -1 : 1, false); RestoreAnimation(); }
                 else Finish();
             }
         }
@@ -192,10 +187,26 @@ namespace LevelKit
                 body.simulated = bodyWasSimulated;
                 player.FinishOpeningAt(arrival);
             }
-            if (IsRunning && levelCamera) levelCamera.transform.position = cameraRestPosition;
+            bool notifyArrival = IsRunning && GameStateManager.Current == GameState.Playing;
             IsRunning = false;
             prepared = false;
             releaseAfterFrame = Time.frameCount;
+            if (notifyArrival) GamePresentation.PresentationEvents.Signal("opening.arrived", player);
+        }
+
+        internal static bool BeginFromStory(Component source)
+        {
+            if (!source || !scenes.TryGetValue(source.gameObject.scene, out var sequence) || !sequence || !sequence.isActiveAndEnabled)
+                return false;
+            sequence.Begin(true);
+            return sequence.IsRunning;
+        }
+
+        // The title and arrival wait run while gameplay remains blocked by this sequence.
+        internal static bool BlocksPresentation(Component source)
+        {
+            if (!source || !scenes.TryGetValue(source.gameObject.scene, out var sequence) || !sequence || !sequence.isActiveAndEnabled) return false;
+            return !sequence.waitForStoryCue && BlocksGameplayInput(source);
         }
 
         internal static bool BlocksGameplayInput(Component source)

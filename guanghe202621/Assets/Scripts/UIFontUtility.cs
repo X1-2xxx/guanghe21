@@ -28,7 +28,8 @@ public static class UIFontUtility
     public static void Apply(Text target)
     {
         if (target == null) return;
-        Font font = GetFont();
+        var selection = target.GetComponent<UIFontOverride>();
+        Font font = selection && selection.font ? selection.font : GetFont();
         if (font != null && target.font != font) target.font = font;
     }
 

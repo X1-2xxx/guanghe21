@@ -17,10 +17,18 @@ namespace LevelKit
         [SerializeField, Min(0f)] private float endpointPause = .7f;
         [Tooltip("默认主角第一次站上后持续往返；勾选后，空载时暂停。")]
         [SerializeField] private bool pauseWhenEmpty;
+        [SerializeField, InspectorName("走到台面中心时停止主角主动行走")] private bool stopPlayerOnBoard = true;
         [SerializeField] private bool stopAtHeadObstruction = true;
+        [Header("关卡结尾（只为最后一台升降机启用）")]
+        [SerializeField] private bool triggersEnding;
+        [SerializeField, Min(.1f), Tooltip("主角站在平台上累计实际行驶的秒数；端点停顿不计时，离开平台后重新计时。")]
+        private float endingRideSeconds = 4f;
+        private float riddenMovementSeconds;
+        private bool endingRequested;
         [Header("Standing detection")]
         [SerializeField] private LayerMask playerLayers = ~0;
         [SerializeField, Range(.02f, .2f)] private float standingTolerance = .09f;
+        [SerializeField, Range(.01f, .25f), InspectorName("台面中心触发容差")] private float boardingCenterTolerance = .06f;
         [Header("Chain artwork")]
         [SerializeField] private Transform leftChainAnchor;
         [SerializeField] private Transform rightChainAnchor;
@@ -45,7 +53,8 @@ namespace LevelKit
             public Rigidbody2D body;
             public Collider2D collider;
             public RigidbodyInterpolation2D interpolation;
-            public bool found;
+            public bool found, reachedCenter;
+            public float previousCenterOffset;
         }
 
         public bool IsActivated => activated;
@@ -66,7 +75,6 @@ namespace LevelKit
         {
             if (!platformBody || !platformCollider || !lowerPoint || !upperPoint || !platformBody.simulated) return;
             FindRiders();
-            if (riders.Count > 0) activated = true;
             float dt = Time.fixedDeltaTime;
             Vector2 delta = Vector2.zero;
             if (activated && (!pauseWhenEmpty || riders.Count > 0))
@@ -90,6 +98,7 @@ namespace LevelKit
             }
             else speed = 0f;
 
+            TickEnding(dt, delta);
             lastVelocity = dt > 0f ? delta / dt : Vector2.zero;
             platformBody.MovePosition(platformBody.position + delta);
             foreach (var rider in riders)
@@ -98,6 +107,17 @@ namespace LevelKit
                 // Matching vertical support velocity keeps contact on descents too. Horizontal player movement remains its own.
                 rider.body.linearVelocityY = lastVelocity.y;
             }
+        }
+
+        private void TickEnding(float dt, Vector2 movement)
+        {
+            if (!triggersEnding || endingRequested || GameStateManager.Current != GameState.Playing) return;
+            if (riders.Count == 0) { riddenMovementSeconds = 0f; return; }
+            if (movement.sqrMagnitude < .00000001f) return;
+            riddenMovementSeconds += dt;
+            if (riddenMovementSeconds < endingRideSeconds) return;
+            endingRequested = true;
+            GamePresentation.PresentationEvents.Signal("elevator.ending", this);
         }
 
         private void ReachEndpoint()
@@ -130,14 +150,26 @@ namespace LevelKit
                 foreach (var entry in riders) if (entry.body == body) { rider = entry; break; }
                 if (rider == null)
                 {
-                    rider = new Rider { player = player, body = body, collider = collider, interpolation = body.interpolation };
+                    rider = new Rider { player = player, body = body, collider = collider, interpolation = body.interpolation, previousCenterOffset = feet.center.x - bounds.center.x };
                     riders.Add(rider);body.interpolation = RigidbodyInterpolation2D.Interpolate;
                 }
+                float centerOffset = feet.center.x - bounds.center.x;
+                if (!rider.reachedCenter && HasReachedBoardingCenter(rider.previousCenterOffset, centerOffset, boardingCenterTolerance))
+                {
+                    rider.reachedCenter = true;
+                    activated = true;
+                    if (stopPlayerOnBoard) player.StopForPresentation();
+                }
+                rider.previousCenterOffset = centerOffset;
                 rider.found = true;
             }
             for (int i = riders.Count - 1; i >= 0; i--)
                 if (!riders[i].found) { Release(riders[i]); riders.RemoveAt(i); }
         }
+
+        // Swept center crossing prevents a walking step from skipping the center; never snap the actor's position.
+        internal static bool HasReachedBoardingCenter(float previousOffset, float currentOffset, float tolerance) =>
+            Mathf.Abs(currentOffset) <= tolerance || previousOffset < 0f && currentOffset > 0f || previousOffset > 0f && currentOffset < 0f;
 
         private bool HeadBlocked(float rise)
         {
@@ -206,6 +238,7 @@ namespace LevelKit
             platformBody.position = lowerPoint.position;
             platformBody.linearVelocity = Vector2.zero;
             activated = false;goingUp = true;pauseRemaining = 0f;speed = 0f;lastVelocity = Vector2.zero;
+            endingRequested = false; riddenMovementSeconds = 0f;
             foreach (var rider in riders) Release(rider);riders.Clear();RefreshChains();
         }
 

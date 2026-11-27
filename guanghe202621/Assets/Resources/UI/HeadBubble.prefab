@@ -105,37 +105,61 @@ PrefabInstance:
       value: 128
       objectReference: {fileID: 0}
     - target: {fileID: 103, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+      propertyPath: minHeight
+      value: 96
+      objectReference: {fileID: 0}
+    - target: {fileID: 103, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
       propertyPath: padding.x
-      value: 52
+      value: 36
       objectReference: {fileID: 0}
     - target: {fileID: 103, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
       propertyPath: padding.y
-      value: 42
+      value: 40
       objectReference: {fileID: 0}
     - target: {fileID: 103, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
       propertyPath: contentLift
-      value: 6
+      value: 8
       objectReference: {fileID: 0}
+    - target: {fileID: 103, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+      propertyPath: headBackground
+      value: 
+      objectReference: {fileID: 26571993384092024}
+    - target: {fileID: 103, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+      propertyPath: headLeftSprite
+      value: 
+      objectReference: {fileID: 7678264250540620089, guid: d8fd95a180020d44b91aac63124ff158, type: 3}
+    - target: {fileID: 103, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+      propertyPath: headAboveSprite
+      value: 
+      objectReference: {fileID: 4089708861143975502, guid: ef8d8a15bc2c0444bb5e2b58f1ee1bcb, type: 3}
+    - target: {fileID: 103, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+      propertyPath: headRightSprite
+      value: 
+      objectReference: {fileID: 328670185853246858, guid: 67c03836ea03c9145bc745c49cd65b20, type: 3}
     - target: {fileID: 200, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
       propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 203, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 4089708861143975502, guid: ef8d8a15bc2c0444bb5e2b58f1ee1bcb, type: 3}
+    - target: {fileID: 301, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+      propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 301, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 301, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
-      propertyPath: m_SizeDelta.y
+    - target: {fileID: 303, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+      propertyPath: m_Type
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 303, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
       propertyPath: m_Sprite
-      value:
-      objectReference: {fileID: 1839159716319381710, guid: 0a42764fc022c6343870083281be35bb, type: 3}
-    - target: {fileID: 303, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
-      propertyPath: m_Type
-      value: 1
-      objectReference: {fileID: 0}
+      value: 
+      objectReference: {fileID: 4089708861143975502, guid: ef8d8a15bc2c0444bb5e2b58f1ee1bcb, type: 3}
     - target: {fileID: 303, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
       value: 1.65
@@ -149,3 +173,14 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+--- !u!114 &26571993384092024 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 303, guid: e0b9a000832f4c9689c9fae3c6da0005, type: 3}
+  m_PrefabInstance: {fileID: 26571993384091735}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image

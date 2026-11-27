@@ -11,7 +11,9 @@ public enum GameplaySfx
     ThinBoardBreak,
     PhysicsBlockImpact,
     PhysicsBlockAttach,
-    PhysicsBlockDetach
+    PhysicsBlockDetach,
+    PauseMenuOpen, PauseMenuClose, DialogueOptionClick, SpeechBubblePop,
+    DialogueTyping, CharacterVoice, CampfireSave
 }
 
 /// <summary>Typed message hub for decoupled gameplay systems.</summary>

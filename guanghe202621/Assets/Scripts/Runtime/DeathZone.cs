@@ -13,7 +13,6 @@ namespace LevelKit
             var body = other.attachedRigidbody;
             if (body && body.TryGetComponent<PlayerActionController>(out var player) && player.isActiveAndEnabled)
             {
-                if (GamePresentation.PresentationEvents.CatchOpeningFall(player)) return;
                 GamePresentation.PresentationEvents.Report(GamePresentation.PlayEvent.PitDeath, player, this);
                 player.Die();
             }

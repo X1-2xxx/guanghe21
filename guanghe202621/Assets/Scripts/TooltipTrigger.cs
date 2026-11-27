@@ -21,7 +21,7 @@ public sealed class TooltipTrigger : MonoBehaviour, IPointerEnterHandler, IPoint
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (!isActiveAndEnabled) return;
-        if (TryGetComponent<ItemSlotUI>(out var item) && item.ItemId == GameItemId.Cardboard)
+        if (isUnlocked && TryGetComponent<ItemSlotUI>(out var item) && item.ItemId == GameItemId.Cardboard)
             GamePresentation.PresentationEvents.Signal("inventory.cardboard", this);
         if (TooltipManager.Instance != null) TooltipManager.Instance.Show(this, eventData);
         else Debug.LogWarning("请把 TooltipPanel 预制体放到 Canvas 下，与主菜单和暂停面板同级。", this);

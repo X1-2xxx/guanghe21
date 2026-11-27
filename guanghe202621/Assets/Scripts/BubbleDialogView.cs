@@ -20,6 +20,34 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
     [SerializeField] private Vector2 padding = new Vector2(32f, 24f);
     [SerializeField, Min(0f), InspectorName("正文上移（为气泡尾巴留空）")] private float contentLift;
 
+    [Header("头顶气泡美术（默认上，屏幕边缘时改用左/右）")]
+    [SerializeField] private Image headBackground;
+    [SerializeField] private Sprite headAboveSprite, headLeftSprite, headRightSprite;
+    private Vector3 headRestScale;
+    private bool headScaleCached;
+
+    public void FollowHead(Collider2D speaker, Transform fallback, Camera camera)
+    {
+        if (!headScaleCached) { headRestScale = transform.localScale; headScaleCached = true; }
+        transform.localScale = headRestScale;
+        transform.rotation = Quaternion.identity;
+        Vector2 head = speaker ? new Vector2(speaker.bounds.center.x, speaker.bounds.max.y) : (Vector2)fallback.position + Vector2.up * 2f;
+        var size = Vector2.Scale(bubbleRect.rect.size, new Vector2(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.y)));
+        var result = new HeadBubbleScreenLayout.Result(head + Vector2.up * (.2f + size.y * .5f), HeadBubbleScreenLayout.Artwork.Above);
+        if (camera && camera.orthographic)
+        {
+            var visible = HeadBubbleScreenLayout.VisibleArea(camera, .08f);
+            float scale = Mathf.Min(1f, visible.width / Mathf.Max(.001f, size.x), visible.height / Mathf.Max(.001f, size.y));
+            transform.localScale = headRestScale * scale; size *= scale;
+            result = HeadBubbleScreenLayout.Solve(head, size, visible, .2f);
+        }
+        var sprite = result.artwork == HeadBubbleScreenLayout.Artwork.Left ? headLeftSprite : result.artwork == HeadBubbleScreenLayout.Artwork.Right ? headRightSprite : headAboveSprite;
+        if (headBackground && sprite) { headBackground.sprite = sprite; headBackground.overrideSprite = null; }
+        var pivot = bubbleRect.pivot;
+        Vector2 origin = result.center + Vector2.Scale(pivot - Vector2.one * .5f, size);
+        transform.position = new Vector3(origin.x, origin.y, 0f);
+    }
+
     public RectTransform Rect => bubbleRect;
     public bool IsConfigured => worldCanvas != null && bubbleRect != null && contentText != null;
     public int CharacterCount => characterStarts.Length;
@@ -88,10 +116,16 @@ public sealed class BubbleDialogView : MonoBehaviour, IPointerClickHandler
         contentText.text = fullText;
     }
 
-    public void Reveal(int count)
+    public void Reveal(int count, bool audible = true)
     {
         count = Mathf.Clamp(count, 0, CharacterCount);
         if (count == revealedCount) return;
+        if (audible && revealedCount >= 0 && count > revealedCount && count - revealedCount <= 3)
+        {
+            int start = revealedCount < CharacterCount ? characterStarts[revealedCount] : fullText.Length;
+            int finish = count == CharacterCount ? fullText.Length : characterStarts[count];
+            AudioManager.TypeCharacters(fullText, start, finish, !screenBottom);
+        }
         revealedCount = count;
         int end = count == CharacterCount ? fullText.Length : characterStarts[count];
         contentText.text = fullText.Substring(0, end);

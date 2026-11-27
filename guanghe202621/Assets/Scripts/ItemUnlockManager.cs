@@ -10,7 +10,7 @@ public sealed class ItemUnlockManager : MonoBehaviour
 
     // 用序列化列表保留运行中编译前的状态；不写 PlayerPrefs，不修改预制体资产。
     [SerializeField, InspectorName("本次游戏已解锁的道具")]
-    private List<GameItemId> unlockedItems = new List<GameItemId> { GameItemId.Cardboard };
+    private List<GameItemId> unlockedItems = new List<GameItemId>();
 
     /// <summary>道具状态真正改变时通知，重复拾取不会重复广播。</summary>
     public static event Action<GameItemId, bool> UnlockStateChanged;
@@ -37,7 +37,6 @@ public sealed class ItemUnlockManager : MonoBehaviour
         }
         instance = this;
         unlockedItems ??= new List<GameItemId>();
-        if (!unlockedItems.Contains(GameItemId.Cardboard)) unlockedItems.Add(GameItemId.Cardboard);
         if (Application.isPlaying) DontDestroyOnLoad(gameObject);
     }
 
@@ -54,16 +53,15 @@ public sealed class ItemUnlockManager : MonoBehaviour
     /// <summary>拾取成功时调用。首次解锁返回 true，已经拥有时返回 false。</summary>
     public static bool Unlock(GameItemId item) => SetUnlocked(item, true);
 
-    /// <summary>查询能力或 UI 状态。硬纸板始终为已解锁。</summary>
+    /// <summary>查询能力或 UI 状态，硬纸板由剧情教学解锁。</summary>
     public static bool IsUnlocked(GameItemId item)
     {
         if (!IsKnownItem(item)) return false;
-        if (item == GameItemId.Cardboard) return true;
         if (!Application.isPlaying) return false;
         return GetOrCreate().unlockedItems.Contains(item);
     }
 
-    /// <summary>设置状态并通知 UI。硬纸板是初始能力，不允许被重新锁定。</summary>
+    /// <summary>设置状态并通知 UI；允许新游戏重新锁定硬纸板。</summary>
     public static bool SetUnlocked(GameItemId item, bool unlocked)
     {
         if (!IsKnownItem(item))
@@ -71,7 +69,7 @@ public sealed class ItemUnlockManager : MonoBehaviour
             Debug.LogWarning($"未知道具标识：{item}");
             return false;
         }
-        if (!Application.isPlaying || (item == GameItemId.Cardboard && !unlocked)) return false;
+        if (!Application.isPlaying) return false;
         var manager = GetOrCreate();
         bool previous = manager.unlockedItems.Contains(item);
         if (previous == unlocked) return false;
@@ -81,12 +79,12 @@ public sealed class ItemUnlockManager : MonoBehaviour
         return true;
     }
 
-    /// <summary>开始全新的一局时由玩法调用，回到只有硬纸板的初始状态。</summary>
+    /// <summary>开始全新的一局时由玩法调用，回到所有道具尚未解锁的初始状态。</summary>
     public static void ResetProgress()
     {
         if (!Application.isPlaying) return;
         foreach (GameItemId item in Enum.GetValues(typeof(GameItemId)))
-            if (item != GameItemId.Cardboard) SetUnlocked(item, false);
+            SetUnlocked(item, false);
     }
 
     private static bool IsKnownItem(GameItemId item) => Enum.IsDefined(typeof(GameItemId), item);

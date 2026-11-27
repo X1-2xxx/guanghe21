@@ -22,35 +22,55 @@ namespace GamePresentation
         [InspectorName("全局教学：半路叫停"), SerializeField] public bool flag_taught_midstop;
         [InspectorName("全局教学：脚下物块不可拖"), SerializeField] public bool flag_taught_underfoot_lock;
         [InspectorName("全局教学：奔跑时不可编辑"), SerializeField] public bool flag_taught_run_lock;
+        [SerializeField, Min(0f), InspectorName("触发剧情后继续运行的秒数")] private float checkpointPauseSeconds = .5f;
+        [SerializeField, Min(0f), InspectorName("气泡最短阅读秒数")] private float minimumBubbleSeconds = 2f;
+        [SerializeField, InspectorName("正式对白期间暂停玩法世界")] private bool pauseWorldDuringDialogue = false;
+        internal float CheckpointPauseSeconds => checkpointPauseSeconds;
+        internal bool PauseWorldDuringDialogue => pauseWorldDuringDialogue;
+        private float PresentationDelta => Director != null && Director.WorldPaused ? Time.unscaledDeltaTime : Time.deltaTime;
         public StoryDirector Director { get; private set; }
         public PresentationSceneBinding Scene { get; private set; }
-        public bool CanPresent => Scene && Scene.player && GameStateManager.Current == GameState.Playing && Time.timeScale > 0f &&
-            !PlayerOpeningSequence.BlocksGameplayInput(Scene.player);
+        public bool CanPresent => Scene && Scene.player && GameStateManager.Current == GameState.Playing && (Time.timeScale > 0f || (Director != null && Director.WorldPaused)) &&
+            !PlayerOpeningSequence.BlocksPresentation(Scene.player);
         public bool HeadVisible => headRemaining > 0f;
+        internal bool HeadProtected => !headIsStory && HeadVisible && headMinimumRemaining > 0f;
+        public bool CheckpointResetAvailable => !V4Mode || Scene.initialEpisode != "village.opening" || resetTutorialUnlocked;
+        private bool resetTutorialUnlocked;
+        private float headMinimumRemaining;
+        private PendingBubble pendingBubble;
+        private sealed class PendingBubble
+        {
+            public string text; public float seconds; public int priority;
+        }
         public string VisibleHeadText { get; private set; }
         public bool V4Mode => Scene && Scene.enableMainline;
         public bool UsesCollectionQuest => V4Mode && Scene.preserveCollectionQuest && Scene.legacyInnQuest is InnQuest;
-        public bool BlocksRun => V4Mode && Director.HasCompleted("village.reunion") && !Director.HasCompleted("village.depart");
 
         private readonly Dictionary<string, int> counts = new Dictionary<string, int>();
         private readonly Dictionary<string, float> cooldowns = new Dictionary<string, float>();
         private readonly HashSet<string> onceBarks = new HashSet<string>();
+        private readonly HashSet<string> shownGuidance = new HashSet<string>();
+        private readonly HashSet<string> shownVillageNudges = new HashSet<string>();
         private readonly Dictionary<Renderer, bool> hiddenActorRenderers = new Dictionary<Renderer, bool>();
         private readonly Queue<float> turns = new Queue<float>();
         private readonly Queue<string> pickupBarks = new Queue<string>();
         private float headRemaining, headElapsed, lastInput, runStarted, nudgeAt;
         private int headPriority, shownFrame, quickStops, tapeCount;
-        private bool headIsStory, began, forcedRun, pitHeld, villageSunk, openingReset, jumpAcquired, wallBroken;
-        private float pitGravity;
+        private bool headIsStory, headIsGuidance, began, forcedRun, villageSunk, openingReset, jumpAcquired, wallBroken;
+        private bool openingPitFallStarted, openingPitImpactStarted;
+        private float openingPitImpactRemaining;
+        private bool pendingBridgeIntroduction, pendingJumpIntroduction;
+        private int bridgeArrivalFrame = -1, jumpArrivalFrame = -1;
         private int shownCharacters;
         private Rigidbody2D body;
         private CapsuleCollider2D capsule;
         private BlockManipulation manipulation;
         private AudioManager audioRouter;
+        private GameFlowTemplate gameFlow;
         private bool actorHeld;
         private float lastFall, stationarySeconds;
-        private string currentHint;
-        private float nextHint;
+        private bool villageGlueReviewPending;
+        private float villageGlueReviewAt, villageGlueStableFor, nextVillageProbe;
         private Vector2 previousPosition;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -66,7 +86,7 @@ namespace GamePresentation
             headView.SetVisible(false); inventoryTray.SetActive(false);
         }
         private void OnEnable() => GameEventCenter.StateChanged += OnStateChanged;
-        private void OnDisable() { GameEventCenter.StateChanged -= OnStateChanged; TooltipManager.SetSuppressed(this, false); RestoreActorArt(); }
+        private void OnDisable() { GameEventCenter.StateChanged -= OnStateChanged; Director?.Clear(); TooltipManager.SetSuppressed(this, false); RestoreActorArt(); }
         private void OnDestroy() { if (Instance == this) Instance = null; }
 
         public void Attach(PresentationSceneBinding binding)
@@ -74,16 +94,21 @@ namespace GamePresentation
             if (Scene == binding) return;
             if (!binding || !binding.player || !binding.levelCamera)
             { Debug.LogError("剧情场景绑定缺少玩家或相机，请在 Inspector 中拖入场景引用。", binding); return; }
-            RestoreActorArt(); RestorePit(); Director.Clear(); Scene = binding;
+            RestoreActorArt(); CancelOpeningRun(); Director.Clear(); Scene = binding;
             body = Scene.player.GetComponent<Rigidbody2D>(); capsule = Scene.player.GetComponent<CapsuleCollider2D>();
             manipulation = null;
             foreach (var controls in FindObjectsByType<BlockManipulation>(FindObjectsSortMode.None))
                 if (controls.gameObject.scene == Scene.gameObject.scene) { manipulation = controls; break; }
             audioRouter = FindAnyObjectByType<AudioManager>();
-            began = forcedRun = pitHeld = villageSunk = openingReset = jumpAcquired = wallBroken = actorHeld = false;
+            gameFlow = FindAnyObjectByType<GameFlowTemplate>();
+            began = forcedRun = pendingBridgeIntroduction = pendingJumpIntroduction = villageSunk = openingReset = jumpAcquired = wallBroken = actorHeld = false;
+            resetTutorialUnlocked = false;
+            ItemUnlockManager.SetUnlocked(GameItemId.Cardboard, !V4Mode || Scene.initialEpisode != "village.opening");
+            PrepareInitialBlack();
+            ResetVillageGlueReview();
             counts.Clear(); cooldowns.Clear(); turns.Clear(); pickupBarks.Clear(); tapeCount = quickStops = 0;
             previousPosition = body.position; stationarySeconds = 0f; lastInput = Time.unscaledTime;
-            currentHint = null;
+            shownGuidance.Clear(); shownVillageNudges.Clear(); nudgeAt = float.PositiveInfinity;
             // 其他关卡若已经带有镜头管理器，复用它；不因重复单例而丢失场景引用。
             if (!cameraPerformance) cameraPerformance = CameraPerformanceManager.Instance;
             if (!cameraPerformance) cameraPerformance = gameObject.AddComponent<CameraPerformanceManager>();
@@ -106,15 +131,26 @@ namespace GamePresentation
         public void Detach(PresentationSceneBinding binding)
         {
             if (Scene != binding) return;
-            RestoreActorArt(); RestorePit(); Director.Clear(); Scene = null; body = null; capsule = null;
+            RestoreActorArt(); CancelOpeningRun(); Director.Clear(); Scene = null; body = null; capsule = null;
             storyView.ClearEquipmentNotice(); pickupBarks.Clear();
             inventoryTray.SetActive(false);
         }
         private void OnStateChanged(GameState state)
         {
-            if (state == GameState.MainMenu) { RestorePit(); Director.Clear(); storyView.ClearEquipmentNotice(); pickupBarks.Clear(); began = false; }
+            if (state == GameState.Playing) PrepareInitialBlack();
+            if (state == GameState.MainMenu) { ResetVillageGlueReview(); CancelOpeningRun(); Director.Clear(); storyView.ClearEquipmentNotice(); pickupBarks.Clear(); began = false; pendingBridgeIntroduction = pendingJumpIntroduction = false; resetTutorialUnlocked = false; shownGuidance.Clear(); shownVillageNudges.Clear(); ItemUnlockManager.SetUnlocked(GameItemId.Cardboard, false); }
             if (state != GameState.Playing && !(state == GameState.Paused && headIsStory)) InterruptBubble();
         }
+        private void PrepareInitialBlack()
+        {
+            if (began || !V4Mode || !Scene.player || GameStateManager.Current != GameState.Playing ||
+                PlayerOpeningSequence.BlocksPresentation(Scene.player)) return;
+            var initial = library.FindEpisode(Scene.initialEpisode);
+            if (initial == null || initial.steps.Find(s => s.id == initial.entry)?.kind != StoryStepKind.BlackTitle) return;
+            // Cover the first gameplay frame, including the short pre-dialogue pause.
+            storyView.Show(new StoryStep { kind = StoryStepKind.BlackTitle, autoAdvance = true, text = string.Empty }, null);
+        }
+
         private void Update()
         {
             bool live = CanPresent;
@@ -125,13 +161,14 @@ namespace GamePresentation
                 began = true;
                 if (V4Mode && !string.IsNullOrEmpty(Scene.initialEpisode)) Director.Enqueue(Scene.initialEpisode);
             }
-            Director.Tick(Time.deltaTime);
-            if (Keyboard.current != null && Keyboard.current.enterKey.wasPressedThisFrame) Director.Advance();
+            if (V4Mode) TickCheckpointStories();
+            Director.Tick(PresentationDelta);
+            var keyboard = Keyboard.current;
+            if (keyboard != null && (!gameFlow || !gameFlow.HasOpenGameplayModal) &&
+                (keyboard.enterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame)) Director.Advance();
             if (Director.Active || HadInput()) lastInput = Time.unscaledTime;
             // 末件失物先报拾取，再报集齐；这些气泡不会持有剧情输入锁。
             if (!Director.Active && !HeadVisible && pickupBarks.Count > 0) PlayBark(pickupBarks.Dequeue());
-            if (!Director.Active && !HeadVisible && currentHint != null && Time.time >= nextHint)
-            { ShowHead(currentHint, 5f, 15); nextHint = Time.time + 18f; }
             if (!Director.Active && Time.unscaledTime - lastInput >= 18f)
             { lastInput = Time.unscaledTime; PlayBark("idle"); }
             if (V4Mode) TickVillage();
@@ -149,28 +186,20 @@ namespace GamePresentation
         {
             UpdateActorArt();
             if (!CanPresent || !Scene.player) return;
-            // 触发行为的同一帧不会清掉新气泡；玩家之后的操作可立即打断小台词。
-            if (!headIsStory && HeadVisible && Time.frameCount > shownFrame && HadInterruptInput()) InterruptBubble();
+            headMinimumRemaining = Mathf.Max(0f, headMinimumRemaining - PresentationDelta);
+            if (!Director.Active && !Director.HasPendingEpisodes && !headIsStory && !HeadProtected && pendingBubble != null)
+            {
+                var next = pendingBubble; pendingBubble = null;
+                ShowHead(next.text, next.seconds, next.priority);
+            }
+            // Gameplay input still works, but cannot erase text before its reading window.
+            if (!headIsStory && HeadVisible && Time.frameCount > shownFrame && HadInterruptInput()) InterruptBubble(false);
             if (!HeadVisible) { headView.SetVisible(false); return; }
-            headRemaining -= Time.deltaTime; headElapsed += Time.deltaTime;
+            headRemaining -= PresentationDelta; headElapsed += PresentationDelta;
             if (headRemaining <= 0f) { InterruptBubble(); return; }
             Scene.player.HideLegacySpeechForPresentation();
             headView.SetVisible(true);
-            Vector3 position = capsule ? new Vector3(capsule.bounds.center.x, capsule.bounds.max.y + 0.2f, 0f) : Scene.player.transform.position + Vector3.up * 2f;
-            if (Scene.levelCamera && Scene.levelCamera.orthographic)
-            {
-                // 角色站在画面边缘时把气泡留在可见范围，兼容不同 Game 窗口宽高比。
-                var view = Scene.levelCamera;
-                float halfWidth = view.orthographicSize * view.aspect;
-                float bubbleHalf = headView.Rect.rect.width * Mathf.Abs(headView.transform.lossyScale.x) * .5f;
-                float height = headView.Rect.rect.height * Mathf.Abs(headView.transform.lossyScale.y);
-                float left = view.transform.position.x - halfWidth + bubbleHalf + .08f;
-                float right = view.transform.position.x + halfWidth - bubbleHalf - .08f;
-                if (left <= right) position.x = Mathf.Clamp(position.x, left, right);
-                position.y = Mathf.Min(position.y, view.transform.position.y + view.orthographicSize - height - .08f);
-            }
-            headView.transform.position = position;
-            headView.transform.rotation = Quaternion.identity;
+            headView.FollowHead(capsule, Scene.player.transform, Scene.levelCamera);
             if (headIsStory || useTypewriter)
             {
                 int count = Mathf.FloorToInt(headElapsed * Mathf.Max(1f, charactersPerSecond));
@@ -185,7 +214,7 @@ namespace GamePresentation
                 Mouse.current.scroll.ReadValue().sqrMagnitude > 0f || (Mouse.current.leftButton.isPressed && Mouse.current.delta.ReadValue().sqrMagnitude > .1f)));
 
         /// <summary>供机关或关卡脚本调用；location 决定“同一位置”的降频计数。</summary>
-        public bool PlayBark(string id, Component location = null)
+        public bool PlayBark(string id, Component location = null, bool guidance = false)
         {
             if (!CanPresent || Director.Active) return false;
             var rule = library.FindBark(id);
@@ -201,7 +230,7 @@ namespace GamePresentation
             float duration = count >= 3 && rule.brief != null && rule.brief.Length > 0 ? Mathf.Min(1.8f, rule.duration) : rule.duration;
             cooldowns[key] = Time.unscaledTime + (count >= 3 ? Mathf.Max(12f, rule.cooldown) : rule.cooldown);
             if (rule.once) onceBarks.Add(id);
-            ShowHead(text, duration, rule.priority); return true;
+            ShowHead(text, duration, guidance ? 0 : rule.priority, guidance: guidance); return true;
         }
         private string LocationKey(Component source)
         {
@@ -210,19 +239,54 @@ namespace GamePresentation
             for (Transform parent = source.transform.parent; parent; parent = parent.parent) path = parent.name + "/" + path;
             return source.gameObject.scene.path + "/" + path;
         }
-        public void ShowHead(string text, float seconds = 3f, int priority = 10, bool story = false)
+        public void ShowHead(string text, float seconds = 3f, int priority = 10, bool story = false, bool guidance = false)
         {
             if (!Scene || !Scene.player || string.IsNullOrWhiteSpace(text)) return;
-            VisibleHeadText = text; headRemaining = Mathf.Max(0.1f, seconds); headElapsed = 0f;
-            headPriority = priority; headIsStory = story; shownFrame = Time.frameCount; shownCharacters = -1;
+            // Optional instructions never replace gameplay feedback or queue across a story boundary.
+            if (guidance && (HeadVisible || pendingBubble != null || Director.Active || Director.HasPendingEpisodes)) return;
+            if (!story && HeadProtected)
+            {
+                if (text != VisibleHeadText && (pendingBubble == null || priority >= pendingBubble.priority))
+                    pendingBubble = new PendingBubble { text = text, seconds = seconds, priority = priority };
+                return;
+            }
+            pendingBubble = null;
+            VisibleHeadText = text; headRemaining = Mathf.Max(story ? 0f : minimumBubbleSeconds, seconds, .1f); headElapsed = 0f;
+            headPriority = priority; headIsStory = story; headIsGuidance = guidance; shownFrame = Time.frameCount; shownCharacters = -1;
             headView.Initialize(Scene.levelCamera, text);
             bool animate = story || useTypewriter;
+            headMinimumRemaining = story ? 0f : Mathf.Max(minimumBubbleSeconds, animate ? headView.CharacterCount / Mathf.Max(1f, charactersPerSecond) + .6f : 0f);
+            headRemaining = Mathf.Max(headRemaining, headMinimumRemaining);
             if (story) headRemaining = Mathf.Max(headRemaining, headView.CharacterCount / Mathf.Max(1f, charactersPerSecond) + 0.9f);
             headView.Reveal(animate ? 0 : headView.CharacterCount);
             headView.SetVisible(true);
+            GameEventCenter.RequestSfx(GameplaySfx.SpeechBubblePop);
         }
-        public void InterruptBubble()
-        { headRemaining = 0f; headPriority = 0; headIsStory = false; VisibleHeadText = string.Empty; headView.SetVisible(false); }
+        internal bool CompleteStoryHeadText()
+        {
+            if (!headIsStory || !HeadVisible || shownCharacters >= headView.CharacterCount) return false;
+            shownCharacters = headView.CharacterCount;
+            headElapsed = (headView.CharacterCount + 1f) / Mathf.Max(1f, charactersPerSecond);
+            headRemaining = Mathf.Max(headRemaining, .6f);
+            headView.Reveal(headView.CharacterCount, false);
+            return true;
+        }
+        internal void DismissGuidance()
+        {
+            if (!headIsGuidance) return;
+            // Keep any real gameplay feedback waiting behind the obsolete instruction.
+            headRemaining = headMinimumRemaining = 0f;
+            headPriority = 0; headIsStory = headIsGuidance = false;
+            VisibleHeadText = string.Empty;
+            if (headView) headView.SetVisible(false);
+        }
+        public void InterruptBubble(bool force = true)
+        {
+            if (!force && HeadProtected) return;
+            if (force) pendingBubble = null;
+            headRemaining = headMinimumRemaining = 0f; headPriority = 0; headIsStory = headIsGuidance = false;
+            VisibleHeadText = string.Empty; headView.SetVisible(false);
+        }
 
         // 大立绘只替代世界中的外观，保留碰撞、刚体、动画与角色控制组件。
         private void UpdateActorArt()
@@ -247,7 +311,7 @@ namespace GamePresentation
             switch (kind)
             {
                 case PlayEvent.RunStarted:
-                    runStarted = Time.time; tapeCount = 0; currentHint = null; InterruptBubble();
+                    runStarted = Time.time; tapeCount = 0; DismissGuidance(); InterruptBubble(false);
                     if (V4Mode && Director.HasCompleted("village.depart") && !Director.HasScheduled("village.crossed")) ShowHead("真的跑起来了！", 2.5f, 50);
                     else if (Scene.player.BreakEnabled) PlayBark("first_shoe_run");
                     break;
@@ -279,7 +343,7 @@ namespace GamePresentation
                     turns.Enqueue(Time.time); while (turns.Count > 0 && Time.time - turns.Peek() > 3f) turns.Dequeue();
                     if (turns.Count >= 3) { PlayBark("turns"); turns.Clear(); } break;
                 case PlayEvent.CheckpointReset:
-                    RestorePit(); forcedRun = false; InterruptBubble(); pickupBarks.Clear();
+                    CancelOpeningRun(); forcedRun = false; InterruptBubble(); pickupBarks.Clear();
                     if (Director.ResetOnly) { Director.AllowResetOnly(false); openingReset = true; Signal("village.reset", actor); }
                     else PlayBark("reset"); break;
                 case PlayEvent.PitDeath:
@@ -289,27 +353,29 @@ namespace GamePresentation
                     if (V4Mode && !onceBarks.Contains("inn_bed_first")) PlayBark("inn_bed_first");
                     else PlayBark("bounce", subject); break;
                 case PlayEvent.JumpAcquired:
-                    jumpAcquired = true; ItemUnlockManager.Unlock(GameItemId.JumpKey);
+                    jumpAcquired = true; UnlockAbilityWithNotice(GameItemId.JumpKey);
                     if (V4Mode) Director.Enqueue("jump.acquired"); break;
                 case PlayEvent.ShoesAcquired:
-                    ItemUnlockManager.Unlock(GameItemId.Rocinante);
-                    storyView.ShowEquipmentNotice();
+                    UnlockAbilityWithNotice(GameItemId.Rocinante);
                     if (V4Mode) Director.Enqueue("inn.shoes"); break;
                 case PlayEvent.InnVaseCollected: pickupBarks.Enqueue("inn_vase"); break;
                 case PlayEvent.InnChocolateCollected: pickupBarks.Enqueue("inn_chocolate"); break;
                 case PlayEvent.InnPortraitCollected:
                     pickupBarks.Enqueue("inn_portrait"); pickupBarks.Enqueue("inn_all_items"); break;
                 case PlayEvent.WallBlocked:
-                    if (forcedRun && Scene.villagePit.Contains(body.position)) CatchOpeningFall(Scene.player);
+                    if (forcedRun && IsBelowVillagePitEntrance()) TryCompleteOpeningFall();
+                    else if (actor is PlayerActionController stoppedPlayer && stoppedPlayer.LastWallStopReason == PlayerActionController.WallStopReason.SlopeTooSteep)
+                        PlayBark("slope_too_steep", subject ? subject : actor);
                     else if (body.position.x > 80f && !Scene.player.BreakEnabled) PlayBark("wall_no_shoes");
                     else PlayBark(V4Mode && Scene.villagePit.Contains(body.position) ? "village_blocked" : "blocked", subject); break;
                 case PlayEvent.WallBroken:
                     wallBroken = true; PlayBark("wall_break", subject); break;
                 case PlayEvent.TapeConnected:
+                    DismissGuidance();
                     tapeCount++; if (tapeCount >= 4) PlayBark("many_tapes");
-                    if (V4Mode) InspectVillageGlue(subject); break;
-                case PlayEvent.TapeRemoved: PlayBark("rebuild", subject); break;
-                case PlayEvent.BlockGrabbed: InterruptBubble(); break;
+                    if (V4Mode) QueueVillageGlueReview(subject); break;
+                case PlayEvent.TapeRemoved: ResetVillageGlueReview(); DismissGuidance(); PlayBark("rebuild", subject); break;
+                case PlayEvent.BlockGrabbed: ResetVillageGlueReview(); DismissGuidance(); InterruptBubble(false); break;
                 case PlayEvent.CheckpointReached: Checkpoint(subject); break;
                 case PlayEvent.Falling: PlayBark("fall", subject); break;
                 case PlayEvent.StuckInPit: PlayBark("stuck", subject); break;
@@ -320,17 +386,47 @@ namespace GamePresentation
                 case PlayEvent.Idle: PlayBark("idle"); break;
             }
         }
+        private void UnlockAbilityWithNotice(GameItemId item)
+        {
+            // Restoration/UI synchronization uses SetUnlocked directly; only a new acquisition shows this notice.
+            if (ItemUnlockManager.Unlock(item)) storyView.ShowEquipmentNotice(item);
+        }
         private void Checkpoint(Component source)
         {
+            DismissGuidance();
             if (!V4Mode || Scene.checkpoints == null) return;
             int index = System.Array.FindIndex(Scene.checkpoints, c => c == source);
+            if (index == 1) ResetVillageGlueReview();
             if (index == 1)
             {
+                pendingBridgeIntroduction = !Director.HasScheduled("bridge.intro");
+                bridgeArrivalFrame = Time.frameCount;
+            }
+            if (index == 2) PlayBark("bridge_complete");
+            if (index == 3) { PlayBark("forest_complete"); RequestJumpIntroduction(); }
+        }
+        private void RequestJumpIntroduction()
+        {
+            if (jumpAcquired) return;
+            if (Director.HasCompleted("jump.intro")) { Director.Enqueue("jump.discover"); return; }
+            if (pendingJumpIntroduction || Director.HasScheduled("jump.intro")) return;
+            pendingJumpIntroduction = true;
+            jumpArrivalFrame = Time.frameCount;
+        }
+        private void TickCheckpointStories()
+        {
+            if (Scene.player.IsGameplayCameraMoving || Scene.player.IsRespawning || Director.CameraBusy) return;
+            if (pendingBridgeIntroduction && Time.frameCount > bridgeArrivalFrame)
+            {
+                pendingBridgeIntroduction = false;
                 if (openingReset) Director.Enqueue("village.crossed");
                 Director.Enqueue("bridge.intro");
             }
-            if (index == 2) { Scene.player.StopForPresentation(); PlayBark("bridge_complete"); }
-            if (index == 3) { Scene.player.StopForPresentation(); PlayBark("forest_complete"); }
+            if (pendingJumpIntroduction && Time.frameCount > jumpArrivalFrame)
+            {
+                pendingJumpIntroduction = false;
+                Director.Enqueue("jump.intro");
+            }
         }
         public void Signal(string id, Component source = null)
         {
@@ -339,65 +435,117 @@ namespace GamePresentation
             if (!V4Mode) return;
             switch (id)
             {
-                case "bridge.enter": Director.Enqueue("bridge.intro"); break;
+                // Bridge introduction is owned by checkpoint arrival, never by the earlier region trigger.
+                case "bridge.enter": break;
                 case "forest.enter": if (Scene.includeForest) Director.Enqueue("forest.intro"); break;
-                case "jump.enter": Director.Enqueue("jump.intro"); break;
+                case "jump.enter": RequestJumpIntroduction(); break;
                 case "inn.approach": Director.Enqueue("inn.approach"); break;
                 case "inn.enter":
                     pickupBarks.Clear();
                     if (UsesCollectionQuest) ((InnQuest)Scene.legacyInnQuest).TryTalk(Scene.player);
                     else Director.Enqueue("inn.intro");
                     break;
-                case "jump.lower": if (!jumpAcquired) Director.Enqueue("jump.discover"); break;
+                case "jump.lower": RequestJumpIntroduction(); break;
                 case "inn.exit": if (wallBroken && Scene.player.BreakEnabled) Director.Enqueue("inn.ending"); break;
+                case "elevator.ending": if (source is ElevatorPlatform) Director.Enqueue("game.ending"); break;
                 case "inventory.cardboard": nudgeAt = Mathf.Min(nudgeAt, Time.time + 10f); break;
             }
         }
         private void TickVillage()
         {
-            if (forcedRun && body && Scene.villagePit.Contains(body.position) && body.position.y < Scene.villageGroundY - 0.25f)
-                CatchOpeningFall(Scene.player);
-            if (!Director.Active && Director.HasCompleted("village.reunion") && !Director.HasScheduled("village.depart") && Scene.villageStone)
+            if (forcedRun) TryCompleteOpeningFall();
+            if (!Director.Active && VillageNeedsGlueReview)
             {
                 // Tape can be attached before the stone finishes settling or before its final adjustment.
                 // Recheck the actual connection and surface every frame, not just on the click that attached it.
-                InspectVillageGlue(null, false);
+                if (HasClearedVillagePit()) { ResetVillageGlueReview(); DismissGuidance(); return; }
+                InspectVillageGlue();
                 var collider = Scene.villageStone.GetComponent<Collider2D>();
-                if (!Director.HasScheduled("village.depart") && !villageSunk && Scene.villagePit.Contains(Scene.villageStone.position) && collider.bounds.max.y < Scene.villageGroundY - 0.1f)
+                if (!Director.HasScheduled("village.depart") && !villageSunk && manipulation && !manipulation.IsHolding(Scene.villageStone) && !manipulation.HasWorldTapeConnection(Scene.villageStone) && Scene.villageStone.position.x >= Scene.villagePit.xMin && Scene.villageStone.position.x <= Scene.villagePit.xMax && collider.bounds.max.y < Scene.villageGroundY - 0.1f)
                 { villageSunk = true; Director.Enqueue("village.sunk"); }
-                if (Time.time >= nudgeAt)
-                { nudgeAt = Time.time + 15f; PlayBark(villageSunk ? "stone_attach_hint" : "stone_drag_hint"); }
+                if (Time.time >= nudgeAt && !HeadVisible && pendingBubble == null)
+                {
+                    nudgeAt = float.PositiveInfinity;
+                    string nudge = villageSunk ? "stone_attach_hint" : "stone_drag_hint";
+                    if (shownVillageNudges.Add(nudge)) PlayBark(nudge, guidance: true);
+                }
             }
         }
-        private void InspectVillageGlue(Component subject, bool showFailureHint = true)
+        private bool VillageNeedsGlueReview => Scene && Scene.villageStone && Director.HasCompleted("village.reunion") &&
+            !Director.HasScheduled("village.depart") && !Director.HasScheduled("bridge.intro") && !pendingBridgeIntroduction;
+        private bool HasClearedVillagePit() => capsule && capsule.bounds.min.x > Scene.villagePit.xMax + .05f &&
+            capsule.bounds.min.y >= Scene.villageGroundY - Scene.player.StepHeight - .1f;
+        private void ResetVillageGlueReview()
+        { villageGlueReviewPending = false; villageGlueStableFor = 0f; villageGlueReviewAt = nextVillageProbe = 0f; }
+        private void QueueVillageGlueReview(Component subject)
         {
-            if (!Scene.villageStone || Director.HasScheduled("village.depart") || !Director.HasCompleted("village.reunion")) return;
+            if (!VillageNeedsGlueReview || !manipulation) return;
             var stone = Scene.villageStone;
-            if (subject && subject.transform != stone.transform) return;
-            var surface = stone.GetComponent<Collider2D>();
-            if (!surface || !surface.enabled || !manipulation) return;
-            var bounds = surface.bounds;
-            float heightTolerance = Mathf.Clamp(Scene.player.StepHeight * .75f, .12f, .3f);
-            float flatAngle = Mathf.Round(stone.rotation / 90f) * 90f;
-            bool level = manipulation.HasWorldTapeConnection(stone) &&
-                Mathf.Abs(bounds.max.y - Scene.villageGroundY) <= heightTolerance &&
-                Mathf.Abs(Mathf.DeltaAngle(stone.rotation, flatAngle)) <= 12f &&
-                bounds.min.x <= Scene.villagePit.xMin + .18f && bounds.max.x >= Scene.villagePit.xMax - .18f;
-            if (level) { if (!villageSunk) Director.Enqueue("village.clever"); Director.Enqueue("village.depart"); }
-            else if (showFailureHint) PlayBark("stone_wrong");
+            if (subject && subject.transform != stone.transform && !manipulation.HasWorldTapeConnection(stone)) return;
+            villageGlueReviewPending = true; villageGlueStableFor = 0f;
+            villageGlueReviewAt = Time.time + .4f; nextVillageProbe = 0f;
         }
-        public bool CatchOpeningFall(Component actor)
+        private void InspectVillageGlue()
         {
-            if (!V4Mode || !forcedRun || pitHeld || actor != Scene.player || !body) return false;
-            forcedRun = false; pitHeld = true; pitGravity = body.gravityScale;
-            storyView.SetResetHint(true);
-            Scene.player.StopForPresentation(); body.gravityScale = 0f; body.linearVelocity = Vector2.zero;
-            body.position = new Vector2(Mathf.Clamp(body.position.x, Scene.villagePit.xMin + 0.55f, Scene.villagePit.xMax - 0.55f), Scene.villagePit.yMin + 0.1f);
-            if (library.pitImpactClip && audioRouter) audioRouter.PlaySfx(library.pitImpactClip);
-            Director.Signal("village.fell"); return true;
+            if (!VillageNeedsGlueReview || !manipulation) return;
+            var stone = Scene.villageStone;
+            var surface = stone.GetComponent<Collider2D>();
+            if (!surface || !surface.enabled || !manipulation.HasWorldTapeConnection(stone))
+            { ResetVillageGlueReview(); return; }
+            if (manipulation.IsHolding(stone) || stone.linearVelocity.sqrMagnitude > .04f || Mathf.Abs(stone.angularVelocity) > 8f)
+            { villageGlueStableFor = 0f; return; }
+            villageGlueStableFor += Time.deltaTime;
+            if (villageGlueStableFor < .2f || Time.time < villageGlueReviewAt || Time.time < nextVillageProbe) return;
+            nextVillageProbe = Time.time + .15f;
+            bool passable = Scene.player.CanWalkAcrossForPresentation(Scene.villagePit, Scene.villageGroundY);
+            if (passable)
+            {
+                ResetVillageGlueReview(); DismissGuidance();
+                if (!villageSunk) Director.Enqueue("village.clever");
+                Director.Enqueue("village.depart");
+            }
+            else if (villageGlueReviewPending && !Director.Active && !Director.HasPendingEpisodes)
+            {
+                villageGlueReviewPending = false;
+                // A conservative query cannot prove failure: offer one optional trial hint, never a verdict.
+                PlayBark("stone_wrong", guidance: true);
+            }
         }
-        private void RestorePit()
-        { if (pitHeld && body) body.gravityScale = pitGravity; pitHeld = false; }
+        private bool IsBelowVillagePitEntrance()
+        {
+            // Pit depth is authored by the terrain collider, never by the old rectangle bottom.
+            return Scene && body && body.position.x >= Scene.villagePit.xMin &&
+                body.position.x <= Scene.villagePit.xMax && body.position.y < Scene.villageGroundY - .25f;
+        }
+        private void TryCompleteOpeningFall()
+        {
+            if (!V4Mode || !forcedRun) return;
+            if (!openingPitFallStarted)
+            {
+                if (!IsBelowVillagePitEntrance()) return;
+                openingPitFallStarted = true;
+                Scene.player.BeginOpeningPitFall();
+            }
+            if (!openingPitImpactStarted)
+            {
+                if (!Scene.player.HasLandedForPresentation) return;
+                openingPitImpactStarted = true;
+                openingPitImpactRemaining = Scene.player.PlayOpeningPitLandingImpact();
+                if (library.pitImpactClip && audioRouter) audioRouter.PlaySfx(library.pitImpactClip);
+                return;
+            }
+            openingPitImpactRemaining -= PresentationDelta;
+            if (openingPitImpactRemaining > 0f) return;
+            forcedRun = false;
+            storyView.SetResetHint(resetTutorialUnlocked);
+            Director.Signal("village.fell");
+        }
+        private void CancelOpeningRun()
+        {
+            forcedRun = openingPitFallStarted = openingPitImpactStarted = false;
+            openingPitImpactRemaining = 0f;
+            if (Scene && Scene.player) Scene.player.CancelOpeningPitAnimation();
+        }
         internal void HoldActor(bool hold)
         {
             RefreshVisibility();
@@ -412,17 +560,31 @@ namespace GamePresentation
             bool live = CanPresent;
             TooltipManager.SetSuppressed(this, live && Director.Active);
             storyView.SetPaused(!live);
-            inventoryTray.SetActive(live);
+            inventoryTray.SetActive(live && !Director.IsEnding && CheckpointResetAvailable);
+            if (gameFlow) gameFlow.SetOpeningHudVisible(CheckpointResetAvailable);
         }
         internal void Command(string command)
         {
             switch (command)
             {
-                case "opening.run": HoldActor(false); forcedRun = true; Scene.player.RunForPresentation(1); break;
-                case "opening.reset_only": HoldActor(false); Director.AllowResetOnly(true); storyView.SetResetHint(true); break;
+                case "opening.emerge":
+                    HoldActor(false);
+                    if (!PlayerOpeningSequence.BeginFromStory(Scene.player)) Director.Signal("opening.arrived");
+                    break;
+                case "opening.run": CancelOpeningRun(); HoldActor(false); forcedRun = true; Scene.player.RunForPresentation(1); break;
+                case "opening.reset_only": resetTutorialUnlocked = true; HoldActor(false); Director.AllowResetOnly(true); storyView.SetResetHint(true); break;
                 case "opening.reset_done": Director.AllowResetOnly(false); storyView.SetResetHint(false); HoldActor(true); break;
+                case "inventory.unlock_cardboard": UnlockAbilityWithNotice(GameItemId.Cardboard); break;
                 case "hint.stone": nudgeAt = Time.time + 15f; break;
             }
+        }
+        internal void PlayRoomCamera(string key)
+        {
+            if (!Scene || !Scene.player) return;
+            if (string.IsNullOrWhiteSpace(key)) { Scene.player.EnterRoomCamera(Scene.entranceCamera, refreshSide: true); return; }
+            var target = Scene.FindCameraTarget(key);
+            if (target?.value) Scene.player.EnterNarrativeCamera(target.value, .8f);
+            else Debug.LogError("剧情关卡镜头缺少目标：" + key, Scene);
         }
         public void PlayCamera(string keys, float hold = 1f)
         {
@@ -447,25 +609,27 @@ namespace GamePresentation
         internal void EpisodeFinished(string id)
         {
             if (id == "village.opening") Director.Enqueue("village.reunion");
+            if (id == "jump.intro" && !jumpAcquired) Director.Enqueue("jump.discover");
             if (id == "village.reunion" || id == "village.sunk") nudgeAt = Time.time + 15f;
             string hint = id switch {
-                "village.reunion" => "试着把石头拖到坑里！",
+                "village.reunion" => "随时按空格起跑或叫停，按 R 回到火堆。试着用石块铺路吧！",
                 "village.sunk" => "把石头提到和地面齐平，贴紧坑边点右键用硬纸板粘住！",
                 "village.depart" => "按下space空格键！让吾动起来吧！",
                 "bridge.intro" => "转动木板调好角度，用硬纸板把桥和岸边都粘稳吧！",
                 "forest.intro" => "试着转动那些歪掉的树，给吾搭出台阶吧！",
-                "jump.discover" => "用石头和木板搭个向上的缓坡，让吾去拿跳跃键！",
+                "jump.discover" => "把石块放在跷跷板翘起的一端作配重，压下石板后再前进拿跳跃键！",
                 "inn.intro" when !flag_taught_midstop => "跑动时再按空格或点吾，就能让吾半路停下！",
-                "inn.quest_done" => "帕洛梅克把好马抛下来了，去拿起驽辛难得吧！",
+                "inn.quest_done" => "帕洛梅克把好马抛下来了，去拿起驽骍难得吧！",
                 "inn.shoes" => "对准右边的裂墙按空格冲锋，撞碎它！", _ => null };
-            if (hint != null) ShowHead(hint, 7f, 40);
-            currentHint = hint; nextHint = Time.time + 18f; lastInput = Time.unscaledTime;
+            // Chapter-end guidance is shown once at low priority; facts and later chapters take precedence.
+            if (hint != null && shownGuidance.Add(id)) ShowHead(hint, 7f, 0, guidance: true);
+            lastInput = Time.unscaledTime;
         }
         private void OnCameraEnded(bool completed) { if (Scene && Scene.player) Scene.player.FinishPresentationCamera(); }
         /// <summary>只有开始全新周目时主动调用；R 重置和切换场景不清空全局教学。</summary>
         public void ResetTutorialProgress()
-        { flag_taught_midstop = flag_taught_underfoot_lock = flag_taught_run_lock = false; onceBarks.Clear(); counts.Clear(); cooldowns.Clear(); }
+        { flag_taught_midstop = flag_taught_underfoot_lock = flag_taught_run_lock = false; onceBarks.Clear(); shownGuidance.Clear(); shownVillageNudges.Clear(); counts.Clear(); cooldowns.Clear(); }
         /// <summary>外部切换剧情/编辑器预览取消时，归还输入、重力和相机。</summary>
-        public void CancelCurrentStory() { RestorePit(); forcedRun = false; Director.Clear(); }
+        public void CancelCurrentStory() { ResetVillageGlueReview(); CancelOpeningRun(); forcedRun = false; pendingBridgeIntroduction = pendingJumpIntroduction = false; Director.Clear(); }
     }
 }

@@ -17,8 +17,19 @@ namespace GamePresentation
         [Header("天空字幕与装备提示（均由预制体提供）")]
         public GameObject skySubtitlePanel, equipmentNotice;
         public Text skySubtitleText;
+        [SerializeField, InspectorName("获得提示文字")] private Text equipmentNoticeText;
+        [SerializeField, InspectorName("获得提示图标")] private Image equipmentNoticeIcon;
+        [SerializeField, InspectorName("硬纸板获得图标")] private Sprite cardboardNoticeSprite;
+        [SerializeField, InspectorName("跳跃键获得图标")] private Sprite jumpKeyNoticeSprite;
+        [SerializeField, InspectorName("驽骍难得获得图标")] private Sprite rocinanteNoticeSprite;
         [SerializeField, Min(1f), InspectorName("装备提示显示秒数")] private float equipmentNoticeSeconds = 4f;
         public Image portrait, endingImage;
+        [Header("结尾黑幕与字幕")]
+        public Text endingTitleText;
+        [SerializeField, Min(0f)] private float endingFadeSeconds = 1f;
+        [SerializeField, Min(0f)] private float endingTitleFadeSeconds = .8f;
+        private bool endingActive;
+        private float endingElapsed;
         [InspectorName("双人立绘显示与亮度")] public StoryPortraitStage portraitStage;
         public Button continueButton, blackContinueButton, narratorContinueButton;
         public Button choiceA, choiceB;
@@ -27,6 +38,16 @@ namespace GamePresentation
         [InspectorName("B 选项前缀")] public string choiceBPrefix = "B. ";
         public Text choiceAText, choiceBText, resetHint;
         [SerializeField, Min(1f), InspectorName("字幕每秒字数")] private float subtitleCharactersPerSecond = 32f;
+        [SerializeField, Min(0f), InspectorName("对话框滑入秒数")] private float panelSlideSeconds = .32f;
+        [SerializeField, Min(0f), InspectorName("对话框滑入距离（画布像素）")] private float panelSlideDistance = 220f;
+        private readonly StoryPanelTransition entrance = new StoryPanelTransition();
+        [SerializeField, InspectorName("每组对白首次出场动画")] private StoryDialogueEntrance dialogueEntrance;
+        private bool dialogueEntrancePlayed;
+        public bool IsEntering => entrance.IsEntering || (dialogueEntrance && dialogueEntrance.IsEntering);
+        internal void TickEntrance(float delta) { entrance.Tick(delta); if (dialogueEntrance) dialogueEntrance.Tick(delta); }
+        internal void CompleteEntrance() { entrance.Complete(); if (dialogueEntrance) dialogueEntrance.Complete(); }
+        private void OnDisable() { entrance.Reset(); if (dialogueEntrance) dialogueEntrance.Complete(); }
+        private void BeginEntrance(GameObject panel, Vector2 offset) => entrance.Begin(panel, panelSlideSeconds, offset);
         private Action onContinue;
         private Action<int> onChoice;
         private string lastLine, lastSpeaker;
@@ -60,19 +81,25 @@ namespace GamePresentation
         public void ResetDialogueMemory() { lastLine = lastSpeaker = null; lastPortrait = null; }
         public void BeginEpisode(bool twoCharacters, Sprite hero, Sprite innkeeper)
         {
-            ResetDialogueMemory();
+            ResetDialogueMemory(); dialogueEntrancePlayed = false;
+            if (dialogueEntrance) dialogueEntrance.Complete();
             if (portraitStage) portraitStage.BeginEpisode(twoCharacters, hero, innkeeper);
         }
         private void Continue() => onContinue?.Invoke();
         private void LateUpdate()
         {
             choiceLayout?.RefreshIfNeeded();
+            TickEnding();
             if (equipmentRemaining <= 0f || group.alpha <= 0f) return;
-            equipmentRemaining -= Time.deltaTime;
+            equipmentRemaining -= Time.unscaledDeltaTime;
             if (equipmentRemaining <= 0f) ClearEquipmentNotice();
         }
-        public void Hide()
+        public void Hide() => Hide(false);
+        private void Hide(bool keepEntrance)
         {
+            endingActive = false;
+            if (endingTitleText) endingTitleText.gameObject.SetActive(false);
+            if (!keepEntrance) { entrance.Reset(); if (dialogueEntrance) dialogueEntrance.Complete(); }
             blackPanel.SetActive(false); dialoguePanel.SetActive(false);
             choicesPanel.SetActive(false); narratorPanel.SetActive(false);
             if (skySubtitlePanel) skySubtitlePanel.SetActive(false);
@@ -86,7 +113,9 @@ namespace GamePresentation
         }
         public void Show(StoryStep step, Sprite actorPortrait)
         {
-            Hide(); group.alpha = 1f; group.blocksRaycasts = true;
+            bool keepDialogue = dialoguePanel.activeSelf && (step.kind == StoryStepKind.Dialogue || step.kind == StoryStepKind.Choice) &&
+                (step.kind == StoryStepKind.Choice || !dialogueFrame || dialogueFrame.activeSelf);
+            Hide(keepDialogue); group.alpha = 1f; group.blocksRaycasts = true;
             if (step.kind == StoryStepKind.BlackTitle)
             {
                 blackGroup.alpha = 1f;
@@ -100,12 +129,14 @@ namespace GamePresentation
                 if (narratorContinueButton) narratorContinueButton.gameObject.SetActive(false);
                 narratorPanel.SetActive(true);
                 SetTextPages(narratorText, step.text);
+                BeginEntrance(narratorPanel, Vector2.up * panelSlideDistance * .5f);
                 return;
             }
             if (step.kind == StoryStepKind.SkySubtitle)
             {
                 skySubtitlePanel.SetActive(true);
                 SetTextPages(skySubtitleText, step.text);
+                BeginEntrance(skySubtitlePanel, Vector2.zero);
                 return;
             }
             dialoguePanel.SetActive(true);
@@ -139,6 +170,12 @@ namespace GamePresentation
                 choiceLayout.Apply(step.choices.Count > 0 ? choiceAPrefix + step.choices[0].text : string.Empty,
                     step.choices.Count > 1 ? choiceBPrefix + step.choices[1].text : string.Empty);
             }
+            if (!dialogueEntrancePlayed && showDialogue)
+            {
+                dialogueEntrancePlayed = true;
+                if (dialogueEntrance && dialogueEntrance.IsConfigured) dialogueEntrance.Begin();
+                else BeginEntrance(dialoguePanel, Vector2.down * panelSlideDistance);
+            }
         }
 
         public bool TryAdvanceTextPage()
@@ -152,8 +189,13 @@ namespace GamePresentation
         internal void TickSubtitle(float delta)
         {
             if (IsPageRevealed) return;
+            int before = Mathf.Min(Mathf.FloorToInt(revealedCharacters), subtitleCharacters.Length);
             revealedCharacters += delta * Mathf.Max(1f, subtitleCharactersPerSecond);
             int count = Mathf.FloorToInt(revealedCharacters);
+            int after = Mathf.Min(count, subtitleCharacters.Length);
+            if (after > before && pagedText)
+                AudioManager.TypeCharacters(pagedText.text, subtitleCharacters[before],
+                    after == subtitleCharacters.Length ? pagedText.text.Length : subtitleCharacters[after], false);
             pageReveal.SetVisibleCharacters(count >= subtitleCharacters.Length ? int.MaxValue : subtitleCharacters[count]);
         }
 
@@ -198,9 +240,26 @@ namespace GamePresentation
         }
         public void SetPaused(bool paused) { group.alpha = paused ? 0f : 1f; group.blocksRaycasts = !paused && (blackPanel.activeSelf || dialoguePanel.activeSelf || narratorPanel.activeSelf || (skySubtitlePanel && skySubtitlePanel.activeSelf)); }
         /// <summary>装备提示与主线纸框独立，不暂停或拦截操作，内容和图标直接在预制体中修改。</summary>
-        public void ShowEquipmentNotice()
+        public void ShowEquipmentNotice() => ShowEquipmentNotice(GameItemId.Rocinante);
+        public void ShowEquipmentNotice(GameItemId item)
         {
             if (!equipmentNotice) return;
+            Sprite icon;
+            string text;
+            switch (item)
+            {
+                case GameItemId.Cardboard: icon = cardboardNoticeSprite; text = "获得能力：【硬纸板】"; break;
+                case GameItemId.JumpKey: icon = jumpKeyNoticeSprite; text = "获得能力：【跳跃键】"; break;
+                case GameItemId.Rocinante: icon = rocinanteNoticeSprite; text = "获得装备：【驽骍难得】"; break;
+                default: return;
+            }
+            if (equipmentNoticeText) equipmentNoticeText.text = text;
+            if (equipmentNoticeIcon)
+            {
+                equipmentNoticeIcon.sprite = icon;
+                equipmentNoticeIcon.preserveAspect = true;
+                equipmentNoticeIcon.enabled = icon;
+            }
             equipmentRemaining = equipmentNoticeSeconds;
             equipmentNotice.SetActive(true);
         }
@@ -209,11 +268,26 @@ namespace GamePresentation
         public void SetResetHint(bool visible) => resetHint.gameObject.SetActive(visible);
         public void FadeBlack(float alpha)
         { blackPanel.SetActive(true); blackText.text = string.Empty; blackGroup.alpha = alpha; }
-        public void ShowEnding(Sprite image)
+        private void TickEnding()
         {
-            Hide(); blackPanel.SetActive(true); blackText.text = "未完待续";
+            if (!endingActive || group.alpha <= 0f) return;
+            endingElapsed += Time.unscaledDeltaTime;
+            float fade = endingFadeSeconds <= 0f ? 1f : Mathf.Clamp01(endingElapsed / endingFadeSeconds);
+            blackGroup.alpha = Mathf.SmoothStep(0f, 1f, fade);
+            var title = endingTitleText ? endingTitleText : blackText;
+            float titleTime = Mathf.Max(0f, endingElapsed - endingFadeSeconds);
+            float titleFade = endingTitleFadeSeconds <= 0f ? (endingElapsed >= endingFadeSeconds ? 1f : 0f) : Mathf.Clamp01(titleTime / endingTitleFadeSeconds);
+            var color = title.color; color.a = Mathf.SmoothStep(0f, 1f, titleFade); title.color = color;
+        }
+        public void ShowEnding(Sprite image, string title = "To Be Continued")
+        {
+            Hide(); blackPanel.SetActive(true); blackText.text = string.Empty;
+            var label = endingTitleText ? endingTitleText : blackText;
+            label.text = title; label.gameObject.SetActive(true);
+            label.color = new Color(1f, 1f, 1f, 0f);
+            endingElapsed = 0f; endingActive = true; group.alpha = 1f;
             blackContinueButton.gameObject.SetActive(false);
-            blackGroup.alpha = 1f;
+            blackGroup.alpha = 0f;
             group.blocksRaycasts = true;
             if (image != null) { endingImage.sprite = image; endingImage.gameObject.SetActive(true); }
         }

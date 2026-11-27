@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5275139040555170204}
   - component: {fileID: 4363854279300267903}
   - component: {fileID: 5219382016125247938}
+  - component: {fileID: 928859906032349984}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -90,7 +91,7 @@ SpriteRenderer:
   m_Size: {x: 1.1428572, y: 2}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
 --- !u!95 &5219382016125247938
@@ -115,3 +116,16 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!210 &928859906032349984
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1099943835744269888}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 20
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0

@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 8939375323643070137}
   - component: {fileID: 1567579833095626403}
   - component: {fileID: 64080297558843547}
+  - component: {fileID: 6747660515997303023}
   m_Layer: 0
   m_Name: Campfire
   m_TagString: Untagged
@@ -207,6 +208,19 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!210 &6747660515997303023
+SortingGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3299424534215364312}
+  m_Enabled: 1
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 19
+  m_SortAtRoot: 0
+  m_Sort3DAs2D: 0
 --- !u!1 &7853426671026734388
 GameObject:
   m_ObjectHideFlags: 0

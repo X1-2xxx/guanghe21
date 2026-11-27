@@ -14,10 +14,10 @@ namespace LevelKit
         [Tooltip("Player scrolls while the hero walks, including when the camera is stationary.")]
         [SerializeField] private ScrollSource scrollSource = ScrollSource.Player;
         [SerializeField] private PlayerActionController player;
-        [Tooltip("The outdoor sky renderer. Mountains follow its visibility and opacity.")]
+        [Tooltip("Visibility reference. Use the same renderer for a background controlled by Camera Background Controller.")]
         [SerializeField] private SpriteRenderer skyBackground;
         [Tooltip("Screen movement per world unit travelled by the selected source. Smaller values feel farther away.")]
-        [SerializeField, Range(0f, 1f)] private float horizontalParallax = 0.25f;
+        [SerializeField, Range(0f, 1f)] private float horizontalParallax = 0.0625f;
         [SerializeField, Range(0f, 1f)] private float verticalParallax;
         [Tooltip("Optional world units per second. Keep at 0 to scroll only when the selected source moves.")]
         [SerializeField] private float automaticScrollSpeed;
@@ -32,6 +32,8 @@ namespace LevelKit
         private Color initialColor;
         private bool initialFlipX, initialEnabled, initialized;
         private float automaticOffset;
+        private int updatedFrame = -1;
+        private Vector3 worldScrollOffset;
 
         private void OnEnable()
         {
@@ -77,7 +79,17 @@ namespace LevelKit
 
         private void UpdateLayer(float deltaTime)
         {
-            if (!initialized || !targetCamera || !source.sprite) return;
+            if (!initialized || !targetCamera || !source.sprite || updatedFrame == Time.frameCount) return;
+            updatedFrame = Time.frameCount;
+            // Update the parent first and subtract its actual wrapped offset. Nested layers must not add speeds.
+            Vector3 inheritedOffset = Vector3.zero;
+            var parentLayer = transform.parent ? transform.parent.GetComponentInParent<ParallaxMountainLayer>() : null;
+            if (parentLayer && parentLayer.isActiveAndEnabled)
+            {
+                parentLayer.Initialize();
+                parentLayer.UpdateLayer(deltaTime);
+                inheritedOffset = parentLayer.worldScrollOffset;
+            }
             float localWidth = source.sprite.bounds.size.x;
             float worldWidth = transform.TransformVector(Vector3.right * localWidth).magnitude;
             if (worldWidth < 0.0001f) return;
@@ -93,20 +105,23 @@ namespace LevelKit
             // A mirrored pair is the repeat period. Wrapping by one tile would flip the image abruptly.
             float x = Mathf.Repeat(-travel.x * horizontalParallax + automaticOffset + period * 0.5f, period) - period * 0.5f;
             Vector3 worldOffset = new Vector3(x, -travel.y * verticalParallax, 0f);
+            worldScrollOffset = worldOffset;
+            Vector3 localMotion = worldOffset - inheritedOffset;
             transform.localPosition = initialLocalPosition + (transform.parent
-                ? transform.parent.InverseTransformVector(worldOffset) : worldOffset);
+                ? transform.parent.InverseTransformVector(localMotion) : localMotion);
 
             // Cover both sides even at wide aspect ratios, zoom changes, and checkpoint camera jumps.
-            Vector3 initialCenter = (transform.parent ? transform.parent.TransformPoint(initialLocalPosition) : initialLocalPosition)
+            Vector3 initialCenter = (transform.parent ? transform.parent.TransformPoint(initialLocalPosition) : initialLocalPosition) - inheritedOffset
                 + transform.TransformVector(new Vector3(initialFlipX ? -source.sprite.bounds.center.x : source.sprite.bounds.center.x, 0f, 0f));
             float centerOffset = Mathf.Abs(initialCenter.x - targetCamera.transform.position.x);
             float halfViewport = targetCamera.orthographicSize * targetCamera.aspect;
             int halfCount = Mathf.Max(1, Mathf.CeilToInt((halfViewport + centerOffset + period * 0.5f) / worldWidth));
             ResizeCopies(halfCount * 2);
 
-            Color tint = initialColor;
-            bool visible = initialEnabled;
-            if (skyBackground)
+            bool managedBackground = skyBackground == source;
+            Color tint = managedBackground ? source.color : initialColor;
+            bool visible = managedBackground ? source.enabled : initialEnabled;
+            if (skyBackground && !managedBackground)
             {
                 tint.a *= skyBackground.color.a;
                 visible &= skyBackground.enabled && skyBackground.gameObject.activeInHierarchy;
@@ -141,7 +156,7 @@ namespace LevelKit
         {
             while (copies.Count < count)
             {
-                var tile = new GameObject("Mountain repeat");
+                var tile = new GameObject("Background repeat");
                 tile.transform.SetParent(transform, false);
                 tile.layer = gameObject.layer;
                 copies.Add(tile.AddComponent<SpriteRenderer>());
@@ -163,11 +178,16 @@ namespace LevelKit
             if (initialized)
             {
                 transform.localPosition = initialLocalPosition;
-                source.color = initialColor;
+                if (skyBackground != source)
+                {
+                    source.color = initialColor;
+                    source.enabled = initialEnabled;
+                }
                 source.flipX = initialFlipX;
-                source.enabled = initialEnabled;
             }
             initialized = false;
+            updatedFrame = -1;
+            worldScrollOffset = Vector3.zero;
         }
 
         private static void DestroyCopy(GameObject copy)
